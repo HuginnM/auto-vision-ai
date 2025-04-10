@@ -17,12 +17,14 @@ project_root = find_project_root()
 config_file_path = project_root / 'src' / 'autovisionai' / 'configs' / 'config.yaml'
 config_folder_path = project_root / 'src' / 'autovisionai' / 'configs'
 data_folder_path = project_root / 'data'
+test_data_folder_path = project_root / 'tests' / 'test_data'
 experiments_folder_path = project_root / 'experiments'
 
 with open(config_file_path) as f:
     config = yaml.load(f, Loader=yaml.FullLoader)
 
 config['dataset']['data_root'] = str(data_folder_path)
+config['dataset']['test_data_root'] = str(test_data_folder_path)
 config['trainer']['logs_and_weights_root'] = str(experiments_folder_path)
 
 with open(config_file_path, 'w') as f:

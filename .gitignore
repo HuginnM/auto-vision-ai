@@ -45,16 +45,19 @@ dist/
 *.egg-info/
 
 # Data & Logs
-# data/
-# experiments/
+data/*
+!data/images/.gitkeep
+!data/masks/.gitkeep
 wandb/
 mlruns/
 *.csv
 *.h5
 *.npz
 *.npy
-*.jpg
-*.png
+
+# Experiments
+experiments/*
+!experiments/.gitkeep
 
 # DVC
 .dvc/

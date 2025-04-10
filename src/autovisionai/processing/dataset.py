@@ -3,7 +3,7 @@ import torch
 import numpy as np
 from PIL import Image
 from torch.utils.data import Dataset
-from typing import Dict, Tuple, Optional, Any
+from typing import Dict, Tuple, Optional, List, Any
 
 from autovisionai.configs.config import CONFIG
 
@@ -18,8 +18,15 @@ class CarsDataset(Dataset):
     def __init__(self, data_root: str, transforms: Optional[Any] = None) -> None:
         self.data_root = data_root
         self.transforms = transforms
-        self.imgs_list = list(sorted(os.listdir(os.path.join(data_root, CONFIG['dataset']['images_folder'].get()))))
-        self.masks_list = list(sorted(os.listdir(os.path.join(data_root, CONFIG['dataset']['masks_folder'].get()))))
+
+        self.allowed_extensions = tuple(CONFIG["dataset"]["allowed_extensions"].get())
+        
+        imgs_dir = os.path.join(data_root, CONFIG['dataset']['images_folder'].get())
+        masks_dir = os.path.join(data_root, CONFIG['dataset']['masks_folder'].get())
+
+        self.imgs_list = self._get_valid_files(imgs_dir)
+        self.masks_list = self._get_valid_files(masks_dir)    
+
 
     def __getitem__(self, idx: int) -> Tuple[Image.Image, Dict[str, torch.Tensor]]:
         """
@@ -48,3 +55,10 @@ class CarsDataset(Dataset):
         """
         samples_number = len(self.imgs_list)
         return samples_number
+    
+    def _get_valid_files(self, directory: str) -> List[str]:
+        """Returns sorted list of valid image filenames in a directory."""
+        return sorted([
+            f for f in os.listdir(directory)
+            if f.lower().endswith(self.allowed_extensions)
+        ])

@@ -4,7 +4,7 @@ from PIL import Image
 from autovisionai.configs.config import CONFIG
 from autovisionai.processing.dataset import CarsDataset
 
-dataset = CarsDataset(data_root=CONFIG['dataset']['data_root'].get())
+dataset = CarsDataset(data_root=CONFIG['dataset']['test_data_root'].get())
 image, annotation = dataset[10]
 
 
@@ -26,9 +26,8 @@ def test_mask_shape():
 
 
 def test_mask_values():
-    assert (annotation['mask'][:, 1000, 925:935] == torch.tensor([[1, 0, 0, 0, 0, 0, 0, 0, 0, 0]],
+    assert (annotation['mask'][:, 1000, 945:955] == torch.tensor([[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]],
                                                                  dtype=torch.uint8)).all()
 
-
 def test_len_dataset():
-    assert dataset.__len__() == 1600
+    assert dataset.__len__() == 16
