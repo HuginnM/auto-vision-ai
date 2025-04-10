@@ -133,3 +133,62 @@ class LinearBottleneck(nn.Module):
         return out
 
 
+class PyramidPooling(nn.Module):
+    """
+    Pyramid pooling module.
+    Aggregates the different-region-based context information.
+
+    :param in_channels: a number of channels in the input.
+    :param out_channels: a number of channels produced by the conv.
+    """
+
+    def __init__(self, in_channels, out_channels):
+        super(PyramidPooling, self).__init__()
+        inter_channels = in_channels // 4
+        self.conv1 = ConvBNReLU(in_channels, inter_channels, kernel_size=1)
+        self.conv2 = ConvBNReLU(in_channels, inter_channels, kernel_size=1)
+        self.conv3 = ConvBNReLU(in_channels, inter_channels, kernel_size=1)
+        self.conv4 = ConvBNReLU(in_channels, inter_channels, kernel_size=1)
+        self.out = ConvBNReLU(in_channels*2, out_channels, kernel_size=1)
+
+    @staticmethod
+    def upsample(x, size):
+        """
+        Up samples the input.
+
+        :param x: an input.
+        :param size: a size to up sample the input.
+        :return: an up sampled input.
+        """
+        return F.interpolate(x, size, mode='bilinear', align_corners=True)
+
+    @staticmethod
+    def pool(x, size):
+        """
+        Applies a 2D adaptive average pooling over an input.
+
+        :param x: an input.
+        :param size: the target output size.
+        :return: a pooled input.
+        """
+        avgpool = nn.AdaptiveAvgPool2d(size)
+        return avgpool(x)
+
+    def forward(self, x):
+        """
+        Forward pass through the PyramidPooling block.
+
+        :param x: an input.
+        :return: an output of the PPM.
+        """
+        size = x.shape[-2:]
+        feat1 = PyramidPooling.upsample(self.conv1(PyramidPooling.pool(x, size=1)), size)
+        feat2 = PyramidPooling.upsample(self.conv2(PyramidPooling.pool(x, size=2)), size)
+        feat3 = PyramidPooling.upsample(self.conv3(PyramidPooling.pool(x, size=3)), size)
+        feat4 = PyramidPooling.upsample(self.conv4(PyramidPooling.pool(x, size=6)), size)
+
+        x = torch.cat([x, feat1, feat2, feat3, feat4], dim=1)
+        x = self.out(x)
+        return x
+
+
