@@ -45,7 +45,8 @@ dist/
 *.egg-info/
 
 # Data & Logs
-data/*
+data/images/*
+data/masks/*
 !data/images/.gitkeep
 !data/masks/.gitkeep
 wandb/
