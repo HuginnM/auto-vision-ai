@@ -45,14 +45,16 @@ dist/
 *.egg-info/
 
 # Data & Logs
-data/
-experiments/
+# data/
+# experiments/
 wandb/
 mlruns/
 *.csv
 *.h5
 *.npz
 *.npy
+*.jpg
+*.png
 
 # DVC
 .dvc/
@@ -64,6 +66,3 @@ Thumbs.db
 
 # PyInstaller
 *.spec
-
-# AutoVisionAI specific
-experiments/
