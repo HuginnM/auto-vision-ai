@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "autovisionai"
+version = "0.1.0"
+authors = [
+    { name="Arthur Sobol", email="arthur.sobol.ai@gmail.com" },
+]
+description = "A Production-Ready Car Segmentation Pipeline with PyTorch Lightning and UNet."
+readme = "README.md"
+license = "MIT"
+keywords = ["computer-vision", "ai"]
+classifiers = [
+    "Programming Language :: Python :: 3.12.3",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/huginnm/auto-vision-ai"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
