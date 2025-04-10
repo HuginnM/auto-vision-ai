@@ -1,0 +1,12 @@
+pillow
+numpy
+torch
+confuse
+torchvision
+pytorch_lightning
+opencv-python
+PyYAML
+requests
+matplotlib
+torchmetrics
+pytest

@@ -1,4 +1,3 @@
-```md
 ## 📌 Description
 - What is this PR doing?
 - Why is it needed?
@@ -16,4 +15,3 @@
 
 ## 🧠 Notes
 (Optional) Anything worth mentioning?
-```
