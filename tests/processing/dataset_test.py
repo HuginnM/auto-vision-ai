@@ -9,7 +9,7 @@ image, annotation = dataset[10]
 
 
 def test_image_type():
-    assert type(image) == Image.Image
+    assert isinstance(image, Image.Image)
 
 
 def test_image_id_dtype():

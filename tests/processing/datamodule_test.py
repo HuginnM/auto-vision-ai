@@ -4,13 +4,13 @@ from autovisionai.processing.datamodule import CarsDataModule
 
 datamodule = CarsDataModule(data_root=CONFIG['dataset']['data_root'].get(),
                             batch_size=2,
-                            num_workers=0)
+                            num_workers=2)
 datamodule.setup()
 
 
 def test_train_val_split_size():
     assert len(datamodule.data_train) == 1280
-    assert len(datamodule.data_val) == 319
+    assert len(datamodule.data_val) == 320
 
 
 def test_train_dataloader_size():
