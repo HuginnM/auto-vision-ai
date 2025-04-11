@@ -105,7 +105,6 @@ class LinearBottleneck(nn.Module):
     """
     def __init__(self, in_channels, out_channels, t=6, stride=2):
         super(LinearBottleneck, self).__init__()
-        # use residual add if features match, otherwise a normal Sequential
         self.use_shortcut = True if in_channels == out_channels and stride == 1 else False
 
         self.block = nn.Sequential(
@@ -122,11 +121,11 @@ class LinearBottleneck(nn.Module):
         :param x: an input with in_channels.
         :return: an output with out_channels.
         """
-        # Use conv block
         out = self.block(x)
-        # Check use_shortcut or not
+
         if self.use_shortcut:
             out = x + out
+
         return out
 
 
@@ -292,3 +291,40 @@ class GlobalFeatureExtractor(nn.Module):
         x = self.bottleneck3(x)
         x = self.ppm(x)
         return x
+
+
+class FeatureFusionModule(nn.Module):
+    """
+    Feature fusion module.
+
+    :param highter_in_channels: high resolution channels input.
+    :param lower_in_channels:  low resolution channels input.
+    :param out_channels: number of output channels.
+    :param scale_factor: scale factor.
+    """
+    def __init__(self, highter_in_channels, lower_in_channels, out_channels, scale_factor=4):
+        super(FeatureFusionModule, self).__init__()
+        self.scale_factor = scale_factor
+        self.dwconv = DWConv(lower_in_channels, lower_in_channels)
+        self.conv_lower_res = nn.Sequential(
+            nn.Conv2d(out_channels, out_channels, kernel_size=1), nn.BatchNorm2d(out_channels))
+        self.conv_higher_res = nn.Sequential(
+            nn.Conv2d(highter_in_channels, out_channels, kernel_size=1), nn.BatchNorm2d(out_channels))
+        self.relu = nn.ReLU(inplace=True)
+
+    def forward(self, higher_res_feature, lower_res_feature):
+        """
+        Forward pass through the FeatureFusionModule block.
+
+        :param higher_res_feature: high resolution features.
+        :param lower_res_feature: low resolution features.
+        :return: an output of the FFM.
+        """
+        lower_res_feature = F.interpolate(
+            lower_res_feature, scale_factor=self.scale_factor, mode='bilinear', align_corners=True)
+        lower_res_feature = self.dwconv(lower_res_feature)
+        lower_res_feature = self.conv_lower_res(lower_res_feature)
+
+        higher_res_feature = self.conv_higher_res(higher_res_feature)
+        out = self.relu(lower_res_feature + higher_res_feature)
+        return out

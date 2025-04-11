@@ -84,3 +84,15 @@ def test_global_feature_extractor():
 
     params_gfe_module = sum(p.numel() for p in gfe_module.parameters() if p.requires_grad)
     assert params_gfe_module == 1066112
+
+
+def test_feature_fusion_module():
+    test_input = torch.randn((2, 128, 8, 8))
+    test_higher_res_features = torch.randn((2, 64, 32, 32))
+
+    ffm_module = FeatureFusionModule(64, 128, 128)
+    output = ffm_module(test_higher_res_features, test_input)
+    assert output.shape == torch.Size([2, 128, 32, 32])
+
+    params_ffm_module = sum(p.numel() for p in ffm_module.parameters() if p.requires_grad)
+    assert params_ffm_module == 26752
