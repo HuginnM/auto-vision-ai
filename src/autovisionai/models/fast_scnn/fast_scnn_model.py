@@ -189,3 +189,106 @@ class PyramidPooling(nn.Module):
         return x
 
 
+class LearningToDownsample(nn.Module):
+    """
+    Learning to downsample module.
+
+    :param dw_channels1: a number of channels to downsample.
+    :param dw_channels2: a number of channels to downsample.
+    :param out_channels: a number of channels produced by the conv.
+    """
+
+    def __init__(self, dw_channels1=32, dw_channels2=48, out_channels=64):
+        super(LearningToDownsample, self).__init__()
+        self.conv = ConvBNReLU(3, dw_channels1, 3, 2)
+        self.dsconv1 = DSConv(dw_channels1, dw_channels2, 2)
+        self.dsconv2 = DSConv(dw_channels2, out_channels, 2)
+
+    def forward(self, x):
+        """
+        Forward pass through the LearningToDownsample block.
+
+        :param x: an input.
+        :return: an output of the LTD.
+        """
+        x = self.conv(x)
+        x = self.dsconv1(x)
+        x = self.dsconv2(x)
+        return x
+
+
+class GlobalFeatureExtractor(nn.Module):
+    """
+    Global feature extractor module.
+
+    :param in_channels: number of channels in the input.
+    :param block_channels: list with number of channels produced by the LinearBottleneck.
+    :param out_channels: number of output channels.
+    :param t: an expansion factor.
+    :param num_blocks: number of times block is repeated.
+    """
+
+    def __init__(
+        self,
+        in_channels=64,
+        block_channels=(64, 96, 128),
+        out_channels=128,
+        t=6,
+        num_blocks=(3, 3, 3),
+    ):
+        super(GlobalFeatureExtractor, self).__init__()
+        self.bottleneck1 = GlobalFeatureExtractor._make_layer(
+            block=LinearBottleneck,
+            inplanes=in_channels,
+            planes=block_channels[0],
+            blocks=num_blocks[0],
+            t=t,
+            stride=2,
+        )
+        self.bottleneck2 = GlobalFeatureExtractor._make_layer(
+            block=LinearBottleneck,
+            inplanes=block_channels[0],
+            planes=block_channels[1],
+            blocks=num_blocks[1],
+            t=t,
+            stride=2,
+        )
+        self.bottleneck3 = GlobalFeatureExtractor._make_layer(
+            block=LinearBottleneck,
+            inplanes=block_channels[1],
+            planes=block_channels[2],
+            blocks=num_blocks[2],
+            t=t,
+            stride=1,
+        )
+        self.ppm = PyramidPooling(block_channels[2], out_channels)
+
+    @staticmethod
+    def _make_layer(block, inplanes, planes, blocks, t=6, stride=1):
+        """
+
+        :param block: block to create.
+        :param inplanes: number of input channels.
+        :param planes: number of output channels.
+        :param blocks: number of times block is repeated.
+        :param t: an expansion factor.
+        :param stride: a stride of the conv.
+        :return: nn.Sequential of layers.
+        """
+        layers = [block(inplanes, planes, t, stride)]
+        for i in range(1, blocks):
+            layers.append(block(planes, planes, t, 1))
+        return nn.Sequential(*layers)
+
+    def forward(self, x):
+        """
+        Forward pass through the GlobalFeatureExtractor block.
+
+        :param x: an input.
+        :return: an output of the GFE.
+        """
+        x = self.bottleneck1(x)
+        x = self.bottleneck2(x)
+        x = self.bottleneck3(x)
+        x = self.ppm(x)
+        return x

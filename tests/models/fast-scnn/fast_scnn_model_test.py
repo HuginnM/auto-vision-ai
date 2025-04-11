@@ -61,3 +61,26 @@ def test_pyramid_pooling():
 
     params_pp_module = sum(p.numel() for p in pp_module.parameters() if p.requires_grad)
     assert params_pp_module == 49664
+
+
+def test_learning_to_downsample():
+    test_input = torch.randn((2, 3, 256, 256))
+
+    ldm_module = LearningToDownsample()
+
+    output = ldm_module(test_input)
+    assert output.shape == torch.Size([2, 64, 8, 8])
+
+    params_ldm_module = sum(p.numel() for p in ldm_module.parameters() if p.requires_grad)
+    assert params_ldm_module == 6640
+
+
+def test_global_feature_extractor():
+    test_input = torch.randn((2, 64, 32, 32))
+
+    gfe_module = GlobalFeatureExtractor()
+    output = gfe_module(test_input)
+    assert output.shape == torch.Size([2, 128, 8, 8])
+
+    params_gfe_module = sum(p.numel() for p in gfe_module.parameters() if p.requires_grad)
+    assert params_gfe_module == 1066112
