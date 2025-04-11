@@ -355,3 +355,39 @@ class Classifier(nn.Module):
         x = self.dsconv2(x)
         x = self.conv(x)
         return x
+
+
+class FastSCNN(nn.Module):
+    """
+    The complete architecture of FastSCNN using layers defined above.
+
+    :param num_classes: number of classes.
+    """
+    def __init__(self, num_classes):
+        super(FastSCNN, self).__init__()
+        self.learning_to_downsample = LearningToDownsample(32, 48, 64)
+        self.global_feature_extractor = GlobalFeatureExtractor(
+            in_channels=64,
+            block_channels=[64, 96, 128],
+            out_channels=128,
+            t=6,
+            num_blocks=[3, 3, 3]
+        )
+        self.feature_fusion = FeatureFusionModule(
+            highter_in_channels=64, lower_in_channels=128, out_channels=128)
+        self.classifier = Classifier(dw_channels=128, num_classes=num_classes)
+
+    def forward(self, x):
+        """
+        Forward pass through the FastSCNN.
+
+        :param x: an input.
+        :return: an output of the FastSCNN.
+        """
+        size = x.shape[-2:]
+        higher_res_features = self.learning_to_downsample(x)
+        x = self.global_feature_extractor(higher_res_features)
+        x = self.feature_fusion(higher_res_features, x)
+        x = self.classifier(x)
+        out = F.interpolate(x, size, mode='bilinear', align_corners=True)
+        return out

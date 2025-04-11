@@ -107,3 +107,14 @@ def test_classifier():
 
     params_classifier = sum(p.numel() for p in classifier.parameters() if p.requires_grad)
     assert params_classifier == 36225
+
+
+def test_full_fast_scnn():
+    test_input = torch.randn((2, 3, 256, 256))
+
+    fast_rcnn = FastSCNN(1)
+    output = fast_rcnn(test_input)
+    assert output.shape == torch.Size([2, 1, 256, 256])
+
+    params_fast_rcnn = sum(p.numel() for p in fast_rcnn.parameters() if p.requires_grad)
+    assert params_fast_rcnn == 1135729
