@@ -108,9 +108,6 @@ class LinearBottleneck(nn.Module):
         # use residual add if features match, otherwise a normal Sequential
         self.use_shortcut = True if in_channels == out_channels and stride == 1 else False
 
-        # nn.Sequential should contain ConvBNReLU(in_channels, in_channels * t, kernel_size=1) -> 
-        # DWConv(in_channels * t, in_channels * t, stride) -> 
-        # Conv2d(in_channels * t, out_channels, kernel_size=1, bias=False) -> BatchNorm2d.
         self.block = nn.Sequential(
             ConvBNReLU(in_channels, in_channels*t, kernel_size=1),
             DWConv(in_channels*t, in_channels*t, stride=stride),

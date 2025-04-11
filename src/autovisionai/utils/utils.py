@@ -95,6 +95,40 @@ def show_pic_and_pred_semantic_mask(img: torch.Tensor, pred_mask: np.ndarray,
             plt.title('Original Image with Predicted Semantic Mask', fontsize=40)
 
 
+def show_pic_and_pred_instance_masks(img: torch.Tensor, pred_masks: np.ndarray,
+                                     scores: np.ndarray, min_score: float = 0.8, threshold: float = 0.5) -> None:
+    """
+    Helper function to plot original image and predicted instance masks.
+
+    :param img: an image for which the trained model predicts segmentation masks.
+    :param pred_masks: predicted instance segmentation masks.
+    :param scores: predicted scores.
+    :param min_score: a min score to sort segmentation masks.
+    :param threshold: a min score for predicted mask pixel after using sigmoid func. Values from 0 to 1.
+    """
+    img = np.asarray(img * 255, dtype='uint8').squeeze()
+    img = img.transpose(1, 2, 0)
+
+    for mask, score in zip(pred_masks, scores):
+        if score > min_score:
+            mask = (mask > threshold).squeeze()
+            r = np.zeros_like(mask).astype(np.uint8)
+            g = np.zeros_like(mask).astype(np.uint8)
+            b = np.zeros_like(mask).astype(np.uint8)
+            color = list(np.random.choice(range(256), size=3))
+            r[mask == 1], g[mask == 1], b[mask == 1] = color
+            rgb_mask = np.stack([r, g, b], axis=2)
+            img = cv2.addWeighted(img, 1, rgb_mask, 0.8, 0)
+    try:
+        cv2.imshow('Original Image with Predicted Instances', img)
+        cv2.waitKey(0)
+    except Exception as e:
+        print('Error:', e)
+        plt.figure(figsize=(20, 10))
+        plt.imshow(img)
+        plt.title('Original Image with Predicted Instances', fontsize=40)
+
+
 def get_input_image_for_inference(local_path: str = None, url: str = None) -> torch.Tensor:
     """
     Converts image into tensor [1, 3, H, W] for model inference.
@@ -150,6 +184,21 @@ def get_batch_images_and_pred_masks_in_a_grid(eval_step_output: Union[List[Dict[
     grid = torchvision.utils.make_grid(masks_on_images)
 
     return grid
+
+
+def bboxes_iou(target: Dict[str, torch.Tensor], pred: Dict[str, torch.Tensor]) -> torch.Tensor:
+    """
+    Calculates an Intersection Over Union metric over bboxes.
+
+    :param target: a dict with target annotations.
+    :param pred: a dict with predicted annotations.
+    :return: an IoU over bboxes score.
+    """
+    if pred['boxes'].shape[0] == 0:
+        iou_score = torch.tensor(0.0, device=pred['boxes'].device)
+        return iou_score
+    iou_score = torchvision.ops.box_iou(target['boxes'], pred['boxes']).diag().mean()
+    return iou_score
 
 
 def masks_iou(target, preds, num_classes):
