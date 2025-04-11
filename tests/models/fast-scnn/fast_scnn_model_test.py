@@ -96,3 +96,14 @@ def test_feature_fusion_module():
 
     params_ffm_module = sum(p.numel() for p in ffm_module.parameters() if p.requires_grad)
     assert params_ffm_module == 26752
+
+
+def test_classifier():
+    test_input = torch.randn((2, 128, 32, 32))
+
+    classifier = Classifier(128, 1)
+    output = classifier(test_input)
+    assert output.shape == torch.Size([2, 1, 32, 32])
+
+    params_classifier = sum(p.numel() for p in classifier.parameters() if p.requires_grad)
+    assert params_classifier == 36225

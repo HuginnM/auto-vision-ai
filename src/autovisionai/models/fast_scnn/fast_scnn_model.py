@@ -328,3 +328,30 @@ class FeatureFusionModule(nn.Module):
         higher_res_feature = self.conv_higher_res(higher_res_feature)
         out = self.relu(lower_res_feature + higher_res_feature)
         return out
+
+
+class Classifier(nn.Module):
+    """
+    Classifier.
+
+    :param dw_channels: number of channels for dsconv.
+    :param num_classes: number of classes.
+    :param stride: a stride of the conv.
+    """
+    def __init__(self, dw_channels, num_classes, stride=1):
+        super(Classifier, self).__init__()
+        self.dsconv1 = DSConv(dw_channels, dw_channels, stride)
+        self.dsconv2 = DSConv(dw_channels, dw_channels, stride)
+        self.conv = nn.Sequential(nn.Dropout(0.1), nn.Conv2d(dw_channels, num_classes, kernel_size=1))
+
+    def forward(self, x):
+        """
+        Forward pass through the Classifier block.
+
+        :param x: an input.
+        :return: an output of the Classifier.
+        """
+        x = self.dsconv1(x)
+        x = self.dsconv2(x)
+        x = self.conv(x)
+        return x
