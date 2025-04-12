@@ -30,7 +30,7 @@ fast_scnn:
   model:
     n_classes: 1
   optimizer:
-    initial_lr: 0.003
+    initial_lr: 0.01
   lr_scheduler:
     step_size: 3
     gamma: 0.5
