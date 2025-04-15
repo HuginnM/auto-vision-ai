@@ -43,9 +43,7 @@ class MaskRCNNTrainer(pl.LightningModule):
         )
         return bbox
 
-    @staticmethod
-    def _convert_targets_to_mask_rcnn_format(targets: Tuple[Dict[str, torch.Tensor]]
-                                             ) -> Tuple[Dict[str, torch.Tensor]]:
+    def _convert_targets_to_mask_rcnn_format(self, targets: Tuple[Dict[str, torch.Tensor]]) -> Tuple[Dict[str, torch.Tensor]]:
         """
         Converts targets from datamodule batch to Mask-RCNN format.
         :param targets: targets from datamodule batch.
@@ -58,10 +56,10 @@ class MaskRCNNTrainer(pl.LightningModule):
             box = MaskRCNNTrainer._find_bounding_box(mask)
 
             mask_rcnn_target = {
-                'image_id': target['image_id'],
-                'boxes': box.unsqueeze(0),
-                'masks': torch.as_tensor(target['mask'], dtype=torch.uint8),
-                'labels': torch.tensor([1], dtype=torch.int64),
+                'image_id': target['image_id'].to(self.device),
+                'boxes': box.unsqueeze(0).to(self.device),
+                'masks': torch.as_tensor(target['mask'], dtype=torch.uint8, device=self.device),
+                'labels': torch.tensor([1], dtype=torch.int64, device=self.device)
             }
             mask_rcnn_targets.append(mask_rcnn_target)
 
@@ -78,7 +76,7 @@ class MaskRCNNTrainer(pl.LightningModule):
         images, targets = batch
         
         images = torch.stack(images)       
-        targets = MaskRCNNTrainer._convert_targets_to_mask_rcnn_format(targets)
+        targets = self._convert_targets_to_mask_rcnn_format(targets)
         
         self.model.train()
         
@@ -99,7 +97,6 @@ class MaskRCNNTrainer(pl.LightningModule):
         :param batch_idx: an index of the current batch.
         :return: a dict of the losses sum and loss_mask of the prediction heads for one batch step.
         """
-        # Use a shared step method
         outputs = self.step(batch, is_training=True)
 
         self.log('train/loss_step', outputs['loss_step'].item())
@@ -143,7 +140,6 @@ class MaskRCNNTrainer(pl.LightningModule):
         self.model.eval()
         preds = self.model(images)
 
-        # Convert targets to Mask RCNN format
         targets = self._convert_targets_to_mask_rcnn_format(targets)
         bboxes_iou_score = torch.stack([bboxes_iou(t, o) for t, o in zip(targets, preds)]).mean()
         imgs_grid = get_batch_images_and_pred_masks_in_a_grid(preds, images, mask_rcnn=True)

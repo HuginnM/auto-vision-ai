@@ -5,8 +5,6 @@ from autovisionai.configs.config import CONFIG
 from autovisionai.processing.datamodule import CarsDataModule
 from autovisionai.models.mask_rcnn.mask_rcnn_trainer import MaskRCNNTrainer
 
-# accelerator = 'cuda' if torch.cuda.is_available() else 'cpu'
-
 
 def set_seed(seed):
     torch.manual_seed(seed)

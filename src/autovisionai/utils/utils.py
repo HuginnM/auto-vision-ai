@@ -96,7 +96,8 @@ def show_pic_and_pred_semantic_mask(img: torch.Tensor, pred_mask: np.ndarray,
 
 
 def show_pic_and_pred_instance_masks(img: torch.Tensor, pred_masks: np.ndarray,
-                                     scores: np.ndarray, min_score: float = 0.8, threshold: float = 0.5) -> None:
+                                     scores: np.ndarray, min_score: float = 0.8, 
+                                     threshold: float = 0.5, use_plt: bool = True) -> None:
     """
     Helper function to plot original image and predicted instance masks.
 
@@ -105,6 +106,7 @@ def show_pic_and_pred_instance_masks(img: torch.Tensor, pred_masks: np.ndarray,
     :param scores: predicted scores.
     :param min_score: a min score to sort segmentation masks.
     :param threshold: a min score for predicted mask pixel after using sigmoid func. Values from 0 to 1.
+    :param use_plt: show image with plt for better experience with JN when True. Instead shows it via GUI with cv2. 
     """
     img = np.asarray(img * 255, dtype='uint8').squeeze()
     img = img.transpose(1, 2, 0)
@@ -119,14 +121,23 @@ def show_pic_and_pred_instance_masks(img: torch.Tensor, pred_masks: np.ndarray,
             r[mask == 1], g[mask == 1], b[mask == 1] = color
             rgb_mask = np.stack([r, g, b], axis=2)
             img = cv2.addWeighted(img, 1, rgb_mask, 0.8, 0)
-    try:
-        cv2.imshow('Original Image with Predicted Instances', img)
-        cv2.waitKey(0)
-    except Exception as e:
-        print('Error:', e)
-        plt.figure(figsize=(20, 10))
+    
+    if use_plt:
+        # Jupyter-friendly visualization
+        plt.figure(figsize=(10, 5))
         plt.imshow(img)
-        plt.title('Original Image with Predicted Instances', fontsize=40)
+        plt.axis("off")
+        plt.title("Original Image with Predicted Semantic Mask")
+        plt.show()
+    else:
+        try:
+            cv2.imshow('Original Image with Predicted Instances', img)
+            cv2.waitKey(0)
+        except Exception as e:
+            print('Error:', e)
+            plt.figure(figsize=(20, 10))
+            plt.imshow(img)
+            plt.title('Original Image with Predicted Instances', fontsize=40)
 
 
 def get_input_image_for_inference(local_path: str = None, url: str = None) -> torch.Tensor:
