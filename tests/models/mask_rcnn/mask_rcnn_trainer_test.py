@@ -5,7 +5,7 @@ from autovisionai.configs.config import CONFIG
 from autovisionai.processing.datamodule import CarsDataModule
 from autovisionai.models.mask_rcnn.mask_rcnn_trainer import MaskRCNNTrainer
 
-accelerator = 'cuda' if torch.cuda.is_available() else 'cpu'
+# accelerator = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
 def set_seed(seed):
@@ -28,4 +28,41 @@ def test_convert_targets_to_mask_rcnn_format():
 
     assert list(mask_rcnn_target[0].keys()) == ['image_id', 'boxes', 'masks', 'labels']
     assert (mask_rcnn_target[0]['boxes'] == torch.tensor([[ 588.,  440., 1251., 1050.]], 
-                                                         dtype=torch.float32).to(accelerator)).all()
+                                                         dtype=torch.float32)).all()
+
+
+def test_step():
+    set_seed(42)
+    test_batch = generate_test_batch()
+
+    model = MaskRCNNTrainer()
+    outputs = model.step(test_batch, is_training=True)
+    assert_almost_equal(outputs['loss'].item(), 3.9373013973236084, decimal=2)
+    assert_almost_equal(outputs['loss_step'].item(), 3.9373013973236084, decimal=2)
+    assert_almost_equal(outputs['loss_mask'].item(), 3.074519634246826, decimal=2)
+
+
+def test_training_step():
+    set_seed(42)
+    test_batch = generate_test_batch()
+
+    model = MaskRCNNTrainer()
+    outputs = model.training_step(test_batch, 0)
+
+    assert_almost_equal(outputs['loss'].item(), 3.9373013973236084, decimal=2)
+    assert_almost_equal(outputs['loss_step'].item(), 3.9373013973236084, decimal=2)
+    assert_almost_equal(outputs['loss_mask'].item(), 3.074519634246826, decimal=2)
+
+
+def test_validation_step():
+    set_seed(42)
+
+    test_batch = generate_test_batch()
+
+    model = MaskRCNNTrainer()
+    outputs = model.validation_step(test_batch, 0)
+
+    assert_almost_equal(outputs['val_outputs']['loss'].item(), 3.9373013973236084, decimal=2)
+    assert_almost_equal(outputs['val_outputs']['loss_step'].item(), 3.9373013973236084, decimal=2)
+    assert_almost_equal(outputs['val_outputs']['loss_mask'].item(), 3.074519634246826, decimal=2)
+    assert_almost_equal(outputs['val_iou'].item(), 0.25738221406936646, decimal=2)

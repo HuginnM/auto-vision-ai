@@ -70,3 +70,7 @@ Thumbs.db
 
 # PyInstaller
 *.spec
+
+# Test notebooks
+notebooks/*
+*.ipynb
