@@ -77,10 +77,26 @@ pip install -e .
 
 The U-Net and Fast-SCNN models were implemented from scratch and trained on a limited synthetic dataset (Carvana). Due to resource constraints and intentionally lightweight training, they perform well on the in-domain data but may generalize poorly to out-of-distribution samples.
 
-| Model      | Visualization Example |
-|------------|------------------------|
-| U-Net      | ![](https://drive.google.com/uc?id=1DWXLDXvaR_XMH50uq1qamsT1WdV9IzQZ) |
-| Fast-SCNN  | ![](https://drive.google.com/uc?id=1F13Q6LLTcYc2CIF0mhlqIbx6PC0kAyQX) |
+<table style="width:100%; table-layout:fixed;">
+  <tr>
+    <td style="width:25%; vertical-align:top; padding:10px;">
+      <strong>U-Net</strong><br>
+      Semantic segmentation model trained and built from scratch on a small dataset.
+    </td>
+    <td style="width:75%; text-align:center; padding:10px;">
+      <img src="https://drive.google.com/uc?id=1DWXLDXvaR_XMH50uq1qamsT1WdV9IzQZ" style="max-width:100%; height:auto; border:1px solid #ccc;" alt="U-Net Prediction">
+    </td>
+  </tr>
+  <tr>
+    <td style="width:25%; vertical-align:top; padding:10px;">
+      <strong>Fast-SCNN</strong><br>
+      Real-time lightweight segmentation model built from scratch. Fast and efficient for edge devices.
+    </td>
+    <td style="width:75%; text-align:center; padding:10px;">
+      <img src="https://drive.google.com/uc?id=1F13Q6LLTcYc2CIF0mhlqIbx6PC0kAyQX" style="max-width:100%; height:auto; border:1px solid #ccc;" alt="Fast-SCNN Prediction">
+    </td>
+  </tr>
+</table>
 
 > These results illustrate solid segmentation performance within the training domain, achieved using entirely custom implementations without pretrained weights.
 
@@ -95,6 +111,27 @@ The Mask R-CNN model utilizes a pretrained ResNet50-FPN backbone from TorchVisio
 
 > Even on real-world internet images, the model demonstrate robust instance segmentation capabilities despite on a tiny dataset.
 
+
+<table style="width:100%; table-layout:fixed;">
+  <tr>
+    <td style="width:25%; vertical-align:top; padding:10px;">
+      <strong>Mask R-CNN</strong><br>
+      Instance segmentation using pretrained backbone with fine-tuned predictors. <br>(For one uncommon car)
+    </td>
+    <td style="width:75%; text-align:center; padding:10px;">
+      <img src="https://drive.google.com/uc?id=1uQM6gWPbQHCccwYoxBd_bdjOHzIPjBpX" style="max-width:100%; height:auto; border:1px solid #ccc;" alt="Mask R-CNN Prediction">
+    </td>
+  </tr>
+  <tr>
+    <td style="width:25%; vertical-align:top; padding:10px;">
+      <strong>Mask R-CNN</strong><br>
+      <br>(For two instances of very rare cars)
+    </td>
+    <td style="width:75%; text-align:center; padding:10px;">
+      <img src="https://drive.google.com/uc?id=1om1YSYS6k3q3ZTjkJ3k-e_BZZyUs7iAo" style="max-width:100%; height:auto; border:1px solid #ccc;" alt="Mask R-CNN Prediction">
+    </td>
+  </tr>
+</table>
 
 ## Training
 
