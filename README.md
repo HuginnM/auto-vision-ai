@@ -57,10 +57,6 @@ pip install -e .
 - No pretrained weights
 - Paper: [U-Net: Convolutional Networks for Biomedical Image Segmentation](https://arxiv.org/abs/1505.04597)
 
-| Input | Prediction |
-|-------|------------|
-| ![](assets/unet_input.jpg) | ![](assets/unet_output.jpg) |
-
 ### 2. Fast-SCNN (from scratch)
 
 - Real-time semantic segmentation
@@ -68,40 +64,12 @@ pip install -e .
 - Lightweight and mobile-friendly
 - Paper: [Fast-SCNN: Fast Semantic Segmentation Network](https://arxiv.org/abs/1902.04502)
 
-| Input | Prediction |
-|-------|------------|
-| ![](assets/fastscnn_input.jpg) | ![](assets/fastscnn_output.jpg) |
-
 ### 3. Mask R-CNN (TorchVision pretrained)
 
 - Instance segmentation using pretrained ResNet50-FPN backbone
 - `box_predictor` and `mask_predictor` layers replaced and fine-tuned
 - Integrated with PyTorch Lightning `Trainer`
 - Paper: [Mask R-CNN](https://arxiv.org/abs/1703.06870)
-
-| Input | Prediction |
-|-------|------------|
-| ![](assets/maskrcnn_input.jpg) | ![](assets/maskrcnn_output.jpg) |
-
-
-
-## Qualitative Results
-
-### Semantic Segmentation Examples
-
-| Model      | Visualization Example |
-|------------|------------------------|
-| U-Net      | ![](https://drive.google.com/uc?id=1DWXLDXvaR_XMH50uq1qamsT1WdV9IzQZ) |
-| Fast-SCNN  | ![](https://drive.google.com/uc?id=1F13Q6LLTcYc2CIF0mhlqIbx6PC0kAyQX) |
-
-### Instance Segmentation Example
-
-| Model      | Visualization Example |
-|------------|------------------------|
-| Mask R-CNN | ![](https://drive.google.com/uc?id=1uQM6gWPbQHCccwYoxBd_bdjOHzIPjBpX) |
-| Mask R-CNN | ![](https://drive.google.com/uc?id=1om1YSYS6k3q3ZTjkJ3k-e_BZZyUs7iAo) |
-
-> Even on real-world internet images, the models demonstrate robust semantic and instance segmentation capabilities despite on a tiny dataset.
 
 ## Qualitative Results
 
@@ -123,7 +91,9 @@ The Mask R-CNN model utilizes a pretrained ResNet50-FPN backbone from TorchVisio
 | Model      | Visualization Example |
 |------------|------------------------|
 | Mask R-CNN | ![](https://drive.google.com/uc?id=1uQM6gWPbQHCccwYoxBd_bdjOHzIPjBpX) |
-| Mask R-CNN | ![](https://drive.google.com/uc?id=1om1YSYS6k3q3ZTjkJ3k-e_BZZyUs7iAo) |
+| Mask R-CNN (Two cars) | ![](https://drive.google.com/uc?id=1om1YSYS6k3q3ZTjkJ3k-e_BZZyUs7iAo) |
+
+> Even on real-world internet images, the model demonstrate robust instance segmentation capabilities despite on a tiny dataset.
 
 
 ## Training
