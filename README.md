@@ -79,21 +79,21 @@ The U-Net and Fast-SCNN models were implemented from scratch and trained on a li
 
 <table style="width:100%; table-layout:fixed;">
   <tr>
-    <td style="width:25%; vertical-align:top; padding:10px;">
+    <td width="220">
       <strong>U-Net</strong><br>
       Semantic segmentation model trained and built from scratch on a small dataset.
     </td>
-    <td style="width:75%; text-align:center; padding:10px;">
-      <img src="https://drive.google.com/uc?id=1DWXLDXvaR_XMH50uq1qamsT1WdV9IzQZ" style="max-width:100%; height:auto; border:1px solid #ccc;" alt="U-Net Prediction">
+    <td>
+      <img src="https://drive.google.com/uc?id=1DWXLDXvaR_XMH50uq1qamsT1WdV9IzQZ" width="100%" alt="U-Net Prediction">
     </td>
   </tr>
   <tr>
-    <td style="width:25%; vertical-align:top; padding:10px;">
+    <td width="220">
       <strong>Fast-SCNN</strong><br>
       Real-time lightweight segmentation model built from scratch. Fast and efficient for edge devices.
     </td>
-    <td style="width:75%; text-align:center; padding:10px;">
-      <img src="https://drive.google.com/uc?id=1F13Q6LLTcYc2CIF0mhlqIbx6PC0kAyQX" style="max-width:100%; height:auto; border:1px solid #ccc;" alt="Fast-SCNN Prediction">
+    <td>
+      <img src="https://drive.google.com/uc?id=1F13Q6LLTcYc2CIF0mhlqIbx6PC0kAyQX" width="100%" alt="Fast-SCNN Prediction">
     </td>
   </tr>
 </table>
@@ -102,36 +102,30 @@ The U-Net and Fast-SCNN models were implemented from scratch and trained on a li
 
 ### Instance Segmentation
 
-The Mask R-CNN model utilizes a pretrained ResNet50-FPN backbone from TorchVision, with the `box_predictor` and `mask_predictor` heads replaced and fine-tuned on a small dataset. Despite limited data, the model demonstrates good generalization — producing correct instance masks even on real-world images found online.
-
-| Model      | Visualization Example |
-|------------|------------------------|
-| Mask R-CNN | ![](https://drive.google.com/uc?id=1uQM6gWPbQHCccwYoxBd_bdjOHzIPjBpX) |
-| Mask R-CNN (Two cars) | ![](https://drive.google.com/uc?id=1om1YSYS6k3q3ZTjkJ3k-e_BZZyUs7iAo) |
-
-> Even on real-world internet images, the model demonstrate robust instance segmentation capabilities despite on a tiny dataset.
-
+The Mask R-CNN model utilizes a pretrained ResNet50-FPN backbone from TorchVision, with the `box_predictor` and `mask_predictor` heads replaced and fine-tuned on a small dataset. Despite limited data, the model demonstrates good generalization, producing correct instance masks even on real-world images found online.
 
 <table style="width:100%; table-layout:fixed;">
   <tr>
-    <td style="width:25%; vertical-align:top; padding:10px;">
+    <td width="220">
       <strong>Mask R-CNN</strong><br>
-      Instance segmentation using pretrained backbone with fine-tuned predictors. <br>(For one uncommon car)
+      Instance segmentation using a pretrained backbone with fine-tuned predictors. <br>(For one uncommon car)
     </td>
-    <td style="width:75%; text-align:center; padding:10px;">
-      <img src="https://drive.google.com/uc?id=1uQM6gWPbQHCccwYoxBd_bdjOHzIPjBpX" style="max-width:100%; height:auto; border:1px solid #ccc;" alt="Mask R-CNN Prediction">
+    <td>
+      <img src="https://drive.google.com/uc?id=1uQM6gWPbQHCccwYoxBd_bdjOHzIPjBpX" width="100%" alt="Mask R-CNN Prediction">
     </td>
   </tr>
   <tr>
-    <td style="width:25%; vertical-align:top; padding:10px;">
+    <td width="220">
       <strong>Mask R-CNN</strong><br>
       <br>(For two instances of very rare cars)
     </td>
-    <td style="width:75%; text-align:center; padding:10px;">
-      <img src="https://drive.google.com/uc?id=1om1YSYS6k3q3ZTjkJ3k-e_BZZyUs7iAo" style="max-width:100%; height:auto; border:1px solid #ccc;" alt="Mask R-CNN Prediction">
+    <td>
+      <img src="https://drive.google.com/uc?id=1om1YSYS6k3q3ZTjkJ3k-e_BZZyUs7iAo" width="100%" alt="Mask R-CNN Prediction">
     </td>
   </tr>
 </table>
+
+> The model demonstrates robust instance segmentation capabilities despite a tiny dataset.
 
 ## Training
 
