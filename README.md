@@ -1,76 +1,184 @@
 # AutoVisionAI
 
-**AutoVisionAI** is a computer vision project focused on **semantic segmentation of vehicles** in images. This repository serves as a demonstration of professional ML engineering practices, model development workflows, and production-ready architecture.
+AutoVisionAI is a modular computer vision pipeline focused on semantic segmentation of vehicles. It demonstrates industry-grade engineering practices, reproducible experimentation, and scalable ML model development workflows.
 
-The initial goal is to build a fully functional **U-Net model from scratch** to segment cars from street images. Future iterations may explore additional model architectures, training strategies, and MLOps integrations.
+## Key Features
 
----
+- Modular architecture built using **PyTorch Lightning** and **TorchVision**
+- **U-Net** implementation from scratch
+- **Fast-SCNN** implementation from scratch
+- **Mask R-CNN** with pretrained TorchVision backbone and custom prediction heads
+- Custom `LightningModule` training wrappers with configurable transforms
+- Unit and integration tests via `pytest` and automated **CI/CD via GitHub Actions**
+- Strict `src/` layout for scalable package management
+- Training visualization using **TensorBoard** (W&B & MLflow support planned)
+- Trunk-based Git development workflow
 
-## 🚀 Project Goals
-- Develop a high-performance vehicle segmentation model
-- Showcase clean project architecture and engineering discipline
-- Integrate **MLflow** and **Weights & Biases** for tracking and observability
-- Build a testable and extensible ML pipeline with CI/CD
+## Project Layout
 
----
-
-## 📁 Project Structure (src layout)
-
-```bash
+```
 AutoVisionAI/
-├── src/                      # Source code
-│   └── autovisionai/        # Main Python package
-│       ├── models/          # Model architectures (e.g., UNet, Fast-SCNN)
-│       ├── processing/      # Transforms, datasets, datamodules
-│       ├── utils/           # Helper functions, metrics, visualizations
-│       └── __init__.py
-│
-├── configs/                 # YAML config files (paths, hyperparams)
-├── notebooks/               # Optional exploration, visualization
-├── experiments/             # Model checkpoints, logs (MLflow, W&B)
-├── tests/                   # Pytest unit & integration tests
-├── train.py                 # Training entrypoint
-├── inference.py             # Inference script
-├── pyproject.toml           # Build configuration
-├── requirements.txt         # Pip requirements
-├── .gitignore               # Git exclusions
+├── .github/                 # GitHub Actions CI config
+├── data/                   # Images and segmentation masks
+├── experiments/            # Logs and model checkpoints
+├── src/
+│   └── autovisionai/
+│       ├── configs/        # Confuse/YAML configuration
+│       ├── models/         # UNet, FastSCNN, MaskRCNN + Lightning trainers
+│       ├── processing/     # Dataset and DataModules
+│       ├── utils/          # Metrics, helpers, visualization
+│       └── train.py        # Training script
+├── tests/                  # Unit + integration tests
+│   ├── models/
+│   ├── processing/
+│   ├── utils/
+│   └── test_data/
+├── requirements.txt
+├── pyproject.toml
+├── .gitignore
+├── LICENSE
 └── README.md
 ```
 
----
-
-## 🧪 Testing
-
-Tests are located under the `tests/` directory and run automatically in CI. To run locally:
+To install as editable package:
 
 ```bash
-pytest tests/
+pip install -e .
 ```
 
----
+**Note:** Ensure your `PYTHONPATH` is set correctly if running from `src/` layout.
 
-## 🧠 Git Workflow (Trunk-based)
+## Supported Models
 
-- `main` — stable, production-ready code only
-- `feature/*` — development branches (e.g., `feature/unet`, `feature/refactor-dataloader`)
-- All contributions go through **Pull Requests** with CI validation
+### 1. U-Net (from scratch)
 
----
+- Semantic segmentation model
+- Designed for small-scale experiments
+- No pretrained weights
+- Paper: [U-Net: Convolutional Networks for Biomedical Image Segmentation](https://arxiv.org/abs/1505.04597)
 
-## 🛠️ Planned Integrations
-- ✅ PyTorch Lightning
-- ✅ U-Net model and others
-- 🔜 MLflow tracking
-- 🔜 Weights & Biases
-- 🔜 Model registry + inference API
+| Input | Prediction |
+|-------|------------|
+| ![](assets/unet_input.jpg) | ![](assets/unet_output.jpg) |
 
----
+### 2. Fast-SCNN (from scratch)
 
-## 📜 License
-This project is licensed under the [MIT License](LICENSE).  
-You are free to use, modify, and distribute it for personal or commercial purposes, as long as the original copyright notice is included.
+- Real-time semantic segmentation
+- Fully implemented from scratch
+- Lightweight and mobile-friendly
+- Paper: [Fast-SCNN: Fast Semantic Segmentation Network](https://arxiv.org/abs/1902.04502)
 
----
+| Input | Prediction |
+|-------|------------|
+| ![](assets/fastscnn_input.jpg) | ![](assets/fastscnn_output.jpg) |
 
-## 🧑‍💻 Author
-Developed by Arthur Sobol — ML/AI Engineer.
+### 3. Mask R-CNN (TorchVision pretrained)
+
+- Instance segmentation using pretrained ResNet50-FPN backbone
+- `box_predictor` and `mask_predictor` layers replaced and fine-tuned
+- Integrated with PyTorch Lightning `Trainer`
+- Paper: [Mask R-CNN](https://arxiv.org/abs/1703.06870)
+
+| Input | Prediction |
+|-------|------------|
+| ![](assets/maskrcnn_input.jpg) | ![](assets/maskrcnn_output.jpg) |
+
+
+
+## Qualitative Results
+
+### Semantic Segmentation Examples
+
+| Model      | Visualization Example |
+|------------|------------------------|
+| U-Net      | ![](https://drive.google.com/uc?id=1DWXLDXvaR_XMH50uq1qamsT1WdV9IzQZ) |
+| Fast-SCNN  | ![](https://drive.google.com/uc?id=1F13Q6LLTcYc2CIF0mhlqIbx6PC0kAyQX) |
+
+### Instance Segmentation Example
+
+| Model      | Visualization Example |
+|------------|------------------------|
+| Mask R-CNN | ![](https://drive.google.com/uc?id=1uQM6gWPbQHCccwYoxBd_bdjOHzIPjBpX) |
+| Mask R-CNN | ![](https://drive.google.com/uc?id=1om1YSYS6k3q3ZTjkJ3k-e_BZZyUs7iAo) |
+
+> Even on real-world internet images, the models demonstrate robust semantic and instance segmentation capabilities despite on a tiny dataset.
+
+## Qualitative Results
+
+### Semantic Segmentation
+
+The U-Net and Fast-SCNN models were implemented from scratch and trained on a limited synthetic dataset (Carvana). Due to resource constraints and intentionally lightweight training, they perform well on the in-domain data but may generalize poorly to out-of-distribution samples.
+
+| Model      | Visualization Example |
+|------------|------------------------|
+| U-Net      | ![](https://drive.google.com/uc?id=1DWXLDXvaR_XMH50uq1qamsT1WdV9IzQZ) |
+| Fast-SCNN  | ![](https://drive.google.com/uc?id=1F13Q6LLTcYc2CIF0mhlqIbx6PC0kAyQX) |
+
+> These results illustrate solid segmentation performance within the training domain, achieved using entirely custom implementations without pretrained weights.
+
+### Instance Segmentation
+
+The Mask R-CNN model utilizes a pretrained ResNet50-FPN backbone from TorchVision, with the `box_predictor` and `mask_predictor` heads replaced and fine-tuned on a small dataset. Despite limited data, the model demonstrates good generalization — producing correct instance masks even on real-world images found online.
+
+| Model      | Visualization Example |
+|------------|------------------------|
+| Mask R-CNN | ![](https://drive.google.com/uc?id=1uQM6gWPbQHCccwYoxBd_bdjOHzIPjBpX) |
+| Mask R-CNN | ![](https://drive.google.com/uc?id=1om1YSYS6k3q3ZTjkJ3k-e_BZZyUs7iAo) |
+
+
+## Training
+
+```python
+from autovisionai.train import train_model
+from autovisionai.models.mask_rcnn.mask_rcnn_trainer import MaskRCNNTrainer
+
+model = MaskRCNNTrainer()
+train_model(
+    exp_number=3,
+    model=model,
+    batch_size=4,
+    max_epochs=1,
+    use_resize=False,
+    use_random_crop=True,
+    use_hflip=True
+)
+```
+
+## Inference
+
+```python
+from autovisionai.utils.utils import get_input_image_for_inference
+from autovisionai.models.mask_rcnn.mask_rcnn_inference import model_inference
+from autovisionai.utils.utils import show_pic_and_pred_instance_masks
+from autovisionai.configs.config import CONFIG
+
+image = get_input_image_for_inference(url="https://cdn.pixabay.com/video/2019/09/26/27260-362770008_tiny.jpg")
+model_path = Path(CONFIG["trainer"]["logs_and_weights_root"].get(confuse.Filename())) / "exp_3/weights/model.pt"
+_, _, scores, masks = model_inference(model_path, image)
+show_pic_and_pred_instance_masks(image, masks, scores)
+```
+
+## CI/CD and DevOps
+
+- ✅ Continuous Integration via **GitHub Actions**
+- ✅ Full `pytest` test coverage (executed in CI)
+- ✅ TensorBoard logging for experiment tracking
+- 🔜 Continuous Deployment workflows
+- 🔜 Weights & Biases logging support
+- 🔜 MLflow tracking and model registry
+- 🔜 Web demo with Docker + Kubernetes packaging
+- 🔜 Migration to `uv` + `ruff` for dependency + linting
+
+## Git Workflow
+
+- `main`: stable production-ready code
+- `feature/*`: short-lived branches for isolated features
+- PRs are required for merging; trunk-based development style
+
+## License
+
+MIT License. See [LICENSE](LICENSE) file.
+
+## Author
+
+Developed and maintained by Arthur Sobol
