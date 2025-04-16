@@ -11,7 +11,7 @@ def set_seed(seed):
 
 
 def generate_test_batch():
-    dm = CarsDataModule(data_root=CONFIG['dataset']['data_root'].get(), batch_size=2, num_workers=2)
+    dm = CarsDataModule(data_root=CONFIG['dataset']['test_data_root'].get(), batch_size=2, num_workers=2)
     dm.setup()
     test_batch = next(iter(dm.train_dataloader()))
     return test_batch
@@ -25,7 +25,7 @@ def test_convert_targets_to_mask_rcnn_format():
     mask_rcnn_target = model._convert_targets_to_mask_rcnn_format(test_batch[1])
 
     assert list(mask_rcnn_target[0].keys()) == ['image_id', 'boxes', 'masks', 'labels']
-    assert (mask_rcnn_target[0]['boxes'] == torch.tensor([[ 588.,  440., 1251., 1050.]], 
+    assert (mask_rcnn_target[0]['boxes'] == torch.tensor([[ 397.,  319., 1282., 898.]], 
                                                          dtype=torch.float32)).all()
 
 
@@ -35,9 +35,9 @@ def test_step():
 
     model = MaskRCNNTrainer()
     outputs = model.step(test_batch, is_training=True)
-    assert_almost_equal(outputs['loss'].item(), 3.9373013973236084, decimal=2)
-    assert_almost_equal(outputs['loss_step'].item(), 3.9373013973236084, decimal=2)
-    assert_almost_equal(outputs['loss_mask'].item(), 3.074519634246826, decimal=2)
+    assert_almost_equal(outputs['loss'].item(), 4.5896124839782715, decimal=2)
+    assert_almost_equal(outputs['loss_step'].item(), 4.5896124839782715, decimal=2)
+    assert_almost_equal(outputs['loss_mask'].item(), 3.671604871749878, decimal=2)
 
 
 def test_training_step():
@@ -47,9 +47,9 @@ def test_training_step():
     model = MaskRCNNTrainer()
     outputs = model.training_step(test_batch, 0)
 
-    assert_almost_equal(outputs['loss'].item(), 3.9373013973236084, decimal=2)
-    assert_almost_equal(outputs['loss_step'].item(), 3.9373013973236084, decimal=2)
-    assert_almost_equal(outputs['loss_mask'].item(), 3.074519634246826, decimal=2)
+    assert_almost_equal(outputs['loss'].item(), 4.5896124839782715, decimal=2)
+    assert_almost_equal(outputs['loss_step'].item(), 4.5896124839782715, decimal=2)
+    assert_almost_equal(outputs['loss_mask'].item(), 3.671604871749878, decimal=2)
 
 
 def test_validation_step():
@@ -60,7 +60,7 @@ def test_validation_step():
     model = MaskRCNNTrainer()
     outputs = model.validation_step(test_batch, 0)
 
-    assert_almost_equal(outputs['val_outputs']['loss'].item(), 3.9373013973236084, decimal=2)
-    assert_almost_equal(outputs['val_outputs']['loss_step'].item(), 3.9373013973236084, decimal=2)
-    assert_almost_equal(outputs['val_outputs']['loss_mask'].item(), 3.074519634246826, decimal=2)
-    assert_almost_equal(outputs['val_iou'].item(), 0.25738221406936646, decimal=2)
+    assert_almost_equal(outputs['val_outputs']['loss'].item(), 4.5896124839782715, decimal=2)
+    assert_almost_equal(outputs['val_outputs']['loss_step'].item(), 4.5896124839782715, decimal=2)
+    assert_almost_equal(outputs['val_outputs']['loss_mask'].item(), 3.671604871749878, decimal=2)
+    assert_almost_equal(outputs['val_iou'].item(), 0.18407917022705078, decimal=2)
