@@ -4,14 +4,15 @@ AutoVisionAI is a modular computer vision pipeline focused on semantic segmentat
 
 ## Key Features
 
-- Modular architecture built using **PyTorch Lightning** and **TorchVision**
-- **U-Net** implementation from scratch
-- **Fast-SCNN** implementation from scratch
-- **Mask R-CNN** with pretrained TorchVision backbone and custom prediction heads
-- Custom `LightningModule` training wrappers with configurable transforms
-- Unit and integration tests via `pytest` and automated **CI/CD via GitHub Actions**
+- Modular architecture built using PyTorch Lightning and TorchVision
+- U-Net implementation from scratch
+- Fast-SCNN implementation from scratch
+- Mask R-CNN with pretrained TorchVision backbone and custom prediction heads
+- Custom LightningModule training wrappers with configurable transforms
+- Unit and integration tests via pytest and automated CI/CD via GitHub Actions
 - Strict `src/` layout for scalable package management
-- Training visualization using **TensorBoard** (W&B & MLflow support planned)
+- Modern Python tooling: `uv` for dependency management, `ruff` for linting & formatting
+- Training visualization using TensorBoard (W&B & MLflow support planned)
 - Trunk-based Git development workflow
 
 ## Project Layout
@@ -33,26 +34,37 @@ AutoVisionAI/
 │   ├── processing/
 │   ├── utils/
 │   └── test_data/
-├── requirements.txt
-├── pyproject.toml
 ├── .gitignore
+├── .pre-commit-config.yaml
+├── .python-version
+├── pyproject.toml
 ├── LICENSE
-└── README.md
+├── README.md
+└── uv.lock
 ```
 
-## Install the package in editable mode with optional dev tools:
-
-### With pip (legacy)
-```bash
-pip install -e ".[all]"
-```
+## Installation:
 
 ### With uv (recommended)
 ```bash
 uv pip install -e ".[all]"
+uv run pre-commit install
 ```
 
-**Note:** Ensure your `PYTHONPATH` is set correctly if running from `src/` layout.
+### With pip (legacy)
+```bash
+pip install -e ".[all]"
+pre-commit install
+```
+> `.[all]` includes pytest, ruff, pre-commit, and other development tools.<br>
+> Omit `[all]` if you only want to install the core package for production use without development dependencies.
+
+---
+> If you don't have `uv` installed, you can get it with:
+
+```bash
+curl -Ls https://astral.sh/uv/install.sh | bash
+```
 
 ## Supported Models
 
@@ -171,11 +183,32 @@ show_pic_and_pred_instance_masks(image, masks, scores)
 - ✅ Continuous Integration via **GitHub Actions**
 - ✅ Full `pytest` test coverage (executed in CI)
 - ✅ TensorBoard logging for experiment tracking
+- ✅ Migration to `uv` + `ruff` for dependency + linting
 - 🔜 Continuous Deployment workflows
 - 🔜 Weights & Biases logging support
 - 🔜 MLflow tracking and model registry
 - 🔜 Web demo with Docker + Kubernetes packaging
-- 🔜 Migration to `uv` + `ruff` for dependency + linting
+
+## 🛠 Modern Python Tooling
+
+AutoVisionAI is fully equipped with modern Python development tooling:
+
+- **uv** — ultra-fast dependency resolver and `pip`/`venv` replacement
+- **ruff** — unified linter and formatter (up to 100× faster than flake8/black)
+- **pre-commit** — enforces code quality before every commit
+
+### Configured Hooks:
+- `ruff`: linter (`E`, `F`, `B`, `I`, etc.)
+- `ruff-format`: formatter (black-compatible)
+- `check-yaml`: ensures valid `.yaml` files
+- `end-of-file-fixer`: enforces trailing newlines
+- `trailing-whitespace`: removes trailing spaces
+
+All configurations are centralized in `pyproject.toml`.  
+The project uses `[project.optional-dependencies]` for maximum compatibility with `pip`, `tox`, and `Poetry`.  
+Experimental `[dependency-groups]` are pre-configured and will be activated once supported by `pip`.
+
+> For installation instructions, including `uv` and `pre-commit` setup, see [Installation](#installation).
 
 ## Git Workflow
 
