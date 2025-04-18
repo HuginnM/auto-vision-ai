@@ -114,6 +114,11 @@ ignore = [
     "N812", # Ignored because import torch.nn.functional as F is PyTorch convention
 ]
 
-# Ignore docstrings and security rules in tests
+# Disable docstring and security checks in test files
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["D", "S"]
+"tests/*" = [
+    "D",  # docstrings 
+    "S",  # security
+    "F403",  # import *
+    "F405",  # using * import
+]

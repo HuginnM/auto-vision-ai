@@ -1,9 +1,10 @@
 import os
-import torch
 from typing import Any
+
 import pytorch_lightning as pl
+import torch
+from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger
-from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 
 from autovisionai.configs.config import CONFIG
 from autovisionai.processing.datamodule import CarsDataModule
@@ -53,10 +54,10 @@ def train_model(exp_number: int, model: Any, batch_size: int = 4,
         monitor='val/loss_epoch',
         auto_insert_metric_name=False,
         filename='sample-cars-segm-model-epoch{epoch:02d}-val_loss_epoch{val/loss_epoch:.3f}')
-    
+
     early_stopping_callback = EarlyStopping(
         monitor='val/loss_epoch',
-        patience=epoch_patience,       # stop after N epochs without improvement 
+        patience=epoch_patience,       # stop after N epochs without improvement
         mode='min',
         verbose=True
     )
@@ -82,4 +83,6 @@ if __name__ == "__main__":
     from autovisionai.models.unet.unet_trainer import UnetTrainer
 
     model = UnetTrainer()
-    train_model(exp_number=1, model=model, batch_size=4, max_epochs=5, use_resize=False, use_random_crop=True, use_hflip=True)
+    train_model(
+        exp_number=1, model=model, batch_size=4, max_epochs=5,
+        use_resize=False, use_random_crop=True, use_hflip=True)

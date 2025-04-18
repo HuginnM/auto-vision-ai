@@ -1,7 +1,7 @@
-import os
-import yaml
-import confuse
 from pathlib import Path
+
+import confuse
+import yaml
 
 
 def find_project_root(anchor_filename="pyproject.toml") -> Path:

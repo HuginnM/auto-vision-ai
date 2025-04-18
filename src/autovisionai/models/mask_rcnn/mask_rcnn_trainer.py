@@ -1,13 +1,13 @@
-import torch
-import pytorch_lightning as pl
 from typing import Dict, Tuple, Union
+
+import pytorch_lightning as pl
+import torch
 from torch.optim import SGD, Optimizer
 from torch.optim.lr_scheduler import StepLR
 
 from autovisionai.configs.config import CONFIG
-from autovisionai.utils.utils import bboxes_iou
 from autovisionai.models.mask_rcnn.mask_rcnn_model import create_model
-from autovisionai.utils.utils import get_batch_images_and_pred_masks_in_a_grid
+from autovisionai.utils.utils import bboxes_iou, get_batch_images_and_pred_masks_in_a_grid
 
 accelerator = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -43,7 +43,8 @@ class MaskRCNNTrainer(pl.LightningModule):
         )
         return bbox
 
-    def _convert_targets_to_mask_rcnn_format(self, targets: Tuple[Dict[str, torch.Tensor]]) -> Tuple[Dict[str, torch.Tensor]]:
+    def _convert_targets_to_mask_rcnn_format(
+            self, targets: Tuple[Dict[str, torch.Tensor]]) -> Tuple[Dict[str, torch.Tensor]]:
         """
         Converts targets from datamodule batch to Mask-RCNN format.
         :param targets: targets from datamodule batch.
@@ -65,7 +66,8 @@ class MaskRCNNTrainer(pl.LightningModule):
 
         return tuple(mask_rcnn_targets)
 
-    def step(self, batch: Tuple[Tuple[torch.Tensor, ...], Tuple[Dict[str, torch.Tensor]]], is_training: bool) -> Dict[str, torch.Tensor]:
+    def step(self, batch: Tuple[Tuple[torch.Tensor, ...], Tuple[Dict[str, torch.Tensor]]],
+             is_training: bool) -> Dict[str, torch.Tensor]:
         """
         A shared step for the training_step and validation_step functions.
         Calculates the sum of losses for one batch step.
@@ -74,15 +76,15 @@ class MaskRCNNTrainer(pl.LightningModule):
         :return: a dict of the losses sum and loss mask of the prediction heads per one batch step.
         """
         images, targets = batch
-        
-        images = torch.stack(images)       
+
+        images = torch.stack(images)
         targets = self._convert_targets_to_mask_rcnn_format(targets)
-        
+
         self.model.train()
-        
+
         with torch.set_grad_enabled(is_training):
             outputs = self.model(images, targets)
-                
+
         loss_step = sum(outputs.values())
         loss_mask = outputs["loss_mask"]
 
@@ -101,13 +103,13 @@ class MaskRCNNTrainer(pl.LightningModule):
 
         self.log('train/loss_step', outputs['loss_step'].item())
         self.log('train/loss_mask_step', outputs['loss_mask'].item())
-        
+
         self.training_losses.append({
             'loss_step': outputs['loss_step'].detach(),
             'loss_mask': outputs['loss_mask'].detach()
         })
         return outputs
-    
+
     def on_train_epoch_end(self) -> None:
         """
         Calculates and logs mean total loss and loss_mask
@@ -118,7 +120,7 @@ class MaskRCNNTrainer(pl.LightningModule):
         if self.training_losses:
             loss_epoch = torch.stack([d['loss_step'] for d in self.training_losses]).mean()
             loss_mask_epoch = torch.stack([d['loss_mask'] for d in self.training_losses]).mean()
-            
+
             self.log('train/loss_epoch', loss_epoch.item())
             self.log('train/loss_mask_epoch', loss_mask_epoch.item())
             self.training_losses.clear()
@@ -141,9 +143,9 @@ class MaskRCNNTrainer(pl.LightningModule):
         preds = self.model(images)
 
         targets = self._convert_targets_to_mask_rcnn_format(targets)
-        bboxes_iou_score = torch.stack([bboxes_iou(t, o) for t, o in zip(targets, preds)]).mean()
+        bboxes_iou_score = torch.stack([bboxes_iou(t, o) for t, o in zip(targets, preds, strict=False)]).mean()
         imgs_grid = get_batch_images_and_pred_masks_in_a_grid(preds, images, mask_rcnn=True)
-        
+
         output = {
             'val_outputs': outputs,
             'val_images_and_pred_masks': imgs_grid,
@@ -169,7 +171,7 @@ class MaskRCNNTrainer(pl.LightningModule):
             self.logger.experiment.add_image('Predicted masks on images', d['val_images_and_pred_masks'], idx)
 
         self.val_outputs.clear()
-            
+
     def configure_optimizers(self) -> Dict[str, Union[Optimizer, object]]:
         """
         Configure the SGD optimizer and the StepLR learning rate scheduler.

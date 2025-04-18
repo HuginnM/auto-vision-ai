@@ -1,6 +1,7 @@
-import torch
-import numpy as np
 from typing import Tuple
+
+import numpy as np
+import torch
 
 from autovisionai.configs.config import CONFIG
 from autovisionai.models.mask_rcnn.mask_rcnn_model import create_model

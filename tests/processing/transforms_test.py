@@ -1,6 +1,8 @@
 import numpy as np
+import torch
+from PIL import Image
 
-from autovisionai.processing.transforms import *
+from autovisionai.processing.transforms import HorizontalFlip, RandomCrop, Resize, ToTensor
 
 NUMPY_IMAGE = np.array([[[0.9378, 0.9137, 0.9059, 0.9137, 0.9333],
                          [0.9412, 0.9120, 0.8941, 0.4020, 0.4392],
@@ -36,7 +38,7 @@ def set_seed(seed):
 def test_to_tensor():
     image = Image.new(mode='RGB', size=(10, 10))
     tensor_image, _ = ToTensor()(image, ANNOTATION.copy())
-    assert type(tensor_image) == torch.Tensor
+    assert isinstance(tensor_image, torch.Tensor)
 
 
 def test_resize():

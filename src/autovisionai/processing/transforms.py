@@ -1,10 +1,12 @@
-import torch
 import random
+from typing import Dict, Optional, Tuple, Union
+
+import torch
+import torch.nn.functional as F
+import torchvision.transforms.functional as TF
 from PIL import Image
 from torchvision import transforms as T
-import torchvision.transforms.functional as TF
-from typing import Dict, Tuple, Optional, Union
-import torch.nn.functional as F
+
 from autovisionai.configs.config import CONFIG
 
 
@@ -21,7 +23,7 @@ class ToTensor:
         """
         image = T.ToTensor()(image)
         return image, target
-    
+
 
 class Resize:
     """
@@ -46,7 +48,7 @@ class Resize:
         target['mask'] = mask
 
         return image, target
-    
+
 
 class RandomCrop:
     """
@@ -75,7 +77,7 @@ class RandomCrop:
             image, target = Resize(self.crop_to)(image, target)
 
         return image, target
-    
+
 
 class HorizontalFlip:
     """
@@ -96,7 +98,7 @@ class HorizontalFlip:
         if random.random() < self.prob:
             image = TF.hflip(image)
             target['mask'] = TF.hflip(target['mask'])
-           
+
         return image, target
 
 

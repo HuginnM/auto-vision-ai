@@ -16,7 +16,7 @@ class ConvBNReLU(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, padding=0):
         super(ConvBNReLU, self).__init__()
         self.conv = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, 
+            nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size,
                       padding=padding, stride=stride, bias=False),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True)
@@ -44,7 +44,7 @@ class DSConv(nn.Module):
     def __init__(self, dw_channels, out_channels, stride=1):
         super(DSConv, self).__init__()
         self.conv = nn.Sequential(
-            nn.Conv2d(dw_channels, dw_channels, kernel_size=[3, 3], padding=1, 
+            nn.Conv2d(dw_channels, dw_channels, kernel_size=[3, 3], padding=1,
                       stride=stride, bias=False, groups=dw_channels),
             nn.BatchNorm2d(dw_channels),
             nn.ReLU(inplace=True),
@@ -76,7 +76,7 @@ class DWConv(nn.Module):
     def __init__(self, dw_channels, out_channels, stride=1):
         super(DWConv, self).__init__()
         self.conv = nn.Sequential(
-            nn.Conv2d(dw_channels, out_channels, kernel_size=[3, 3], padding=1, 
+            nn.Conv2d(dw_channels, out_channels, kernel_size=[3, 3], padding=1,
                       stride=stride, bias=False, groups=dw_channels),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True)
@@ -275,7 +275,7 @@ class GlobalFeatureExtractor(nn.Module):
         :return: nn.Sequential of layers.
         """
         layers = [block(inplanes, planes, t, stride)]
-        for i in range(1, blocks):
+        for _i in range(1, blocks):
             layers.append(block(planes, planes, t, 1))
         return nn.Sequential(*layers)
 

@@ -1,13 +1,14 @@
+from typing import Dict, Tuple, Union
+
+import pytorch_lightning as pl
 import torch
 import torch.nn as nn
-import pytorch_lightning as pl
 from torch.optim import Adam, Optimizer
 from torch.optim.lr_scheduler import StepLR
-from typing import Dict, Tuple, Union, List
 
-from autovisionai.utils.utils import masks_iou, get_batch_images_and_pred_masks_in_a_grid
 from autovisionai.configs.config import CONFIG
 from autovisionai.models.unet.unet_model import Unet
+from autovisionai.utils.utils import get_batch_images_and_pred_masks_in_a_grid, masks_iou
 
 
 class UnetTrainer(pl.LightningModule):
@@ -60,7 +61,7 @@ class UnetTrainer(pl.LightningModule):
         self.val_outputs.append(output)
 
         return output
-    
+
     def on_validation_epoch_end(self):
         if not self.val_outputs:
             return

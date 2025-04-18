@@ -1,12 +1,12 @@
-import torch
+from typing import Dict, List, Optional, Tuple
+
 import pytorch_lightning as pl
-from typing import Dict, Tuple, List, Optional
+import torch
 from torch.utils.data import DataLoader, Subset
 
+from autovisionai.configs.config import CONFIG
 from autovisionai.processing.dataset import CarsDataset
 from autovisionai.processing.transforms import get_transform
-
-from autovisionai.configs.config import CONFIG
 
 
 def collate_fn(batch: List[Tuple[torch.Tensor, Dict[str, torch.Tensor]]]) -> \
@@ -17,7 +17,7 @@ def collate_fn(batch: List[Tuple[torch.Tensor, Dict[str, torch.Tensor]]]) -> \
     :param batch: a list containing tuples of images and annotations.
     :return: a collated batch. Tuple containing a tuple of images and a tuple of annotations.
     """
-    return tuple(zip(*batch))
+    return tuple(zip(*batch, strict=False))
 
 
 class CarsDataModule(pl.LightningDataModule):
@@ -35,14 +35,14 @@ class CarsDataModule(pl.LightningDataModule):
                  num_workers: int, resize: bool = False,
                  random_crop: bool = False, hflip: bool = False) -> None:
         super().__init__()
-        
+
         self.data_root = data_root
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.resize = resize
         self.random_crop = random_crop
         self.hflip = hflip
-        
+
         self.full_data = None
         self.data_train = None
         self.data_val = None
@@ -70,8 +70,8 @@ class CarsDataModule(pl.LightningDataModule):
         :return: a dataloader for training.
         """
         return DataLoader(
-            dataset=self.data_train, 
-            batch_size=self.batch_size, 
+            dataset=self.data_train,
+            batch_size=self.batch_size,
             shuffle=True,
             num_workers=self.num_workers,
             collate_fn=collate_fn,
@@ -82,10 +82,10 @@ class CarsDataModule(pl.LightningDataModule):
         Represents a Python iterable over a validation dataset.
 
         :return: a dataloader for validation.
-        """       
+        """
         return DataLoader(
-            dataset=self.data_val, 
-            batch_size=self.batch_size, 
+            dataset=self.data_val,
+            batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.num_workers,
             collate_fn=collate_fn,

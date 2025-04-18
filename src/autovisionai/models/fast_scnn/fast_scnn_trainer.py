@@ -1,14 +1,14 @@
+from typing import Dict, Tuple, Union
+
+import pytorch_lightning as pl
 import torch
 import torch.nn as nn
-import pytorch_lightning as pl
-from torch.optim import Optimizer, Adam
-from typing import Dict, Tuple, Union, List
+from torch.optim import Adam, Optimizer
 from torch.optim.lr_scheduler import StepLR
 
-from autovisionai.utils.utils import masks_iou
 from autovisionai.configs.config import CONFIG
 from autovisionai.models.fast_scnn.fast_scnn_model import FastSCNN
-from autovisionai.utils.utils import get_batch_images_and_pred_masks_in_a_grid
+from autovisionai.utils.utils import get_batch_images_and_pred_masks_in_a_grid, masks_iou
 
 
 class FastSCNNTrainer(pl.LightningModule):
@@ -44,8 +44,8 @@ class FastSCNNTrainer(pl.LightningModule):
         loss = self.criterion(y_hat, masks_tensor.to(torch.float))
 
         self.training_losses.append(loss.detach())
-        return loss   
-    
+        return loss
+
     def on_train_epoch_end(self) -> None:
         if self.training_losses:
             loss_epoch = torch.stack(self.training_losses).mean()
@@ -60,7 +60,7 @@ class FastSCNNTrainer(pl.LightningModule):
 
         :param batch: a batch of images and targets with annotations.
         :param batch_idx: an index of the current batch.
-        :return: dict with epoch loss value and masks IoU score and 
+        :return: dict with epoch loss value and masks IoU score and
         predicted masks for one batch step.
         """
         images, targets = batch
@@ -73,11 +73,11 @@ class FastSCNNTrainer(pl.LightningModule):
         masks_iou_score = masks_iou(masks_tensor, y_hat, self.n_classes + 1)
         loss = self.criterion(y_hat, masks_tensor.to(torch.float))
         imgs_grid = get_batch_images_and_pred_masks_in_a_grid(y_hat, images)
-        
+
         output = {'val_loss': loss, 'val_iou': masks_iou_score, 'val_images_and_pred_masks': imgs_grid}
         self.val_outputs.append(output)
         return output
-    
+
     def on_validation_epoch_end(self):
         if not self.val_outputs:
             return

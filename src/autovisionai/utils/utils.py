@@ -1,15 +1,17 @@
 import os
-import cv2
-import torch
-import requests
-import torchvision
-import numpy as np
-from PIL import Image
-import matplotlib.pyplot as plt
+from io import BytesIO
 from typing import Dict, List, Tuple, Union
+
+import cv2
+import matplotlib.pyplot as plt
+import numpy as np
+import requests
+import torch
+import torchvision
+from PIL import Image
 from torchmetrics.functional import jaccard_index
 from torchvision.transforms import functional as F
-from io import BytesIO
+
 from autovisionai.configs.config import CONFIG
 
 
@@ -19,10 +21,10 @@ def show_pic_and_original_mask(image_id: int) -> None:
 
     :param image_id: an image id.
     """
-    imgs_list = list(sorted(
-        os.listdir(os.path.join(CONFIG['dataset']['data_root'].get(), CONFIG['dataset']['images_folder'].get()))))
-    masks_list = list(
-        sorted(os.listdir(os.path.join(CONFIG['dataset']['data_root'].get(), CONFIG['dataset']['masks_folder'].get()))))
+    imgs_list = sorted(
+        os.listdir(os.path.join(CONFIG['dataset']['data_root'].get(), CONFIG['dataset']['images_folder'].get())))
+    masks_list = sorted(os.listdir(
+        os.path.join(CONFIG['dataset']['data_root'].get(), CONFIG['dataset']['masks_folder'].get())))
 
     img_path = os.path.join(CONFIG['dataset']['data_root'].get(), CONFIG['dataset']['images_folder'].get(),
                             imgs_list[image_id])
@@ -55,7 +57,7 @@ def show_pic_and_original_mask(image_id: int) -> None:
         plt.title('Original Image | Original Image + Mask | Mask', fontsize=50)
 
 
-def show_pic_and_pred_semantic_mask(img: torch.Tensor, pred_mask: np.ndarray, 
+def show_pic_and_pred_semantic_mask(img: torch.Tensor, pred_mask: np.ndarray,
                                     threshold: float = 0.5, use_plt: bool = False) -> None:
     """
     Helper function to plot original image and predicted semantic mask.
@@ -63,7 +65,7 @@ def show_pic_and_pred_semantic_mask(img: torch.Tensor, pred_mask: np.ndarray,
     :param img: an image for which the trained model predicts segmentation masks.
     :param pred_mask: predicted semantic mask.
     :param threshold: a min score for predicted mask pixel after using sigmoid func. Values from 0 to 1.
-    :param use_plt: show image with plt for better experience with JN when True. Instead shows it via GUI with cv2. 
+    :param use_plt: show image with plt for better experience with JN when True. Instead shows it via GUI with cv2.
     """
     img = np.asarray(img * 255, dtype="uint8").squeeze()
     img = img.transpose(1, 2, 0)
@@ -76,7 +78,7 @@ def show_pic_and_pred_semantic_mask(img: torch.Tensor, pred_mask: np.ndarray,
     r[mask == 1], g[mask == 1], b[mask == 1] = color
     rgb_mask = np.stack([r, g, b], axis=2)
     img = cv2.addWeighted(img, 0.7, rgb_mask, 1, 0)
-    
+
     if use_plt:
         # Jupyter-friendly visualization
         plt.figure(figsize=(10, 5))
@@ -96,7 +98,7 @@ def show_pic_and_pred_semantic_mask(img: torch.Tensor, pred_mask: np.ndarray,
 
 
 def show_pic_and_pred_instance_masks(img: torch.Tensor, pred_masks: np.ndarray,
-                                     scores: np.ndarray, min_score: float = 0.8, 
+                                     scores: np.ndarray, min_score: float = 0.8,
                                      threshold: float = 0.5, use_plt: bool = True) -> None:
     """
     Helper function to plot original image and predicted instance masks.
@@ -106,12 +108,12 @@ def show_pic_and_pred_instance_masks(img: torch.Tensor, pred_masks: np.ndarray,
     :param scores: predicted scores.
     :param min_score: a min score to sort segmentation masks.
     :param threshold: a min score for predicted mask pixel after using sigmoid func. Values from 0 to 1.
-    :param use_plt: show image with plt for better experience with JN when True. Instead shows it via GUI with cv2. 
+    :param use_plt: show image with plt for better experience with JN when True. Instead shows it via GUI with cv2.
     """
     img = np.asarray(img * 255, dtype='uint8').squeeze()
     img = img.transpose(1, 2, 0)
 
-    for mask, score in zip(pred_masks, scores):
+    for mask, score in zip(pred_masks, scores, strict=False):
         if score > min_score:
             mask = (mask > threshold).squeeze()
             r = np.zeros_like(mask).astype(np.uint8)
@@ -121,7 +123,7 @@ def show_pic_and_pred_instance_masks(img: torch.Tensor, pred_masks: np.ndarray,
             r[mask == 1], g[mask == 1], b[mask == 1] = color
             rgb_mask = np.stack([r, g, b], axis=2)
             img = cv2.addWeighted(img, 1, rgb_mask, 0.8, 0)
-    
+
     if use_plt:
         # Jupyter-friendly visualization
         plt.figure(figsize=(10, 5))
@@ -151,7 +153,7 @@ def get_input_image_for_inference(local_path: str = None, url: str = None) -> to
     if local_path is not None:
         img = Image.open(local_path).convert('RGB')
     elif url is not None:
-        # adding this header to avoid some sites blocking. Imitating user behaviour. 
+        # adding this header to avoid some sites blocking. Imitating user behaviour.
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
         }
@@ -232,8 +234,8 @@ def masks_iou(target, preds, num_classes):
     #     else:
     #         print('IoT: Multiclass task.')
     #         return 'multiclass'
-        
-    iou_score = jaccard_index(preds=pred_masks, target=target.squeeze(1).cpu(), 
+
+    iou_score = jaccard_index(preds=pred_masks, target=target.squeeze(1).cpu(),
                               num_classes=num_classes, task='multiclass')  #task=define_task(num_classes))
 
     return iou_score
