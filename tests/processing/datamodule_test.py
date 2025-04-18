@@ -1,7 +1,6 @@
 from autovisionai.configs.config import CONFIG
 from autovisionai.processing.datamodule import CarsDataModule
 
-
 datamodule = CarsDataModule(data_root=CONFIG['dataset']['test_data_root'].get(),
                             batch_size=2,
                             num_workers=2)

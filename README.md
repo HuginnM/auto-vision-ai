@@ -40,10 +40,16 @@ AutoVisionAI/
 └── README.md
 ```
 
-To install as editable package:
+Install the package in editable mode with optional dev tools:
 
+# With pip (legacy)
 ```bash
-pip install -e .
+pip install -e ".[all]"
+```
+
+# With uv (recommended)
+```bash
+uv pip install -e ".[all]"
 ```
 
 **Note:** Ensure your `PYTHONPATH` is set correctly if running from `src/` layout.
@@ -153,8 +159,9 @@ from autovisionai.models.mask_rcnn.mask_rcnn_inference import model_inference
 from autovisionai.utils.utils import show_pic_and_pred_instance_masks
 from autovisionai.configs.config import CONFIG
 
-image = get_input_image_for_inference(url="https://cdn.pixabay.com/video/2019/09/26/27260-362770008_tiny.jpg")
-model_path = Path(CONFIG["trainer"]["logs_and_weights_root"].get(confuse.Filename())) / "exp_3/weights/model.pt"
+exp_n = 1
+image = get_input_image_for_inference(url="https://your_image.com/img.jpg")
+model_path = Path(CONFIG["trainer"]["logs_and_weights_root"].get(confuse.Filename())) / f"exp_{exp_n}/weights/model.pt"
 _, _, scores, masks = model_inference(model_path, image)
 show_pic_and_pred_instance_masks(image, masks, scores)
 ```

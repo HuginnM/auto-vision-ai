@@ -2,8 +2,8 @@ import torch
 from numpy.testing import assert_almost_equal
 
 from autovisionai.configs.config import CONFIG
-from autovisionai.processing.datamodule import CarsDataModule
 from autovisionai.models.mask_rcnn.mask_rcnn_trainer import MaskRCNNTrainer
+from autovisionai.processing.datamodule import CarsDataModule
 
 
 def set_seed(seed):
@@ -25,7 +25,7 @@ def test_convert_targets_to_mask_rcnn_format():
     mask_rcnn_target = model._convert_targets_to_mask_rcnn_format(test_batch[1])
 
     assert list(mask_rcnn_target[0].keys()) == ['image_id', 'boxes', 'masks', 'labels']
-    assert (mask_rcnn_target[0]['boxes'] == torch.tensor([[ 397.,  319., 1282., 898.]], 
+    assert (mask_rcnn_target[0]['boxes'] == torch.tensor([[ 397.,  319., 1282., 898.]],
                                                          dtype=torch.float32)).all()
 
 
