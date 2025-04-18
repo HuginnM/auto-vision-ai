@@ -9,8 +9,9 @@ from autovisionai.processing.dataset import CarsDataset
 from autovisionai.processing.transforms import get_transform
 
 
-def collate_fn(batch: List[Tuple[torch.Tensor, Dict[str, torch.Tensor]]]) -> \
-        Tuple[Tuple[torch.Tensor, ...], Tuple[Dict[str, torch.Tensor], ...]]:
+def collate_fn(
+    batch: List[Tuple[torch.Tensor, Dict[str, torch.Tensor]]],
+) -> Tuple[Tuple[torch.Tensor, ...], Tuple[Dict[str, torch.Tensor], ...]]:
     """
     Defines how to collate batches.
 
@@ -31,9 +32,16 @@ class CarsDataModule(pl.LightningDataModule):
     :param random_crop: specify, whether to randomly crop image and mask or not.
     :param hflip: specify, whether to apply horizontal flip to image and mask or not.
     """
-    def __init__(self, data_root: str, batch_size: int,
-                 num_workers: int, resize: bool = False,
-                 random_crop: bool = False, hflip: bool = False) -> None:
+
+    def __init__(
+        self,
+        data_root: str,
+        batch_size: int,
+        num_workers: int,
+        resize: bool = False,
+        random_crop: bool = False,
+        hflip: bool = False,
+    ) -> None:
         super().__init__()
 
         self.data_root = data_root
@@ -53,12 +61,12 @@ class CarsDataModule(pl.LightningDataModule):
 
         :param stage: an argument to separate setup logic for trainer.
         """
-        if stage == 'fit' or stage is None:
+        if stage == "fit" or stage is None:
             transforms = get_transform(self.resize, self.random_crop, self.hflip)
             self.full_data = CarsDataset(self.data_root, transforms)
 
             n_sample = len(self.full_data)
-            split_idx = round(n_sample * CONFIG['datamodule']['training_set_size'].get())
+            split_idx = round(n_sample * CONFIG["datamodule"]["training_set_size"].get())
 
             self.data_train = Subset(self.full_data, range(n_sample)[:split_idx])
             self.data_val = Subset(self.full_data, range(n_sample)[split_idx:])
@@ -75,7 +83,8 @@ class CarsDataModule(pl.LightningDataModule):
             shuffle=True,
             num_workers=self.num_workers,
             collate_fn=collate_fn,
-            persistent_workers=True)
+            persistent_workers=True,
+        )
 
     def val_dataloader(self) -> DataLoader:
         """
@@ -89,4 +98,5 @@ class CarsDataModule(pl.LightningDataModule):
             shuffle=False,
             num_workers=self.num_workers,
             collate_fn=collate_fn,
-            persistent_workers=True)
+            persistent_workers=True,
+        )

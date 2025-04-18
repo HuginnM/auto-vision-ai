@@ -28,8 +28,9 @@ class UnetTrainer(pl.LightningModule):
         self.training_losses = []
         self.val_outputs = []
 
-    def training_step(self, batch: Tuple[Tuple[torch.Tensor, ...], Tuple[Dict[str, torch.Tensor], ...]],
-                      batch_idx: int) -> torch.Tensor:
+    def training_step(
+        self, batch: Tuple[Tuple[torch.Tensor, ...], Tuple[Dict[str, torch.Tensor], ...]], batch_idx: int
+    ) -> torch.Tensor:
         images, targets = batch
         images_tensor = torch.stack(images)
         masks_tensor = torch.stack([pair["mask"] for pair in targets])
@@ -43,11 +44,12 @@ class UnetTrainer(pl.LightningModule):
     def on_train_epoch_end(self) -> None:
         if self.training_losses:
             loss_epoch = torch.stack(self.training_losses).mean()
-            self.log('train/loss_epoch', loss_epoch.item())
+            self.log("train/loss_epoch", loss_epoch.item())
             self.training_losses.clear()
 
-    def validation_step(self, batch: Tuple[Tuple[torch.Tensor, ...], Tuple[Dict[str, torch.Tensor], ...]],
-                        batch_idx: int) -> Dict[str, torch.Tensor]:
+    def validation_step(
+        self, batch: Tuple[Tuple[torch.Tensor, ...], Tuple[Dict[str, torch.Tensor], ...]], batch_idx: int
+    ) -> Dict[str, torch.Tensor]:
         images, targets = batch
         images_tensor = torch.stack(images)
         masks_tensor = torch.stack([pair["mask"] for pair in targets])
@@ -57,7 +59,7 @@ class UnetTrainer(pl.LightningModule):
         loss = self.criterion(y_hat, masks_tensor.to(torch.float))
         imgs_grid = get_batch_images_and_pred_masks_in_a_grid(y_hat, images)
 
-        output = {'val_loss': loss, 'val_iou': masks_iou_score, 'val_images_and_pred_masks': imgs_grid}
+        output = {"val_loss": loss, "val_iou": masks_iou_score, "val_images_and_pred_masks": imgs_grid}
         self.val_outputs.append(output)
 
         return output
@@ -66,24 +68,28 @@ class UnetTrainer(pl.LightningModule):
         if not self.val_outputs:
             return
 
-        loss_epoch = torch.stack([o['val_loss'] for o in self.val_outputs]).mean()
-        avg_iou = torch.stack([o['val_iou'] for o in self.val_outputs]).mean()
+        loss_epoch = torch.stack([o["val_loss"] for o in self.val_outputs]).mean()
+        avg_iou = torch.stack([o["val_iou"] for o in self.val_outputs]).mean()
 
-        self.log('val/loss_epoch', loss_epoch, prog_bar=True)
-        self.log('val/val_iou', avg_iou, prog_bar=True)
+        self.log("val/loss_epoch", loss_epoch, prog_bar=True)
+        self.log("val/val_iou", avg_iou, prog_bar=True)
 
         for idx, dict_i in enumerate(self.val_outputs):
-            self.logger.experiment.add_image('Predicted masks on images', dict_i['val_images_and_pred_masks'], idx)
+            self.logger.experiment.add_image("Predicted masks on images", dict_i["val_images_and_pred_masks"], idx)
 
         self.val_outputs.clear()
 
     def configure_optimizers(self) -> Dict[str, Union[Optimizer, object]]:
-        optimizer = Adam(self.model.parameters(),
-                        lr=CONFIG['unet']['optimizer']['initial_lr'].get(),
-                        weight_decay=CONFIG['unet']['optimizer']['weight_decay'].get())
+        optimizer = Adam(
+            self.model.parameters(),
+            lr=CONFIG["unet"]["optimizer"]["initial_lr"].get(),
+            weight_decay=CONFIG["unet"]["optimizer"]["weight_decay"].get(),
+        )
 
-        lr_scheduler = StepLR(optimizer,
-                            step_size=CONFIG['unet']['lr_scheduler']['step_size'].get(),
-                            gamma=CONFIG['unet']['lr_scheduler']['gamma'].get())
+        lr_scheduler = StepLR(
+            optimizer,
+            step_size=CONFIG["unet"]["lr_scheduler"]["step_size"].get(),
+            gamma=CONFIG["unet"]["lr_scheduler"]["gamma"].get(),
+        )
 
-        return {'optimizer': optimizer, 'lr_scheduler': lr_scheduler}
+        return {"optimizer": optimizer, "lr_scheduler": lr_scheduler}

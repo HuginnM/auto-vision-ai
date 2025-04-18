@@ -1,10 +1,10 @@
 default_language_version:
-    python: python3
+    python: python3.12
 
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.3.0
+    rev: v5.0.0
     hooks:
       - id: check-yaml
       - id: end-of-file-fixer
@@ -16,5 +16,6 @@ repos:
     hooks:
       # Run the linter.
       - id: ruff
+        args: [ --fix ]
       # Run the formatter.
       - id: ruff-format
