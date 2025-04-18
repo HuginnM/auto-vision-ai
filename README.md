@@ -40,14 +40,14 @@ AutoVisionAI/
 └── README.md
 ```
 
-Install the package in editable mode with optional dev tools:
+## Install the package in editable mode with optional dev tools:
 
-# With pip (legacy)
+### With pip (legacy)
 ```bash
 pip install -e ".[all]"
 ```
 
-# With uv (recommended)
+### With uv (recommended)
 ```bash
 uv pip install -e ".[all]"
 ```
