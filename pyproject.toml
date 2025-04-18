@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "autovisionai"
-version = "0.1.4"
+version = "0.1.0"
 authors = [
     { name="Arthur Sobol", email="arthur.sobol.ai@gmail.com" }
 ]
