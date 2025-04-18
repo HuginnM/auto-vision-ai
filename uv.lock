@@ -121,6 +121,11 @@ test = [
     { name = "pytest" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "pre-commit" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "autovisionai", extras = ["dev"], marker = "extra == 'all'" },
@@ -141,6 +146,9 @@ requires-dist = [
     { name = "torchvision", specifier = ">=0.21.0" },
 ]
 provides-extras = ["test", "lint", "dev", "all"]
+
+[package.metadata.requires-dev]
+dev = [{ name = "pre-commit", specifier = ">=4.2.0" }]
 
 [[package]]
 name = "certifi"

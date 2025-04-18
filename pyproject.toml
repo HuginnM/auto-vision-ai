@@ -59,6 +59,7 @@ where = ["src"]
 # [dependency-groups]
 # dev = [
 #     "pytest>=8.3.5",
+#     "pre-commit>=4.2.0",
 # ]
 # lint = [
 #     "ruff>=0.11.6",
@@ -66,13 +67,13 @@ where = ["src"]
 
 # Support for pip, poetry, tox, etc.
 [project.optional-dependencies]
-test = [
-    "pytest>=8.3.5",
+test = ["pytest>=8.3.5"]
+lint = ["ruff>=0.11.6"]
+dev = [
+  "pytest>=8.3.5",
+  "ruff>=0.11.6",
+  "pre-commit>=4.2.0"
 ]
-lint = [
-    "ruff>=0.11.6",
-]
-dev = ["autovisionai[test,lint]"]
 all = ["autovisionai[dev]"]
 
 [tool.uv]
