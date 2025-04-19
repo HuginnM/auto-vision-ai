@@ -10,6 +10,7 @@ class DoubleConv(nn.Module):
     :param in_channels: a number of input channels.
     :param out_channels: a number of output channels.
     """
+
     def __init__(self, in_channels, out_channels):
         super(DoubleConv, self).__init__()
         self.conv = nn.Sequential(
@@ -18,7 +19,7 @@ class DoubleConv(nn.Module):
             nn.ReLU(inplace=True),
             nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
             nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True)
+            nn.ReLU(inplace=True),
         )
 
     def forward(self, x):
@@ -39,6 +40,7 @@ class InConv(nn.Module):
     :param in_channels: a number of input channels.
     :param out_channels: a number of output channels.
     """
+
     def __init__(self, in_channels, out_channels):
         super(InConv, self).__init__()
         self.conv = DoubleConv(in_channels, out_channels)
@@ -62,12 +64,10 @@ class Down(nn.Module):
     :param in_channels: a number of input channels.
     :param out_channels: a number of output channels.
     """
+
     def __init__(self, in_channels, out_channels):
         super(Down, self).__init__()
-        self.conv = nn.Sequential(
-            nn.MaxPool2d(kernel_size=2),
-            DoubleConv(in_channels, out_channels)
-        )
+        self.conv = nn.Sequential(nn.MaxPool2d(kernel_size=2), DoubleConv(in_channels, out_channels))
 
     def forward(self, x):
         """
@@ -90,9 +90,10 @@ class Up(nn.Module):
     :param in_channels: a number of input channels.
     :param out_channels: a number of output channels.
     """
+
     def __init__(self, in_channels, out_channels):
         super(Up, self).__init__()
-        self.up = nn.ConvTranspose2d(in_channels//2, in_channels//2, kernel_size=2, stride=2)
+        self.up = nn.ConvTranspose2d(in_channels // 2, in_channels // 2, kernel_size=2, stride=2)
         self.conv = DoubleConv(in_channels, out_channels)
 
     def forward(self, x1, x2):
@@ -116,6 +117,7 @@ class OutConv(nn.Module):
     :param in_channels: a number of input channels.
     :param n_classes: a number classes.
     """
+
     def __init__(self, in_channels, n_classes):
         super(OutConv, self).__init__()
         self.conv = nn.Conv2d(in_channels, n_classes, kernel_size=1)
@@ -138,6 +140,7 @@ class Unet(nn.Module):
     :param in_channels: a number of input channels.
     :param n_classes: a number classes.
     """
+
     def __init__(self, in_channels, n_classes):
         super(Unet, self).__init__()
         self.inc = InConv(in_channels, 64)
@@ -145,10 +148,10 @@ class Unet(nn.Module):
         self.down2 = Down(128, 256)
         self.down3 = Down(256, 512)
         self.down4 = Down(512, 512)
-        self.up1 = Up(512*2, 256)
-        self.up2 = Up(256*2, 128)
-        self.up3 = Up(128*2, 64)
-        self.up4 = Up(64*2, 64)
+        self.up1 = Up(512 * 2, 256)
+        self.up2 = Up(256 * 2, 128)
+        self.up3 = Up(128 * 2, 64)
+        self.up4 = Up(64 * 2, 64)
         self.out = OutConv(64, n_classes)
 
     def forward(self, x):

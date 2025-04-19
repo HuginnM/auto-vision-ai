@@ -1,20 +1,48 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "autovisionai"
 version = "0.1.0"
 authors = [
-    { name="Arthur Sobol", email="arthur.sobol.ai@gmail.com" },
+    { name="Arthur Sobol", email="arthur.sobol.ai@gmail.com" }
 ]
-description = "A Production-Ready Car Segmentation Pipeline with PyTorch Lightning and UNet."
+description = "Production-Ready Car Segmentation Pipeline featuring modern architectures (UNet, Fast-SCNN, Mask R-CNN) implemented with PyTorch Lightning. Includes CI/CD, MLflow & Weights & Biases integration, Dockerized deployment, and modern Python tooling (UV, Ruff, Tox, etc)."
 readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "confuse>=2.0.1",
+    "matplotlib>=3.10.1",
+    "numpy>=2.2.4",
+    "opencv-python>=4.11.0.86",
+    "pillow>=11.2.1",
+    "pre-commit>=4.2.0",
+    "pytorch-lightning>=2.5.1",
+    "pyyaml>=6.0.2",
+    "requests>=2.32.3",
+    "torch>=2.6.0",
+    "torchmetrics>=1.7.1",
+    "torchvision>=0.21.0",
+]
 license = "MIT"
-keywords = ["computer-vision", "ai"]
+keywords = [
+  "computer-vision",
+  "semantic-segmentation",
+  "instance-segmentation",
+  "pytorch",
+  "unet",
+  "fast-scnn",
+  "mask-rcnn",
+  "mlflow",
+  "wandb",
+  "docker"
+]
 classifiers = [
-    "Programming Language :: Python :: 3.12.3",
-    "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent"
 ]
 
 [project.urls]
@@ -25,3 +53,73 @@ package-dir = { "" = "src" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+# Modern uv-native dependency groups (preferred when using uv >= 0.6.14)
+# Uncomment when pip and build tools support this format
+# [dependency-groups]
+# dev = [
+#     "pytest>=8.3.5",
+#     "pre-commit>=4.2.0",
+# ]
+# lint = [
+#     "ruff>=0.11.6",
+# ]
+
+# Support for pip, poetry, tox, etc.
+[project.optional-dependencies]
+test = ["pytest>=8.3.5"]
+lint = ["ruff>=0.11.6"]
+dev = [
+  "pytest>=8.3.5",
+  "ruff>=0.11.6",
+  "pre-commit>=4.2.0"
+]
+all = ["autovisionai[dev]"]
+
+[tool.uv]
+default-groups = "all"
+
+[tool.ruff]
+line-length = 120
+exclude = [
+    "./.git",
+    "./docs/*",
+    "./build",
+    "./venv",
+    "*.pyi",
+    ".pre-commit-config.yaml",
+    "*.md",
+    ".flake8",
+    "__pycache__",
+    ".mypy_cache",
+    ".pytest_cache",
+]
+
+[tool.ruff.lint]
+select = [
+    "B",   # flake8-bugbear
+    "B9",  # flake8-bugbear subset
+    "C",   # comprehensions
+    "E",   # pycodestyle
+    "F",   # Pyflakes
+    "N",   # Naming
+    "W",   # Warnings
+    "DTZ", # datetime rules
+    "I",   # isort (imports order)
+]
+ignore = [
+    # The following ignores are desired by the project maintainers.
+    # "E402", # Module level import not at top of file
+    # "E501", # Line too long
+    "F405", # Maybe undefined or defined from star import
+    "N812", # Ignored because import torch.nn.functional as F is PyTorch convention
+]
+
+# Disable docstring and security checks in test files
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = [
+    "D",  # docstrings
+    "S",  # security
+    "F403",  # import *
+    "F405",  # using * import
+]

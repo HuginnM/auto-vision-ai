@@ -13,13 +13,13 @@ class ConvBNReLU(nn.Module):
     :param stride: a stride of the conv.
     :param padding: padding added to all four sides of the input.
     """
+
     def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, padding=0):
         super(ConvBNReLU, self).__init__()
         self.conv = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, 
-                      padding=padding, stride=stride, bias=False),
+            nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, padding=padding, stride=stride, bias=False),
             nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True)
+            nn.ReLU(inplace=True),
         )
 
     def forward(self, x):
@@ -41,17 +41,18 @@ class DSConv(nn.Module):
     :param out_channels: a number of channels produced by the conv.
     :param stride: a stride of the conv.
     """
+
     def __init__(self, dw_channels, out_channels, stride=1):
         super(DSConv, self).__init__()
         self.conv = nn.Sequential(
-            nn.Conv2d(dw_channels, dw_channels, kernel_size=[3, 3], padding=1, 
-                      stride=stride, bias=False, groups=dw_channels),
+            nn.Conv2d(
+                dw_channels, dw_channels, kernel_size=[3, 3], padding=1, stride=stride, bias=False, groups=dw_channels
+            ),
             nn.BatchNorm2d(dw_channels),
             nn.ReLU(inplace=True),
-
             nn.Conv2d(dw_channels, out_channels, kernel_size=[1, 1], padding=0, stride=stride, bias=False),
             nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True)
+            nn.ReLU(inplace=True),
         )
 
     def forward(self, x):
@@ -73,13 +74,15 @@ class DWConv(nn.Module):
     :param out_channels: a number of channels produced by the conv.
     :param stride: a stride of the conv.
     """
+
     def __init__(self, dw_channels, out_channels, stride=1):
         super(DWConv, self).__init__()
         self.conv = nn.Sequential(
-            nn.Conv2d(dw_channels, out_channels, kernel_size=[3, 3], padding=1, 
-                      stride=stride, bias=False, groups=dw_channels),
+            nn.Conv2d(
+                dw_channels, out_channels, kernel_size=[3, 3], padding=1, stride=stride, bias=False, groups=dw_channels
+            ),
             nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True)
+            nn.ReLU(inplace=True),
         )
 
     def forward(self, x):
@@ -103,15 +106,16 @@ class LinearBottleneck(nn.Module):
     :param t: an expansion factor.
     :param stride: a stride of the conv.
     """
+
     def __init__(self, in_channels, out_channels, t=6, stride=2):
         super(LinearBottleneck, self).__init__()
         self.use_shortcut = True if in_channels == out_channels and stride == 1 else False
 
         self.block = nn.Sequential(
-            ConvBNReLU(in_channels, in_channels*t, kernel_size=1),
-            DWConv(in_channels*t, in_channels*t, stride=stride),
-            nn.Conv2d(in_channels*t, out_channels, kernel_size=1, bias=False),
-            nn.BatchNorm2d(out_channels)
+            ConvBNReLU(in_channels, in_channels * t, kernel_size=1),
+            DWConv(in_channels * t, in_channels * t, stride=stride),
+            nn.Conv2d(in_channels * t, out_channels, kernel_size=1, bias=False),
+            nn.BatchNorm2d(out_channels),
         )
 
     def forward(self, x):
@@ -145,7 +149,7 @@ class PyramidPooling(nn.Module):
         self.conv2 = ConvBNReLU(in_channels, inter_channels, kernel_size=1)
         self.conv3 = ConvBNReLU(in_channels, inter_channels, kernel_size=1)
         self.conv4 = ConvBNReLU(in_channels, inter_channels, kernel_size=1)
-        self.out = ConvBNReLU(in_channels*2, out_channels, kernel_size=1)
+        self.out = ConvBNReLU(in_channels * 2, out_channels, kernel_size=1)
 
     @staticmethod
     def upsample(x, size):
@@ -156,7 +160,7 @@ class PyramidPooling(nn.Module):
         :param size: a size to up sample the input.
         :return: an up sampled input.
         """
-        return F.interpolate(x, size, mode='bilinear', align_corners=True)
+        return F.interpolate(x, size, mode="bilinear", align_corners=True)
 
     @staticmethod
     def pool(x, size):
@@ -275,7 +279,7 @@ class GlobalFeatureExtractor(nn.Module):
         :return: nn.Sequential of layers.
         """
         layers = [block(inplanes, planes, t, stride)]
-        for i in range(1, blocks):
+        for _i in range(1, blocks):
             layers.append(block(planes, planes, t, 1))
         return nn.Sequential(*layers)
 
@@ -302,14 +306,17 @@ class FeatureFusionModule(nn.Module):
     :param out_channels: number of output channels.
     :param scale_factor: scale factor.
     """
+
     def __init__(self, highter_in_channels, lower_in_channels, out_channels, scale_factor=4):
         super(FeatureFusionModule, self).__init__()
         self.scale_factor = scale_factor
         self.dwconv = DWConv(lower_in_channels, lower_in_channels)
         self.conv_lower_res = nn.Sequential(
-            nn.Conv2d(out_channels, out_channels, kernel_size=1), nn.BatchNorm2d(out_channels))
+            nn.Conv2d(out_channels, out_channels, kernel_size=1), nn.BatchNorm2d(out_channels)
+        )
         self.conv_higher_res = nn.Sequential(
-            nn.Conv2d(highter_in_channels, out_channels, kernel_size=1), nn.BatchNorm2d(out_channels))
+            nn.Conv2d(highter_in_channels, out_channels, kernel_size=1), nn.BatchNorm2d(out_channels)
+        )
         self.relu = nn.ReLU(inplace=True)
 
     def forward(self, higher_res_feature, lower_res_feature):
@@ -321,7 +328,8 @@ class FeatureFusionModule(nn.Module):
         :return: an output of the FFM.
         """
         lower_res_feature = F.interpolate(
-            lower_res_feature, scale_factor=self.scale_factor, mode='bilinear', align_corners=True)
+            lower_res_feature, scale_factor=self.scale_factor, mode="bilinear", align_corners=True
+        )
         lower_res_feature = self.dwconv(lower_res_feature)
         lower_res_feature = self.conv_lower_res(lower_res_feature)
 
@@ -338,6 +346,7 @@ class Classifier(nn.Module):
     :param num_classes: number of classes.
     :param stride: a stride of the conv.
     """
+
     def __init__(self, dw_channels, num_classes, stride=1):
         super(Classifier, self).__init__()
         self.dsconv1 = DSConv(dw_channels, dw_channels, stride)
@@ -363,18 +372,14 @@ class FastSCNN(nn.Module):
 
     :param num_classes: number of classes.
     """
+
     def __init__(self, num_classes):
         super(FastSCNN, self).__init__()
         self.learning_to_downsample = LearningToDownsample(32, 48, 64)
         self.global_feature_extractor = GlobalFeatureExtractor(
-            in_channels=64,
-            block_channels=[64, 96, 128],
-            out_channels=128,
-            t=6,
-            num_blocks=[3, 3, 3]
+            in_channels=64, block_channels=[64, 96, 128], out_channels=128, t=6, num_blocks=[3, 3, 3]
         )
-        self.feature_fusion = FeatureFusionModule(
-            highter_in_channels=64, lower_in_channels=128, out_channels=128)
+        self.feature_fusion = FeatureFusionModule(highter_in_channels=64, lower_in_channels=128, out_channels=128)
         self.classifier = Classifier(dw_channels=128, num_classes=num_classes)
 
     def forward(self, x):
@@ -389,5 +394,5 @@ class FastSCNN(nn.Module):
         x = self.global_feature_extractor(higher_res_features)
         x = self.feature_fusion(higher_res_features, x)
         x = self.classifier(x)
-        out = F.interpolate(x, size, mode='bilinear', align_corners=True)
+        out = F.interpolate(x, size, mode="bilinear", align_corners=True)
         return out
