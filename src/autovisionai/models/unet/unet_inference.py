@@ -1,5 +1,5 @@
-import torch
 import numpy as np
+import torch
 from torchvision import transforms as T
 
 from autovisionai.configs.config import CONFIG
@@ -15,15 +15,11 @@ def model_inference(trained_model_path: str, image: torch.Tensor) -> np.ndarray:
     :return: predicted mask for an input image.
     """
 
-    model = Unet(CONFIG['unet']['model']['in_channels'].get(),
-                 CONFIG['unet']['model']['n_classes'].get())
+    model = Unet(CONFIG["unet"]["model"]["in_channels"].get(), CONFIG["unet"]["model"]["n_classes"].get())
     model.load_state_dict(torch.load(trained_model_path))
     model.eval()
 
-    resize_to = (
-        CONFIG['data_augmentation']['resize_to'].get(),
-        CONFIG['data_augmentation']['resize_to'].get()
-    )
+    resize_to = (CONFIG["data_augmentation"]["resize_to"].get(), CONFIG["data_augmentation"]["resize_to"].get())
 
     resized_image = T.Resize(resize_to)(image)
 

@@ -34,10 +34,11 @@ logs/
 htmlcov/
 .tox/
 
-# MyPy / Pylint / coverage
+# Ruff / MyPy / Pylint / coverage
 .mypy_cache/
 .cache/
 .pyre/
+.ruff_cache
 
 # Packaging
 build/

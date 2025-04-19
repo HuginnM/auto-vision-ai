@@ -1,15 +1,17 @@
 import os
-import cv2
-import torch
-import requests
-import torchvision
-import numpy as np
-from PIL import Image
-import matplotlib.pyplot as plt
+from io import BytesIO
 from typing import Dict, List, Tuple, Union
+
+import cv2
+import matplotlib.pyplot as plt
+import numpy as np
+import requests
+import torch
+import torchvision
+from PIL import Image
 from torchmetrics.functional import jaccard_index
 from torchvision.transforms import functional as F
-from io import BytesIO
+
 from autovisionai.configs.config import CONFIG
 
 
@@ -19,17 +21,21 @@ def show_pic_and_original_mask(image_id: int) -> None:
 
     :param image_id: an image id.
     """
-    imgs_list = list(sorted(
-        os.listdir(os.path.join(CONFIG['dataset']['data_root'].get(), CONFIG['dataset']['images_folder'].get()))))
-    masks_list = list(
-        sorted(os.listdir(os.path.join(CONFIG['dataset']['data_root'].get(), CONFIG['dataset']['masks_folder'].get()))))
+    imgs_list = sorted(
+        os.listdir(os.path.join(CONFIG["dataset"]["data_root"].get(), CONFIG["dataset"]["images_folder"].get()))
+    )
+    masks_list = sorted(
+        os.listdir(os.path.join(CONFIG["dataset"]["data_root"].get(), CONFIG["dataset"]["masks_folder"].get()))
+    )
 
-    img_path = os.path.join(CONFIG['dataset']['data_root'].get(), CONFIG['dataset']['images_folder'].get(),
-                            imgs_list[image_id])
-    mask_path = os.path.join(CONFIG['dataset']['data_root'].get(), CONFIG['dataset']['masks_folder'].get(),
-                             masks_list[image_id])
+    img_path = os.path.join(
+        CONFIG["dataset"]["data_root"].get(), CONFIG["dataset"]["images_folder"].get(), imgs_list[image_id]
+    )
+    mask_path = os.path.join(
+        CONFIG["dataset"]["data_root"].get(), CONFIG["dataset"]["masks_folder"].get(), masks_list[image_id]
+    )
 
-    img = Image.open(img_path).convert('RGB')
+    img = Image.open(img_path).convert("RGB")
     img = np.asarray(img)
 
     mask = Image.open(mask_path)
@@ -46,24 +52,25 @@ def show_pic_and_original_mask(image_id: int) -> None:
     horizontal_imgs = np.concatenate((img, img_masked, mask3), axis=1)
 
     try:
-        cv2.imshow('Original Image | Original Image + Mask | Mask', horizontal_imgs)
+        cv2.imshow("Original Image | Original Image + Mask | Mask", horizontal_imgs)
         cv2.waitKey(0)
     except Exception as e:
-        print('Error:', e)
+        print("Error:", e)
         plt.figure(figsize=(40, 10))
         plt.imshow(horizontal_imgs)
-        plt.title('Original Image | Original Image + Mask | Mask', fontsize=50)
+        plt.title("Original Image | Original Image + Mask | Mask", fontsize=50)
 
 
-def show_pic_and_pred_semantic_mask(img: torch.Tensor, pred_mask: np.ndarray, 
-                                    threshold: float = 0.5, use_plt: bool = False) -> None:
+def show_pic_and_pred_semantic_mask(
+    img: torch.Tensor, pred_mask: np.ndarray, threshold: float = 0.5, use_plt: bool = False
+) -> None:
     """
     Helper function to plot original image and predicted semantic mask.
 
     :param img: an image for which the trained model predicts segmentation masks.
     :param pred_mask: predicted semantic mask.
     :param threshold: a min score for predicted mask pixel after using sigmoid func. Values from 0 to 1.
-    :param use_plt: show image with plt for better experience with JN when True. Instead shows it via GUI with cv2. 
+    :param use_plt: show image with plt for better experience with JN when True. Instead shows it via GUI with cv2.
     """
     img = np.asarray(img * 255, dtype="uint8").squeeze()
     img = img.transpose(1, 2, 0)
@@ -76,7 +83,7 @@ def show_pic_and_pred_semantic_mask(img: torch.Tensor, pred_mask: np.ndarray,
     r[mask == 1], g[mask == 1], b[mask == 1] = color
     rgb_mask = np.stack([r, g, b], axis=2)
     img = cv2.addWeighted(img, 0.7, rgb_mask, 1, 0)
-    
+
     if use_plt:
         # Jupyter-friendly visualization
         plt.figure(figsize=(10, 5))
@@ -86,18 +93,23 @@ def show_pic_and_pred_semantic_mask(img: torch.Tensor, pred_mask: np.ndarray,
         plt.show()
     else:
         try:
-            cv2.imshow('Original Image with Predicted Semantic Mask', img)
+            cv2.imshow("Original Image with Predicted Semantic Mask", img)
             cv2.waitKey(0)
         except Exception as e:
-            print('Error:', e)
+            print("Error:", e)
             plt.figure(figsize=(20, 10))
             plt.imshow(img)
-            plt.title('Original Image with Predicted Semantic Mask', fontsize=40)
+            plt.title("Original Image with Predicted Semantic Mask", fontsize=40)
 
 
-def show_pic_and_pred_instance_masks(img: torch.Tensor, pred_masks: np.ndarray,
-                                     scores: np.ndarray, min_score: float = 0.8, 
-                                     threshold: float = 0.5, use_plt: bool = True) -> None:
+def show_pic_and_pred_instance_masks(
+    img: torch.Tensor,
+    pred_masks: np.ndarray,
+    scores: np.ndarray,
+    min_score: float = 0.8,
+    threshold: float = 0.5,
+    use_plt: bool = True,
+) -> None:
     """
     Helper function to plot original image and predicted instance masks.
 
@@ -106,12 +118,12 @@ def show_pic_and_pred_instance_masks(img: torch.Tensor, pred_masks: np.ndarray,
     :param scores: predicted scores.
     :param min_score: a min score to sort segmentation masks.
     :param threshold: a min score for predicted mask pixel after using sigmoid func. Values from 0 to 1.
-    :param use_plt: show image with plt for better experience with JN when True. Instead shows it via GUI with cv2. 
+    :param use_plt: show image with plt for better experience with JN when True. Instead shows it via GUI with cv2.
     """
-    img = np.asarray(img * 255, dtype='uint8').squeeze()
+    img = np.asarray(img * 255, dtype="uint8").squeeze()
     img = img.transpose(1, 2, 0)
 
-    for mask, score in zip(pred_masks, scores):
+    for mask, score in zip(pred_masks, scores, strict=False):
         if score > min_score:
             mask = (mask > threshold).squeeze()
             r = np.zeros_like(mask).astype(np.uint8)
@@ -121,7 +133,7 @@ def show_pic_and_pred_instance_masks(img: torch.Tensor, pred_masks: np.ndarray,
             r[mask == 1], g[mask == 1], b[mask == 1] = color
             rgb_mask = np.stack([r, g, b], axis=2)
             img = cv2.addWeighted(img, 1, rgb_mask, 0.8, 0)
-    
+
     if use_plt:
         # Jupyter-friendly visualization
         plt.figure(figsize=(10, 5))
@@ -131,13 +143,13 @@ def show_pic_and_pred_instance_masks(img: torch.Tensor, pred_masks: np.ndarray,
         plt.show()
     else:
         try:
-            cv2.imshow('Original Image with Predicted Instances', img)
+            cv2.imshow("Original Image with Predicted Instances", img)
             cv2.waitKey(0)
         except Exception as e:
-            print('Error:', e)
+            print("Error:", e)
             plt.figure(figsize=(20, 10))
             plt.imshow(img)
-            plt.title('Original Image with Predicted Instances', fontsize=40)
+            plt.title("Original Image with Predicted Instances", fontsize=40)
 
 
 def get_input_image_for_inference(local_path: str = None, url: str = None) -> torch.Tensor:
@@ -149,15 +161,13 @@ def get_input_image_for_inference(local_path: str = None, url: str = None) -> to
     :return: a torch tensor with shape [1, 3, H, W].
     """
     if local_path is not None:
-        img = Image.open(local_path).convert('RGB')
+        img = Image.open(local_path).convert("RGB")
     elif url is not None:
-        # adding this header to avoid some sites blocking. Imitating user behaviour. 
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
-        }
+        # adding this header to avoid some sites blocking. Imitating user behaviour.
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
         response = requests.get(url, headers=headers)
         response.raise_for_status()  # add more protections
-        img = Image.open(BytesIO(response.content)).convert('RGB')
+        img = Image.open(BytesIO(response.content)).convert("RGB")
     else:
         raise ValueError("Provide either `local_path` or `url`.")
         raise
@@ -166,9 +176,11 @@ def get_input_image_for_inference(local_path: str = None, url: str = None) -> to
     return img
 
 
-def get_batch_images_and_pred_masks_in_a_grid(eval_step_output: Union[List[Dict[str, torch.Tensor]], torch.Tensor],
-                                              images: Tuple[torch.Tensor, ...],
-                                              mask_rcnn: bool = False) -> torch.Tensor:
+def get_batch_images_and_pred_masks_in_a_grid(
+    eval_step_output: Union[List[Dict[str, torch.Tensor]], torch.Tensor],
+    images: Tuple[torch.Tensor, ...],
+    mask_rcnn: bool = False,
+) -> torch.Tensor:
     """
     Makes a grid of images and their predicted masks on validation_step.
 
@@ -180,17 +192,23 @@ def get_batch_images_and_pred_masks_in_a_grid(eval_step_output: Union[List[Dict[
     if mask_rcnn:
         # get top scored mask for each image in a batch
         # use sigmoid func on predicted masks and use threshold = 0.65
-        pred_masks = torch.stack([dict_i['masks'][0].sigmoid().detach().cpu() > 0.65 for dict_i in eval_step_output])
+        pred_masks = torch.stack([dict_i["masks"][0].sigmoid().detach().cpu() > 0.65 for dict_i in eval_step_output])
     else:
         # use sigmoid func on predicted masks and use threshold = 0.5
         pred_masks = torch.stack([mask.sigmoid().detach().cpu() > 0.5 for mask in eval_step_output])
 
     # draw masks on images
     masks_on_images = torch.stack(
-        [torchvision.utils.draw_segmentation_masks(image=images[i].detach().cpu().mul(255).type(torch.uint8),
-                                                   masks=pred_masks[i].type(torch.bool),
-                                                   alpha=0.8,
-                                                   colors='blue') for i in range(len(images))])
+        [
+            torchvision.utils.draw_segmentation_masks(
+                image=images[i].detach().cpu().mul(255).type(torch.uint8),
+                masks=pred_masks[i].type(torch.bool),
+                alpha=0.8,
+                colors="blue",
+            )
+            for i in range(len(images))
+        ]
+    )
     # make grid with predicted masks on batch images
     grid = torchvision.utils.make_grid(masks_on_images)
 
@@ -205,10 +223,10 @@ def bboxes_iou(target: Dict[str, torch.Tensor], pred: Dict[str, torch.Tensor]) -
     :param pred: a dict with predicted annotations.
     :return: an IoU over bboxes score.
     """
-    if pred['boxes'].shape[0] == 0:
-        iou_score = torch.tensor(0.0, device=pred['boxes'].device)
+    if pred["boxes"].shape[0] == 0:
+        iou_score = torch.tensor(0.0, device=pred["boxes"].device)
         return iou_score
-    iou_score = torchvision.ops.box_iou(target['boxes'], pred['boxes']).diag().mean()
+    iou_score = torchvision.ops.box_iou(target["boxes"], pred["boxes"]).diag().mean()
     return iou_score
 
 
@@ -222,7 +240,7 @@ def masks_iou(target, preds, num_classes):
     :return: an IoU score over masks.
     """
     probs = torch.sigmoid(preds.squeeze(1))
-    pred_masks = torch.where(probs > 0.5, 1., 0.)
+    pred_masks = torch.where(probs > 0.5, 1.0, 0.0)
     pred_masks = pred_masks.cpu()
 
     # def define_task(num_classes):
@@ -232,8 +250,9 @@ def masks_iou(target, preds, num_classes):
     #     else:
     #         print('IoT: Multiclass task.')
     #         return 'multiclass'
-        
-    iou_score = jaccard_index(preds=pred_masks, target=target.squeeze(1).cpu(), 
-                              num_classes=num_classes, task='multiclass')  #task=define_task(num_classes))
+
+    iou_score = jaccard_index(
+        preds=pred_masks, target=target.squeeze(1).cpu(), num_classes=num_classes, task="multiclass"
+    )  # task=define_task(num_classes))
 
     return iou_score

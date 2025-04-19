@@ -1,6 +1,6 @@
 import torchvision
-from torchvision.models.detection.mask_rcnn import MaskRCNNPredictor, MaskRCNN_ResNet50_FPN_Weights
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
+from torchvision.models.detection.mask_rcnn import MaskRCNN_ResNet50_FPN_Weights, MaskRCNNPredictor
 
 from autovisionai.configs.config import CONFIG
 
@@ -24,9 +24,10 @@ def create_model(n_classes: int, pretrained: bool = True) -> MaskRCNNPredictor:
 
     # Getting the number of input features for the mask classifier
     in_features_mask = model.roi_heads.mask_predictor.conv5_mask.in_channels
-    hidden_layer = CONFIG['mask_rcnn']['model']['hidden_size'].get()
+    hidden_layer = CONFIG["mask_rcnn"]["model"]["hidden_size"].get()
 
     model.roi_heads.mask_predictor = MaskRCNNPredictor(
-        in_channels=in_features_mask, dim_reduced=hidden_layer, num_classes=n_classes)
+        in_channels=in_features_mask, dim_reduced=hidden_layer, num_classes=n_classes
+    )
 
     return model
