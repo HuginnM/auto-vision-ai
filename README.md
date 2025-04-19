@@ -204,8 +204,8 @@ AutoVisionAI is fully equipped with modern Python development tooling:
 - `end-of-file-fixer`: enforces trailing newlines
 - `trailing-whitespace`: removes trailing spaces
 
-All configurations are centralized in `pyproject.toml`.  
-The project uses `[project.optional-dependencies]` for maximum compatibility with `pip`, `tox`, and `Poetry`.  
+All configurations are centralized in `pyproject.toml`.
+The project uses `[project.optional-dependencies]` for maximum compatibility with `pip`, `tox`, and `Poetry`.
 Experimental `[dependency-groups]` are pre-configured and will be activated once supported by `pip`.
 
 > For installation instructions, including `uv` and `pre-commit` setup, see [Installation](#installation).

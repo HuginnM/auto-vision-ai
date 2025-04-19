@@ -88,7 +88,7 @@ wheels = [
 
 [[package]]
 name = "autovisionai"
-version = "0.1.4"
+version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "confuse" },
@@ -107,10 +107,12 @@ dependencies = [
 
 [package.optional-dependencies]
 all = [
+    { name = "pre-commit" },
     { name = "pytest" },
     { name = "ruff" },
 ]
 dev = [
+    { name = "pre-commit" },
     { name = "pytest" },
     { name = "ruff" },
 ]
@@ -121,34 +123,28 @@ test = [
     { name = "pytest" },
 ]
 
-[package.dev-dependencies]
-dev = [
-    { name = "pre-commit" },
-]
-
 [package.metadata]
 requires-dist = [
     { name = "autovisionai", extras = ["dev"], marker = "extra == 'all'" },
-    { name = "autovisionai", extras = ["test", "lint"], marker = "extra == 'dev'" },
     { name = "confuse", specifier = ">=2.0.1" },
     { name = "matplotlib", specifier = ">=3.10.1" },
     { name = "numpy", specifier = ">=2.2.4" },
     { name = "opencv-python", specifier = ">=4.11.0.86" },
     { name = "pillow", specifier = ">=11.2.1" },
     { name = "pre-commit", specifier = ">=4.2.0" },
+    { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.2.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3.5" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8.3.5" },
     { name = "pytorch-lightning", specifier = ">=2.5.1" },
     { name = "pyyaml", specifier = ">=6.0.2" },
     { name = "requests", specifier = ">=2.32.3" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.11.6" },
     { name = "ruff", marker = "extra == 'lint'", specifier = ">=0.11.6" },
     { name = "torch", specifier = ">=2.6.0" },
     { name = "torchmetrics", specifier = ">=1.7.1" },
     { name = "torchvision", specifier = ">=0.21.0" },
 ]
 provides-extras = ["test", "lint", "dev", "all"]
-
-[package.metadata.requires-dev]
-dev = [{ name = "pre-commit", specifier = ">=4.2.0" }]
 
 [[package]]
 name = "certifi"
