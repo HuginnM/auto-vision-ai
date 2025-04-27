@@ -52,6 +52,7 @@ data/masks/*
 !data/masks/.gitkeep
 wandb/
 mlruns/
+mlartifacts/
 *.csv
 *.h5
 *.npz
@@ -73,5 +74,5 @@ Thumbs.db
 *.spec
 
 # Test notebooks
-notebooks/*
+notebooks/
 *.ipynb

@@ -46,7 +46,21 @@ mask_rcnn:
     step_size: 1
     gamma: 0.1
 trainer:
+  max_epoch: 10
   log_every_n_steps: 20
-  logger_folder: logs
   weights_folder: weights
   logs_and_weights_root: C:\DATA\Projects\AutoVisionAI\experiments
+logging:
+  root_dir: C:\DATA\Projects\AutoVisionAI\experiments
+  tensorboard:
+    use: true
+    save_dir: tb_logs
+  mlflow:
+    use: false
+    tracking_uri: http://127.0.0.1:8080
+    save_dir: mlruns
+  wandb:
+    use: false
+    log_model: true
+    save_dir: wandb_logs
+    mode: online

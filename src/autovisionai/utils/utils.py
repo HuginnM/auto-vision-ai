@@ -203,14 +203,14 @@ def get_batch_images_and_pred_masks_in_a_grid(
             torchvision.utils.draw_segmentation_masks(
                 image=images[i].detach().cpu().mul(255).type(torch.uint8),
                 masks=pred_masks[i].type(torch.bool),
-                alpha=0.8,
+                alpha=0.7,
                 colors="blue",
             )
             for i in range(len(images))
         ]
     )
     # make grid with predicted masks on batch images
-    grid = torchvision.utils.make_grid(masks_on_images)
+    grid = torchvision.utils.make_grid(masks_on_images, nrow=8)
 
     return grid
 

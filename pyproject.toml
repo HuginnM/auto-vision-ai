@@ -14,6 +14,7 @@ requires-python = ">=3.12"
 dependencies = [
     "confuse>=2.0.1",
     "matplotlib>=3.10.1",
+    "mlflow>=2.21.3",
     "numpy>=2.2.4",
     "opencv-python>=4.11.0.86",
     "pillow>=11.2.1",
@@ -21,6 +22,7 @@ dependencies = [
     "pytorch-lightning>=2.5.1",
     "pyyaml>=6.0.2",
     "requests>=2.32.3",
+    "tensorboard>=2.19.0",
     "torch>=2.6.0",
     "torchmetrics>=1.7.1",
     "torchvision>=0.21.0",
@@ -53,6 +55,26 @@ package-dir = { "" = "src" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cpu", marker = "sys_platform == 'linux'" },
+  { index = "pytorch-cu128", marker = "sys_platform != 'linux'" },
+]
+torchvision = [
+  { index = "pytorch-cpu", marker = "sys_platform == 'linux'" },
+  { index = "pytorch-cu128", marker = "sys_platform != 'linux'" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
 
 # Modern uv-native dependency groups (preferred when using uv >= 0.6.14)
 # Uncomment when pip and build tools support this format
