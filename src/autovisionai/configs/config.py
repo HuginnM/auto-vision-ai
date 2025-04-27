@@ -1,7 +1,14 @@
+import os
 from pathlib import Path
 
 import confuse
 import yaml
+from dotenv import load_dotenv
+
+load_dotenv()
+
+ENV_MODE = os.getenv("ENV_MODE")
+WANDB_API_KEY = os.getenv("WANDB_API_KEY")
 
 
 def find_project_root(anchor_filename="pyproject.toml") -> Path:
