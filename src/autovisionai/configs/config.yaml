@@ -58,7 +58,7 @@ logging:
   mlflow:
     use: true
     tracking_uri: http://127.0.0.1:8080
-    save_dir: mlruns
+    save_dir: mlruns_logs
   wandb:
     use: true
     log_model: true

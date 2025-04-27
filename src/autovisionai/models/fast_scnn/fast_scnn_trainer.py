@@ -8,6 +8,7 @@ from torch.optim.lr_scheduler import StepLR
 
 from autovisionai.configs.config import CONFIG
 from autovisionai.models.fast_scnn.fast_scnn_model import FastSCNN
+from autovisionai.utils.logging import log_image_for_all_loggers
 from autovisionai.utils.utils import get_batch_images_and_pred_masks_in_a_grid, masks_iou
 
 
@@ -72,13 +73,12 @@ class FastSCNNTrainer(pl.LightningModule):
         masks_tensor = torch.stack([pair["mask"] for pair in targets])
 
         y_hat = self.model(images_tensor)
-
         masks_iou_score = masks_iou(masks_tensor, y_hat, self.n_classes + 1)
         loss = self.criterion(y_hat, masks_tensor.to(torch.float))
-        imgs_grid = get_batch_images_and_pred_masks_in_a_grid(y_hat, images)
 
-        output = {"val_loss": loss, "val_iou": masks_iou_score, "val_images_and_pred_masks": imgs_grid}
+        output = {"val_loss": loss, "val_iou": masks_iou_score, "pred_masks": y_hat, "images": images_tensor}
         self.val_outputs.append(output)
+
         return output
 
     def on_validation_epoch_end(self):
@@ -87,12 +87,20 @@ class FastSCNNTrainer(pl.LightningModule):
 
         loss_epoch = torch.stack([o["val_loss"] for o in self.val_outputs]).mean()
         avg_iou = torch.stack([o["val_iou"] for o in self.val_outputs]).mean()
+        pred_masks = torch.cat([o["pred_masks"] for o in self.val_outputs], dim=0)[:64]
+        images = torch.cat([o["images"] for o in self.val_outputs], dim=0)[:64]
 
         self.log("val/loss_epoch", loss_epoch, prog_bar=True)
         self.log("val/val_iou", avg_iou, prog_bar=True)
 
-        for idx, dict_i in enumerate(self.val_outputs):
-            self.logger.experiment.add_image("Predicted masks on images", dict_i["val_images_and_pred_masks"], idx)
+        imgs_grid = get_batch_images_and_pred_masks_in_a_grid(pred_masks, images)
+
+        log_image_for_all_loggers(
+            loggers=self.logger,
+            tag="Predicted masks on images per epoch",
+            image_tensor=imgs_grid,
+            step=self.current_epoch,
+        )
 
         self.val_outputs.clear()
 

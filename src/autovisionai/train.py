@@ -82,7 +82,7 @@ if __name__ == "__main__":
 
     model = UnetTrainer()
     train_model(
-        experiment_name="logger_test123",
+        experiment_name="wandb_image_logging",
         model=model,
         batch_size=4,
         use_resize=False,

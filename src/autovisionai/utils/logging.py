@@ -4,6 +4,7 @@ import shutil
 from pathlib import Path
 
 import torch
+import wandb
 from pytorch_lightning.loggers import MLFlowLogger, TensorBoardLogger, WandbLogger
 
 from autovisionai.configs.config import CONFIG, config_file_path
@@ -47,7 +48,7 @@ def get_loggers(experiment_name: str, experiment_path: Path) -> list:
 
     # W&B Logger
     if CONFIG["logging"]["wandb"]["use"].get(bool):
-        wandb_mode = CONFIG["logging"]["wandb"]["mode"].get(str, "online")
+        wandb_mode = CONFIG["logging"]["wandb"]["mode"].get(str)
         os.environ["WANDB_MODE"] = wandb_mode
         wandb_log_dir = experiment_path / CONFIG["logging"]["wandb"]["save_dir"].get(str)
 
@@ -55,7 +56,7 @@ def get_loggers(experiment_name: str, experiment_path: Path) -> list:
             WandbLogger(
                 project=experiment_name,
                 name=run_name,
-                log_model=CONFIG["logging"]["wandb"]["log_model"].get(bool, False),
+                log_model=CONFIG["logging"]["wandb"]["log_model"].get(bool),
                 save_dir=str(wandb_log_dir),
             )
         )
@@ -124,5 +125,5 @@ def log_image_for_all_loggers(loggers: list, tag: str, image_tensor: torch.Tenso
     for logger in loggers:
         if isinstance(logger, TensorBoardLogger):
             logger.experiment.add_image(tag, image_tensor, global_step=step)
-        # elif isinstance(logger, WandbLogger):
-        #     logger.experiment.log({tag: wandb.Image(image_tensor)}, step=step)
+        elif isinstance(logger, WandbLogger):
+            logger.experiment.log({tag: wandb.Image(image_tensor)}, step=step)

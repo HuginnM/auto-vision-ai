@@ -58,7 +58,6 @@ class UnetTrainer(pl.LightningModule):
         y_hat = self.model(images_tensor)
         masks_iou_score = masks_iou(masks_tensor, y_hat, self.n_classes + 1)
         loss = self.criterion(y_hat, masks_tensor.to(torch.float))
-        # imgs_grid = get_batch_images_and_pred_masks_in_a_grid(y_hat, images)
 
         output = {"val_loss": loss, "val_iou": masks_iou_score, "pred_masks": y_hat, "images": images_tensor}
         self.val_outputs.append(output)
