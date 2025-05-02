@@ -7,6 +7,7 @@ from torch.optim.lr_scheduler import StepLR
 
 from autovisionai.configs.config import CONFIG
 from autovisionai.models.mask_rcnn.mask_rcnn_model import create_model
+from autovisionai.utils.logging import log_image_to_all_loggers
 from autovisionai.utils.utils import bboxes_iou, get_batch_images_and_pred_masks_in_a_grid
 
 accelerator = "cuda" if torch.cuda.is_available() else "cpu"
@@ -25,23 +26,58 @@ class MaskRCNNTrainer(pl.LightningModule):
         self.training_losses = []
         self.val_outputs = []
 
-    @staticmethod
-    def _find_bounding_box(mask):
-        rows = torch.any(mask != 0, dim=1)
-        cols = torch.any(mask != 0, dim=0)
-        nz_rows = torch.nonzero(rows)
-        nz_cols = torch.nonzero(cols)
+    def _create_valid_target(self, target: Dict) -> Dict[str, torch.Tensor]:
+        """
+        Creates a valid target dictionary for Mask R-CNN.
 
-        bbox = torch.as_tensor(
-            [
-                nz_rows[0][1].item(),  # First row's index
-                nz_cols[0][0].item(),  # First col's index
-                nz_rows[-1][1].item(),  # Last row's index
-                nz_cols[-1][0],  # Last col's index
-            ],
-            dtype=torch.float32,
-        )
-        return bbox
+        :param target: targets from datamodule batch.
+        :param box: boundary box of the object on the mask.
+        :return: A target dict compatible with Mask R-CNN.
+        """
+        return {
+            "image_id": target["image_id"].to(self.device),
+            "boxes": target["box"].unsqueeze(0).to(self.device),
+            "masks": torch.as_tensor(target["mask"], dtype=torch.uint8, device=self.device),
+            "labels": torch.tensor([1], dtype=torch.int64, device=self.device),
+        }
+
+    def _create_empty_target(self, target: Dict):
+        """
+        Creates an empty target dictionary for Mask R-CNN.
+
+        :param target: targets from datamodule batch.
+        :return: A target dict compatible with Mask R-CNN.
+        """
+        return {
+            "image_id": target["image_id"].to(self.device),
+            "boxes": torch.zeros((0, 4), dtype=torch.float32, device=self.device),
+            "masks": torch.as_tensor(target["mask"], dtype=torch.uint8, device=self.device),
+            "labels": torch.zeros((0,), dtype=torch.int64, device=self.device),
+        }
+
+    def _safe_stack_pred_masks(self, preds: list, images: tuple) -> torch.Tensor:
+        """
+        Extracts the first predicted mask from each prediction dict.
+        If no masks are present, returns an empty mask of the same shape.
+
+        :param preds: list of prediction dicts from Mask R-CNN
+        :return: torch.Tensor of shape [N, H, W]
+        """
+        stacked = []
+
+        for i, pred in enumerate(preds):
+            masks = pred.get("masks", None)  # mask shape is (N, 1, H-mask, W-mask)
+
+            if masks is not None and masks.shape[0] > 0:
+                # Take 0 mask here as in demostration purposes and hence shallow dataset, the train images
+                # contains only 1 object. Take whole masks here to include all instances.
+                stacked.append(masks[0])
+            else:
+                _, height, witdth = images[i].shape
+                stacked.append(torch.zeros((1, height, witdth), dtype=torch.float32, device=self.device))
+                print(f"[_safe_stack_pred_masks] No masks for prediction {i}, inserting empty mask.")
+
+        return torch.stack(stacked)
 
     def _convert_targets_to_mask_rcnn_format(
         self, targets: Tuple[Dict[str, torch.Tensor]]
@@ -52,18 +88,10 @@ class MaskRCNNTrainer(pl.LightningModule):
         """
         mask_rcnn_targets = []
 
-        # For Mask RCNN training, the Dataset requires to consist of `masks`, `boxes`, `labels` and `image_id` keys.
+        # For Mask RCNN training, the Dataset requires to consist of
+        # `masks`, `boxes`, `labels` and `image_id` keys.
         for target in targets:
-            mask = target["mask"]
-            box = MaskRCNNTrainer._find_bounding_box(mask)
-
-            mask_rcnn_target = {
-                "image_id": target["image_id"].to(self.device),
-                "boxes": box.unsqueeze(0).to(self.device),
-                "masks": torch.as_tensor(target["mask"], dtype=torch.uint8, device=self.device),
-                "labels": torch.tensor([1], dtype=torch.int64, device=self.device),
-            }
-            mask_rcnn_targets.append(mask_rcnn_target)
+            mask_rcnn_targets.append(self._create_valid_target(target))
 
         return tuple(mask_rcnn_targets)
 
@@ -80,12 +108,12 @@ class MaskRCNNTrainer(pl.LightningModule):
         images, targets = batch
 
         images = torch.stack(images)
-        targets = self._convert_targets_to_mask_rcnn_format(targets)
+        valid_targets = self._convert_targets_to_mask_rcnn_format(targets)
 
         self.model.train()
 
         with torch.set_grad_enabled(is_training):
-            outputs = self.model(images, targets)
+            outputs = self.model(images, valid_targets)
 
         loss_step = sum(outputs.values())
         loss_mask = outputs["loss_mask"]
@@ -145,11 +173,18 @@ class MaskRCNNTrainer(pl.LightningModule):
         self.model.eval()
         preds = self.model(images)
 
+        pred_masks = self._safe_stack_pred_masks(preds, images)
+        images_tensor = torch.stack(images)
+
         targets = self._convert_targets_to_mask_rcnn_format(targets)
         bboxes_iou_score = torch.stack([bboxes_iou(t, o) for t, o in zip(targets, preds, strict=False)]).mean()
-        imgs_grid = get_batch_images_and_pred_masks_in_a_grid(preds, images, mask_rcnn=True)
 
-        output = {"val_outputs": outputs, "val_images_and_pred_masks": imgs_grid, "val_iou": bboxes_iou_score}
+        output = {
+            "val_outputs": outputs,
+            "val_iou": bboxes_iou_score,
+            "pred_masks": pred_masks,
+            "images": images_tensor,
+        }
         self.val_outputs.append(output)
         return output
 
@@ -162,12 +197,22 @@ class MaskRCNNTrainer(pl.LightningModule):
         loss_mask_epoch = torch.stack(val_mask_losses).mean()
         avg_iou = torch.stack(val_ious).mean()
 
+        pred_masks = torch.cat([o["pred_masks"] for o in self.val_outputs], dim=0)[:16]
+        images = torch.cat([o["images"] for o in self.val_outputs], dim=0)[:16]
+
         self.log("val/loss_epoch", loss_epoch.item(), prog_bar=True)
         self.log("val/loss_mask_epoch", loss_mask_epoch.item())
         self.log("val/val_iou", avg_iou.item(), prog_bar=True)
 
-        for idx, d in enumerate(self.val_outputs):
-            self.logger.experiment.add_image("Predicted masks on images", d["val_images_and_pred_masks"], idx)
+        imgs_grid = get_batch_images_and_pred_masks_in_a_grid(pred_masks, images, threshold=0.65)
+
+        log_image_to_all_loggers(
+            loggers=self.trainer.loggers,
+            tag="Predicted masks on images per epoch",
+            image_tensor=imgs_grid,
+            epoch=self.current_epoch,
+            step=self.global_step,
+        )
 
         self.val_outputs.clear()
 

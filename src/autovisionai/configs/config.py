@@ -1,7 +1,14 @@
+import os
 from pathlib import Path
 
 import confuse
 import yaml
+from dotenv import load_dotenv
+
+load_dotenv()
+
+ENV_MODE = os.getenv("ENV_MODE")
+WANDB_API_KEY = os.getenv("WANDB_API_KEY")
 
 
 def find_project_root(anchor_filename="pyproject.toml") -> Path:
@@ -26,7 +33,7 @@ with open(config_file_path) as f:
 
 config["dataset"]["data_root"] = str(data_folder_path)
 config["dataset"]["test_data_root"] = str(test_data_folder_path)
-config["trainer"]["logs_and_weights_root"] = str(experiments_folder_path)
+config["logging"]["root_dir"] = str(experiments_folder_path)
 
 with open(config_file_path, "w") as f:
     yaml.dump(config, stream=f, default_flow_style=False, sort_keys=False)

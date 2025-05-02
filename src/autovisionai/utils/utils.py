@@ -11,6 +11,7 @@ import torchvision
 from PIL import Image
 from torchmetrics.functional import jaccard_index
 from torchvision.transforms import functional as F
+from torchvision.utils import save_image
 
 from autovisionai.configs.config import CONFIG
 
@@ -179,7 +180,7 @@ def get_input_image_for_inference(local_path: str = None, url: str = None) -> to
 def get_batch_images_and_pred_masks_in_a_grid(
     eval_step_output: Union[List[Dict[str, torch.Tensor]], torch.Tensor],
     images: Tuple[torch.Tensor, ...],
-    mask_rcnn: bool = False,
+    threshold: float = 0.5,
 ) -> torch.Tensor:
     """
     Makes a grid of images and their predicted masks on validation_step.
@@ -189,13 +190,7 @@ def get_batch_images_and_pred_masks_in_a_grid(
     :param images: a batch of images.
     :return: a tensor containing grid of images.
     """
-    if mask_rcnn:
-        # get top scored mask for each image in a batch
-        # use sigmoid func on predicted masks and use threshold = 0.65
-        pred_masks = torch.stack([dict_i["masks"][0].sigmoid().detach().cpu() > 0.65 for dict_i in eval_step_output])
-    else:
-        # use sigmoid func on predicted masks and use threshold = 0.5
-        pred_masks = torch.stack([mask.sigmoid().detach().cpu() > 0.5 for mask in eval_step_output])
+    pred_masks = torch.stack([mask.sigmoid().detach().cpu() > threshold for mask in eval_step_output])
 
     # draw masks on images
     masks_on_images = torch.stack(
@@ -203,14 +198,14 @@ def get_batch_images_and_pred_masks_in_a_grid(
             torchvision.utils.draw_segmentation_masks(
                 image=images[i].detach().cpu().mul(255).type(torch.uint8),
                 masks=pred_masks[i].type(torch.bool),
-                alpha=0.8,
+                alpha=0.7,
                 colors="blue",
             )
             for i in range(len(images))
         ]
     )
     # make grid with predicted masks on batch images
-    grid = torchvision.utils.make_grid(masks_on_images)
+    grid = torchvision.utils.make_grid(masks_on_images, nrow=4)
 
     return grid
 
@@ -256,3 +251,50 @@ def masks_iou(target, preds, num_classes):
     )  # task=define_task(num_classes))
 
     return iou_score
+
+
+def save_tensor_image(tensor: torch.Tensor, filename: str, folder: str = "debug_failed_samples"):
+    """
+    Saves a tensor image [C, H, W] to a PNG file in the specified folder.
+
+    :param tensor: Tensor of shape [C, H, W], values in [0, 1] or [0, 255]
+    :param filename: File name (e.g., 'bad_sample_001.png')
+    :param folder: Folder to save into (default = 'debug_failed_samples')
+    """
+    os.makedirs(folder, exist_ok=True)
+
+    tensor = tensor.detach().cpu().float()
+    if tensor.max() > 1:
+        tensor = tensor / 255.0
+
+    path = os.path.join(folder, filename)
+    save_image(tensor, path)
+
+
+def find_bounding_box(mask, min_size: int = CONFIG["data_augmentation"]["bbox_min_size"].get(int)):
+    if not torch.any(mask):
+        print("The mask is empty. Returning the empty bbox.")
+        return None
+
+    mask = mask.squeeze(0)
+    rows = torch.any(mask != 0, dim=1)
+    cols = torch.any(mask != 0, dim=0)
+
+    nz_rows = torch.where(rows)[0]
+    nz_cols = torch.where(cols)[0]
+
+    xmin = nz_cols[0].item()
+    ymin = nz_rows[0].item()
+    xmax = nz_cols[-1].item()
+    ymax = nz_rows[-1].item()
+
+    width = xmax - xmin + 1
+    height = ymax - ymin + 1
+
+    if width < min_size or height < min_size:
+        # print("Boundary box is too small, returning empty BBOX.")
+        return None
+
+    bbox = torch.tensor([xmin, ymin, xmax, ymax], dtype=torch.float32)
+
+    return bbox

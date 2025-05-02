@@ -48,10 +48,12 @@ dist/
 # Data & Logs
 data/images/*
 data/masks/*
+data/*
 !data/images/.gitkeep
 !data/masks/.gitkeep
 wandb/
 mlruns/
+mlartifacts/
 *.csv
 *.h5
 *.npz
@@ -73,5 +75,5 @@ Thumbs.db
 *.spec
 
 # Test notebooks
-notebooks/*
+notebooks/
 *.ipynb

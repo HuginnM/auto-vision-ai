@@ -8,6 +8,7 @@ dataset:
   - .jpeg
   - .png
 data_augmentation:
+  bbox_min_size: 20
   h_flip_prob: 0.5
   random_crop_prob: 0.5
   resize_to: 512
@@ -21,7 +22,7 @@ unet:
     in_channels: 3
     n_classes: 1
   optimizer:
-    initial_lr: 0.003
+    initial_lr: 0.01
     weight_decay: 0.005
   lr_scheduler:
     step_size: 2
@@ -46,7 +47,20 @@ mask_rcnn:
     step_size: 1
     gamma: 0.1
 trainer:
+  max_epoch: 10
   log_every_n_steps: 20
-  logger_folder: logs
   weights_folder: weights
-  logs_and_weights_root: C:\DATA\Projects\AutoVisionAI\experiments
+logging:
+  root_dir: C:\DATA\Projects\AutoVisionAI\experiments
+  tensorboard:
+    use: true
+    save_dir: tensorlogs
+  mlflow:
+    use: true
+    tracking_uri: http://127.0.0.1:8080
+    save_dir: mlruns
+  wandb:
+    use: true
+    log_model: true
+    save_dir: wandb
+    mode: online

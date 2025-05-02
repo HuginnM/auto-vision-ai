@@ -41,6 +41,7 @@ class CarsDataModule(pl.LightningDataModule):
         resize: bool = False,
         random_crop: bool = False,
         hflip: bool = False,
+        bbox: bool = False,
     ) -> None:
         super().__init__()
 
@@ -50,7 +51,7 @@ class CarsDataModule(pl.LightningDataModule):
         self.resize = resize
         self.random_crop = random_crop
         self.hflip = hflip
-
+        self.bbox = bbox
         self.full_data = None
         self.data_train = None
         self.data_val = None
@@ -62,7 +63,7 @@ class CarsDataModule(pl.LightningDataModule):
         :param stage: an argument to separate setup logic for trainer.
         """
         if stage == "fit" or stage is None:
-            transforms = get_transform(self.resize, self.random_crop, self.hflip)
+            transforms = get_transform(self.resize, self.random_crop, self.hflip, self.bbox)
             self.full_data = CarsDataset(self.data_root, transforms)
 
             n_sample = len(self.full_data)

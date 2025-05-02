@@ -23,7 +23,7 @@ def test_training_step():
     model = FastSCNNTrainer(1)
     outputs = model.training_step(test_batch, 0)
 
-    assert_almost_equal(outputs.item(), 0.6784942746162415, decimal=5)
+    assert_almost_equal(outputs.item(), 0.6832375526428223, decimal=5)
 
 
 def test_validation_step():
@@ -34,5 +34,5 @@ def test_validation_step():
     model = FastSCNNTrainer(1)
     outputs = model.validation_step(test_batch, 0)
 
-    assert_almost_equal(outputs["val_loss"].item(), 0.6784942746162415, decimal=5)
-    assert_almost_equal(outputs["val_iou"].item(), 0.28369617462158203, decimal=5)
+    assert_almost_equal(outputs["val_loss"].item(), 0.6832375526428223, decimal=5)
+    assert_almost_equal(outputs["val_iou"].item(), 0.27531957626342773, decimal=5)

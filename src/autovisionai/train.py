@@ -1,22 +1,21 @@
-import os
+from pathlib import Path
 from typing import Any
 
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
-from pytorch_lightning.loggers import TensorBoardLogger
 
 from autovisionai.configs.config import CONFIG
 from autovisionai.processing.datamodule import CarsDataModule
+from autovisionai.utils.logging import create_experiments_dirs, get_loggers, get_run_name, save_config_to_experiment
 
 accelerator = "gpu" if torch.cuda.is_available() else "cpu"
 
 
 def train_model(
-    exp_number: int,
+    experiment_name: str,
     model: Any,
     batch_size: int = 4,
-    max_epochs: int = 1,
     epoch_patience: int = 2,
     use_resize: bool = False,
     use_random_crop: bool = False,
@@ -41,26 +40,20 @@ def train_model(
         resize=use_resize,
         random_crop=use_random_crop,
         hflip=use_hflip,
+        bbox=True if isinstance(model, MaskRCNNTrainer) else False,
     )
 
-    experiment_folder = "exp_" + str(exp_number)
-
-    # Creates experiment folders to save there logs and weights
-    # Weights folder:
-    weights_folder_path = os.path.join(
-        os.path.join(CONFIG["trainer"]["logs_and_weights_root"].get(), experiment_folder),
-        CONFIG["trainer"]["weights_folder"].get(),
-    )
-    os.makedirs(weights_folder_path, exist_ok=True)
-    # Logs folder:
-    logs_folder_path = os.path.join(
-        os.path.join(CONFIG["trainer"]["logs_and_weights_root"].get(), experiment_folder),
-        CONFIG["trainer"]["logger_folder"].get(),
-    )
-    os.makedirs(logs_folder_path, exist_ok=True)
+    experiment_folder = "exp_" + experiment_name
+    experiment_path = Path(CONFIG["logging"]["root_dir"].get(str)) / experiment_folder
+    run_name = get_run_name()
+    exp_paths = create_experiments_dirs(
+        experiment_path, model._get_name(), run_name
+    )  # create logging folders and weights
+    save_config_to_experiment(experiment_path)  # copy config to exp for reproducibility
+    loggers = get_loggers(experiment_name, experiment_path, run_name)
 
     checkpoint_callback = ModelCheckpoint(
-        dirpath=weights_folder_path,
+        dirpath=exp_paths["weights_path"],
         every_n_epochs=1,
         monitor="val/loss_epoch",
         auto_insert_metric_name=False,
@@ -75,25 +68,36 @@ def train_model(
     )
 
     trainer = pl.Trainer(
-        max_epochs=max_epochs,
+        max_epochs=CONFIG["trainer"]["max_epoch"].get(int),
         accelerator=accelerator,
         devices=1,
-        logger=TensorBoardLogger(
-            save_dir=os.path.join(CONFIG["trainer"]["logs_and_weights_root"].get(), experiment_folder),
-            name=CONFIG["trainer"]["logger_folder"].get(),
-        ),
+        logger=loggers,
         log_every_n_steps=CONFIG["trainer"]["log_every_n_steps"].get(),
         callbacks=[checkpoint_callback, early_stopping_callback],
     )
     trainer.fit(model, datamodule)
 
-    torch.save(model.model.state_dict(), os.path.join(weights_folder_path, "model.pt"))
+    torch.save(model.model.state_dict(), exp_paths["weights_path"] / "model.pt")
 
 
 if __name__ == "__main__":
+    from autovisionai.models.fast_scnn.fast_scnn_trainer import FastSCNNTrainer
+    from autovisionai.models.mask_rcnn.mask_rcnn_trainer import MaskRCNNTrainer
     from autovisionai.models.unet.unet_trainer import UnetTrainer
 
-    model = UnetTrainer()
-    train_model(
-        exp_number=1, model=model, batch_size=4, max_epochs=5, use_resize=False, use_random_crop=True, use_hflip=True
-    )
+    models = [UnetTrainer, FastSCNNTrainer, MaskRCNNTrainer]
+
+    for model in models:
+        try:
+            model = model()
+            train_model(
+                experiment_name="all_model_training",
+                model=model,
+                batch_size=4,
+                use_resize=False,
+                use_random_crop=True,
+                use_hflip=True,
+            )
+        except Exception as err:
+            print(f"For the model {model} the training was unsuccessfull.")
+            print(err)
