@@ -35,9 +35,8 @@ class Resize:
     :param resize_to: a size of image and mask to be resized to.
     """
 
-    def __init__(self, resize_to: Tuple[int, int], find_bbox: bool = False):
+    def __init__(self, resize_to: Tuple[int, int]):
         self.resize_to = resize_to
-        self.find_bbox = find_bbox
 
     def __call__(self, image: torch.Tensor, target: Dict[str, torch.Tensor]):
         """
@@ -51,9 +50,6 @@ class Resize:
         image = image.squeeze(0)
         mask = mask.squeeze(0).to(torch.uint8)
         target["mask"] = mask
-
-        if self.find_bbox:
-            target["box"] = find_bounding_box(mask)
 
         return image, target
 
@@ -134,6 +130,19 @@ class RandomCropWithObject:
         return self.resizer(image, target)
 
 
+class AddBoundingBox:
+    """
+    Adds box field to the target. If the target already has 'box'
+    (e.g. after RandomCropWithObject) -- do nothing and returns input.
+
+    """
+
+    def __call__(self, image, target):
+        if "box" not in target:
+            target["box"] = find_bounding_box(target["mask"])
+        return image, target
+
+
 class HorizontalFlip:
     """
     Horizontally flips the image and mask with a given probability.
@@ -141,9 +150,8 @@ class HorizontalFlip:
     :param prob: a probability of image and mask being flipped.
     """
 
-    def __init__(self, prob: float, find_bbox: bool = False) -> None:
+    def __init__(self, prob: float) -> None:
         self.prob = prob
-        self.find_bbox = find_bbox
 
     def __call__(
         self, image: torch.Tensor, target: Dict[str, torch.Tensor]
@@ -156,9 +164,6 @@ class HorizontalFlip:
         if random.random() < self.prob:
             image = TF.hflip(image)
             target["mask"] = TF.hflip(target["mask"])
-
-        if self.find_bbox:
-            target["box"] = find_bounding_box(target["mask"])
 
         return image, target
 
@@ -202,7 +207,6 @@ def get_transform(resize: bool = False, random_crop: bool = False, hflip: bool =
                     CONFIG["data_augmentation"]["resize_to"].get(),
                     CONFIG["data_augmentation"]["resize_to"].get(),
                 ),
-                find_bbox=bbox,
             )
         )
     elif random_crop:
@@ -217,6 +221,8 @@ def get_transform(resize: bool = False, random_crop: bool = False, hflip: bool =
             )
         )
     if hflip:
-        transforms.append(HorizontalFlip(prob=CONFIG["data_augmentation"]["h_flip_prob"].get(), find_bbox=bbox))
+        transforms.append(HorizontalFlip(prob=CONFIG["data_augmentation"]["h_flip_prob"].get()))
+    if bbox:
+        transforms.append(AddBoundingBox())
 
     return Compose(transforms)

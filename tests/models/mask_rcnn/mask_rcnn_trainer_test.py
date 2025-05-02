@@ -11,7 +11,7 @@ def set_seed(seed):
 
 
 def generate_test_batch():
-    dm = CarsDataModule(data_root=CONFIG["dataset"]["test_data_root"].get(), batch_size=2, num_workers=2)
+    dm = CarsDataModule(data_root=CONFIG["dataset"]["test_data_root"].get(), batch_size=2, num_workers=2, bbox=True)
     dm.setup()
     test_batch = next(iter(dm.train_dataloader()))
     return test_batch
@@ -63,3 +63,13 @@ def test_validation_step():
     assert_almost_equal(outputs["val_outputs"]["loss_step"].item(), 4.5896124839782715, decimal=2)
     assert_almost_equal(outputs["val_outputs"]["loss_mask"].item(), 3.671604871749878, decimal=2)
     assert_almost_equal(outputs["val_iou"].item(), 0.18407917022705078, decimal=2)
+
+
+if __name__ == "__main__":
+    batch = generate_test_batch()
+    print(type(batch[1]))
+    if isinstance(type(batch[1]), dict):
+        print(batch[1].keys())
+
+    for i in batch[1]:
+        print(i.keys())
