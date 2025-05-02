@@ -8,7 +8,7 @@ from torch.optim.lr_scheduler import StepLR
 
 from autovisionai.configs.config import CONFIG
 from autovisionai.models.fast_scnn.fast_scnn_model import FastSCNN
-from autovisionai.utils.logging import log_image_for_all_loggers
+from autovisionai.utils.logging import log_image_to_all_loggers
 from autovisionai.utils.utils import get_batch_images_and_pred_masks_in_a_grid, masks_iou
 
 
@@ -87,21 +87,21 @@ class FastSCNNTrainer(pl.LightningModule):
 
         loss_epoch = torch.stack([o["val_loss"] for o in self.val_outputs]).mean()
         avg_iou = torch.stack([o["val_iou"] for o in self.val_outputs]).mean()
-        pred_masks = torch.cat([o["pred_masks"] for o in self.val_outputs], dim=0)[:64]
-        images = torch.cat([o["images"] for o in self.val_outputs], dim=0)[:64]
+        pred_masks = torch.cat([o["pred_masks"] for o in self.val_outputs], dim=0)[:16]
+        images = torch.cat([o["images"] for o in self.val_outputs], dim=0)[:16]
 
         self.log("val/loss_epoch", loss_epoch, prog_bar=True)
         self.log("val/val_iou", avg_iou, prog_bar=True)
 
         imgs_grid = get_batch_images_and_pred_masks_in_a_grid(pred_masks, images)
 
-        log_image_for_all_loggers(
-            loggers=self.logger,
+        log_image_to_all_loggers(
+            loggers=self.trainer.loggers,
             tag="Predicted masks on images per epoch",
             image_tensor=imgs_grid,
-            step=self.current_epoch,
+            epoch=self.current_epoch,
+            step=self.global_step,
         )
-
         self.val_outputs.clear()
 
     def configure_optimizers(self) -> Dict[str, Union[Optimizer, object]]:

@@ -31,6 +31,6 @@ def test_validation_step():
     test_batch = generate_test_batch()
 
     model = UnetTrainer(3, 1)
-    outputs = model.validation_step(test_batch, 0)
+    outputs = model.validation_step(test_batch)
     assert_almost_equal(outputs["val_loss"].item(), 0.6361280679702759, decimal=1)
     assert_almost_equal(outputs["val_iou"].item(), 0.3317837715148926, decimal=1)

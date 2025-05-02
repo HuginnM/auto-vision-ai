@@ -48,6 +48,7 @@ dist/
 # Data & Logs
 data/images/*
 data/masks/*
+data/*
 !data/images/.gitkeep
 !data/masks/.gitkeep
 wandb/

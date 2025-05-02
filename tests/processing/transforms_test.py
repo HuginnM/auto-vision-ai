@@ -3,6 +3,7 @@ import torch
 from PIL import Image
 
 from autovisionai.processing.transforms import HorizontalFlip, RandomCrop, Resize, ToTensor
+from autovisionai.utils.utils import find_bounding_box
 
 NUMPY_IMAGE = np.array(
     [
@@ -141,3 +142,30 @@ def test_horizontal_flip():
             [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 1, 1, 1, 1], [0, 0, 1, 1, 1], [0, 0, 0, 0, 0]], dtype=torch.uint8
         )
     ).all()
+
+
+def test_empty_mask_returns_none():
+    mask = torch.zeros((1, 10, 10), dtype=torch.uint8)
+    assert find_bounding_box(mask) is None
+
+
+def test_single_pixel_object_below_min_size():
+    mask = torch.zeros((1, 10, 10), dtype=torch.uint8)
+    mask[0, 5, 5] = 1
+    assert find_bounding_box(mask, min_size=2) is None
+
+
+def test_valid_object_box():
+    mask = torch.zeros((1, 10, 10), dtype=torch.uint8)
+    mask[0, 2:5, 3:6] = 1  # object from (3,2) to (5,4)
+    bbox = find_bounding_box(mask, min_size=1)
+    expected = torch.tensor([3, 2, 5, 4], dtype=torch.float32)
+    assert torch.equal(bbox, expected)
+
+
+def test_object_with_exact_min_size():
+    mask = torch.zeros((1, 10, 10), dtype=torch.uint8)
+    mask[0, 2:4, 3:6] = 1  # height=2, width=3
+    bbox = find_bounding_box(mask, min_size=2)
+    expected = torch.tensor([3, 2, 5, 3], dtype=torch.float32)
+    assert torch.equal(bbox, expected)

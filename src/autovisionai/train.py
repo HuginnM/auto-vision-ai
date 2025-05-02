@@ -40,6 +40,7 @@ def train_model(
         resize=use_resize,
         random_crop=use_random_crop,
         hflip=use_hflip,
+        bbox=True if isinstance(model, MaskRCNNTrainer) else False,
     )
 
     experiment_folder = "exp_" + experiment_name
@@ -78,14 +79,31 @@ def train_model(
 
 
 if __name__ == "__main__":
-    from autovisionai.models.unet.unet_trainer import UnetTrainer
+    from autovisionai.models.mask_rcnn.mask_rcnn_trainer import MaskRCNNTrainer
 
-    model = UnetTrainer()
+    # models = [UnetTrainer, FastSCNNTrainer, MaskRCNNTrainer]
+
+    # for model in models:
+    #     try:
+    #         model = model()
+    #         train_model(
+    #             experiment_name="three-models-training-compare",
+    #             model=model,
+    #             batch_size=4,
+    #             use_resize=False,
+    #             use_random_crop=True,
+    #             use_hflip=True,
+    #         )
+    #     except Exception as err:
+    #         print(f"For the model {model} the training was unsuccessfull.")
+    #         print(err)
+
+    model = MaskRCNNTrainer()
     train_model(
-        experiment_name="wandb_image_logging",
+        experiment_name="three-models-training-compare",
         model=model,
         batch_size=4,
-        use_resize=False,
+        use_resize=True,
         use_random_crop=True,
         use_hflip=True,
     )

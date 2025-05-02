@@ -146,6 +146,7 @@ dependencies = [
     { name = "opencv-python" },
     { name = "pillow" },
     { name = "pre-commit" },
+    { name = "pytest" },
     { name = "pytorch-lightning" },
     { name = "pyyaml" },
     { name = "requests" },
@@ -163,11 +164,13 @@ dependencies = [
 all = [
     { name = "pre-commit" },
     { name = "pytest" },
+    { name = "python-dotenv" },
     { name = "ruff" },
 ]
 dev = [
     { name = "pre-commit" },
     { name = "pytest" },
+    { name = "python-dotenv" },
     { name = "ruff" },
 ]
 lint = [
@@ -175,11 +178,6 @@ lint = [
 ]
 test = [
     { name = "pytest" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "python-dotenv" },
 ]
 
 [package.metadata]
@@ -193,8 +191,10 @@ requires-dist = [
     { name = "pillow", specifier = ">=11.2.1" },
     { name = "pre-commit", specifier = ">=4.2.0" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.2.0" },
+    { name = "pytest", specifier = ">=8.3.5" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3.5" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8.3.5" },
+    { name = "python-dotenv", marker = "extra == 'dev'", specifier = ">=1.1.0" },
     { name = "pytorch-lightning", specifier = ">=2.5.1" },
     { name = "pyyaml", specifier = ">=6.0.2" },
     { name = "requests", specifier = ">=2.32.3" },
@@ -209,9 +209,6 @@ requires-dist = [
     { name = "wandb", specifier = ">=0.19.10" },
 ]
 provides-extras = ["test", "lint", "dev", "all"]
-
-[package.metadata.requires-dev]
-dev = [{ name = "python-dotenv", specifier = ">=1.1.0" }]
 
 [[package]]
 name = "blinker"

@@ -8,6 +8,7 @@ from PIL import Image
 from torchvision import transforms as T
 
 from autovisionai.configs.config import CONFIG
+from autovisionai.utils.utils import find_bounding_box
 
 
 class ToTensor:
@@ -34,8 +35,9 @@ class Resize:
     :param resize_to: a size of image and mask to be resized to.
     """
 
-    def __init__(self, resize_to: Tuple[int, int]):
+    def __init__(self, resize_to: Tuple[int, int], find_bbox: bool = False):
         self.resize_to = resize_to
+        self.find_bbox = find_bbox
 
     def __call__(self, image: torch.Tensor, target: Dict[str, torch.Tensor]):
         """
@@ -49,6 +51,9 @@ class Resize:
         image = image.squeeze(0)
         mask = mask.squeeze(0).to(torch.uint8)
         target["mask"] = mask
+
+        if self.find_bbox:
+            target["box"] = find_bounding_box(mask)
 
         return image, target
 
@@ -83,6 +88,52 @@ class RandomCrop:
         return image, target
 
 
+class RandomCropWithObject:
+    """
+    Randomly crops the image and mask, ensuring the object is not completely lost (mask not empty).
+    Falls back to Resize if all attempts fail.
+
+    :param prob: Probability to apply random crop.
+    :param crop_to: Output size (H, W).
+    :param max_tries: How many times to try finding a crop with some object inside.
+    """
+
+    def __init__(self, prob: float, crop_to: Tuple[int, int], add_bbox: bool = False, max_tries: int = 10) -> None:
+        self.prob = prob
+        self.crop_to = crop_to
+        self.max_tries = max_tries
+        self.add_bbox = add_bbox
+        self.resizer = Resize(crop_to)  # fallback resizer
+
+    def __call__(
+        self, image: torch.Tensor, target: Dict[str, torch.Tensor]
+    ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
+        if random.random() >= self.prob:
+            # print("[RandomCropWithObject] Skipped cropping (probability gate)")
+            return self.resizer(image, target)
+
+        for _ in range(self.max_tries):
+            i, j, h_crop, w_crop = T.RandomCrop.get_params(image, output_size=self.crop_to)
+            cropped_mask = TF.crop(target["mask"], i, j, h_crop, w_crop)
+
+            if torch.any(cropped_mask):
+                bbox_of_mask = find_bounding_box(cropped_mask)
+
+                # If bbox is valid, then find_bounding_box will return
+                # valid bbox tensor and the model can use it.
+                if isinstance(bbox_of_mask, torch.Tensor):
+                    image = TF.crop(image, i, j, h_crop, w_crop)
+                    target["mask"] = cropped_mask
+
+                    if self.add_bbox:
+                        target["box"] = bbox_of_mask
+                    # print(f"[RandomCropWithObject] Applied crop (attempt {attempt + 1}) at (i={i}, j={j})")
+                    return image, target
+
+        print("[RandomCropWithObject] Fallback: all crops were empty — applied resize")
+        return self.resizer(image, target)
+
+
 class HorizontalFlip:
     """
     Horizontally flips the image and mask with a given probability.
@@ -90,8 +141,9 @@ class HorizontalFlip:
     :param prob: a probability of image and mask being flipped.
     """
 
-    def __init__(self, prob: float) -> None:
+    def __init__(self, prob: float, find_bbox: bool = False) -> None:
         self.prob = prob
+        self.find_bbox = find_bbox
 
     def __call__(
         self, image: torch.Tensor, target: Dict[str, torch.Tensor]
@@ -104,6 +156,9 @@ class HorizontalFlip:
         if random.random() < self.prob:
             image = TF.hflip(image)
             target["mask"] = TF.hflip(target["mask"])
+
+        if self.find_bbox:
+            target["box"] = find_bounding_box(target["mask"])
 
         return image, target
 
@@ -130,7 +185,7 @@ class Compose:
         return image, target
 
 
-def get_transform(resize: bool = False, random_crop: bool = False, hflip: bool = False) -> Compose:
+def get_transform(resize: bool = False, random_crop: bool = False, hflip: bool = False, bbox: bool = False) -> Compose:
     """
     Compose transforms for image amd mask augmentations.
     :param resize: specify, whether to apply image resize or not.
@@ -146,20 +201,22 @@ def get_transform(resize: bool = False, random_crop: bool = False, hflip: bool =
                 resize_to=(
                     CONFIG["data_augmentation"]["resize_to"].get(),
                     CONFIG["data_augmentation"]["resize_to"].get(),
-                )
+                ),
+                find_bbox=bbox,
             )
         )
     elif random_crop:
         transforms.append(
-            RandomCrop(
+            RandomCropWithObject(
                 prob=CONFIG["data_augmentation"]["random_crop_prob"].get(),
                 crop_to=(
                     CONFIG["data_augmentation"]["random_crop_crop_to"].get(),
                     CONFIG["data_augmentation"]["random_crop_crop_to"].get(),
                 ),
+                add_bbox=bbox,
             )
         )
     if hflip:
-        transforms.append(HorizontalFlip(prob=CONFIG["data_augmentation"]["h_flip_prob"].get()))
+        transforms.append(HorizontalFlip(prob=CONFIG["data_augmentation"]["h_flip_prob"].get(), find_bbox=bbox))
 
     return Compose(transforms)

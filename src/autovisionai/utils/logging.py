@@ -1,12 +1,17 @@
 import datetime as dt
+import io
 import os
 import shutil
+import traceback
 from pathlib import Path
 
 import torch
+import torchvision.transforms.functional as F
 import wandb
+from PIL import Image
 from pytorch_lightning.loggers import MLFlowLogger, TensorBoardLogger, WandbLogger
 
+# from pytorch_lightning.loggers.logger import LoggerCollection
 from autovisionai.configs.config import CONFIG, config_file_path
 
 
@@ -108,7 +113,7 @@ def save_config_to_experiment(experiment_path: Path) -> None:
         shutil.copy(str(config_file_path), str(destination_path))
 
 
-def log_image_for_all_loggers(loggers: list, tag: str, image_tensor: torch.Tensor, step: int) -> None:
+def log_image_to_all_loggers(loggers: list, tag: str, image_tensor: torch.Tensor, epoch: int, step: int) -> None:
     """
     Logs an image to all available loggers depending on their type.
     Supports TensorBoardLogger and WandbLogger.
@@ -117,13 +122,44 @@ def log_image_for_all_loggers(loggers: list, tag: str, image_tensor: torch.Tenso
     :param loggers: list of loggers.
     :param image_tensor: A torch.Tensor image (C, H, W).
     :param tag: Name/tag for the image.
-    :param step: step number.
+    :param epoch: epoch number
+    :param step: global step number.
     """
-    if not isinstance(loggers, (list, tuple)):
-        loggers = [loggers]
+    pil_image = compress_image_for_logging(image_tensor)
 
     for logger in loggers:
         if isinstance(logger, TensorBoardLogger):
-            logger.experiment.add_image(tag, image_tensor, global_step=step)
+            try:
+                logger.experiment.add_image(tag, F.to_tensor(pil_image), global_step=epoch)
+            except Exception:
+                error_message = traceback.format_exc()
+                print("Error with logging the image to TensorBoard:\n", error_message)
         elif isinstance(logger, WandbLogger):
-            logger.experiment.log({tag: wandb.Image(image_tensor)}, step=step)
+            try:
+                logger.experiment.log({tag: wandb.Image(pil_image), "epoch": epoch}, step=step)
+            except Exception:
+                error_message = traceback.format_exc()
+                print("Error with logging the image to Weight and Biases:\n", error_message)
+        elif isinstance(logger, MLFlowLogger):
+            # log_image_to_mlflow(logger, image_tensor, tag, step)
+            try:
+                logger.experiment.log_image(run_id=logger.run_id, image=pil_image, key=tag, step=epoch)
+            except Exception:
+                error_message = traceback.format_exc()
+                print("Error with logging the image to MLflow:\n", error_message)
+
+
+def compress_image_for_logging(image_tensor: torch.Tensor, quality: int = 75) -> Image:
+    """
+    Compresses the given tensor image and returns PIL Image.
+    :param image_tensor: image tensor.
+    :param quality: jpeg image compresssion quality
+    :return: A compressed copy of the image.
+    """
+    image = F.to_pil_image(image_tensor)
+
+    buffer = io.BytesIO()
+    image.save(buffer, format="JPEG", optimize=True, quality=quality)
+    buffer.seek(0)
+
+    return Image.open(buffer)
