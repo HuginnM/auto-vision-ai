@@ -1,3 +1,4 @@
+import traceback
 from pathlib import Path
 from typing import Any
 
@@ -37,7 +38,7 @@ def train_model(
     run_name = get_run_name()
     model_name = model._get_name()
     logger.info(
-        f"Start training model ({model_name}) under experiment: '{{experiment_name}}' and run name: '{{run_name}}'."
+        f"Start training model ({model_name}) under experiment: '{experiment_name}' and run name: '{run_name}'."
     )
 
     datamodule = CarsDataModule(
@@ -90,11 +91,10 @@ def train_model(
 
 
 if __name__ == "__main__":
-    from autovisionai.models.fast_scnn.fast_scnn_trainer import FastSCNNTrainer
     from autovisionai.models.mask_rcnn.mask_rcnn_trainer import MaskRCNNTrainer
     from autovisionai.models.unet.unet_trainer import UnetTrainer
 
-    models = [UnetTrainer, FastSCNNTrainer, MaskRCNNTrainer]
+    models = [UnetTrainer]  # , FastSCNNTrainer, MaskRCNNTrainer]
 
     for model in models:
         try:
@@ -107,6 +107,6 @@ if __name__ == "__main__":
                 use_random_crop=True,
                 use_hflip=True,
             )
-        except Exception as err:
-            print(f"For the model {model} the training was unsuccessfull.")
-            print(err)
+        except Exception:
+            error_message = traceback.format_exc()
+            logger.exception(f"For the model {model} the training was unsuccessfull.\n", error_message)

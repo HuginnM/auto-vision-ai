@@ -38,7 +38,6 @@ def get_loggers(experiment_name: str, experiment_path: Path, run_name: str = "ru
     if CONFIG["logging"]["tensorboard"]["use"].get(bool):
         tb_log_dir = experiment_path / CONFIG["logging"]["tensorboard"]["save_dir"].get(str)
         loggers.append(TensorBoardLogger(save_dir=str(tb_log_dir), name=run_name))
-        logger.info("Created TensorBoardLogger.")
     # MLflow Logger
     if CONFIG["logging"]["mlflow"]["use"].get(bool):
         mlflow_uri = CONFIG["logging"]["mlflow"]["tracking_uri"].get(str)
@@ -51,8 +50,6 @@ def get_loggers(experiment_name: str, experiment_path: Path, run_name: str = "ru
                 save_dir=str(ml_log_dir),
             )
         )
-        logger.info("Created MLFlowLogger.")
-
     # W&B Logger
     if CONFIG["logging"]["wandb"]["use"].get(bool):
         wandb_mode = CONFIG["logging"]["wandb"]["mode"].get(str)
@@ -67,7 +64,10 @@ def get_loggers(experiment_name: str, experiment_path: Path, run_name: str = "ru
                 save_dir=str(wandb_log_dir),
             )
         )
-        logger.info("Created WandbLogger.")
+    if len(loggers) > 0:
+        logger.info(f"Initialized ML loggers: {', '.join([type(log).__name__ for log in loggers])}")
+    else:
+        logger.warning("There are no enabled ML loggers. Experiments are untracked.")
     return loggers
 
 
@@ -117,7 +117,7 @@ def save_config_to_experiment(experiment_path: Path) -> None:
     if not destination_path.exists():
         shutil.copy(str(config_file_path), str(destination_path))
 
-    logger.info(f"The ML config.yaml was successfully saved to the experiment folder: {experiment_path}.")
+    logger.debug(f"The ML config.yaml was successfully saved to the experiment folder: {experiment_path}.")
 
 
 def log_image_to_all_loggers(ml_loggers: list, tag: str, image_tensor: torch.Tensor, epoch: int, step: int) -> None:
@@ -138,14 +138,12 @@ def log_image_to_all_loggers(ml_loggers: list, tag: str, image_tensor: torch.Ten
         if isinstance(ml_logger, TensorBoardLogger):
             try:
                 ml_logger.experiment.add_image(tag, F.to_tensor(pil_image), global_step=epoch)
-                logger.debug("The image was successfully uploaded to TensorBoardLogger.")
             except Exception:
                 error_message = traceback.format_exc()
                 logger.exception("Error with logging the image to TensorBoard:\n", error_message)
         elif isinstance(ml_logger, WandbLogger):
             try:
                 ml_logger.experiment.log({tag: wandb.Image(pil_image), "epoch": epoch}, step=step)
-                logger.debug("The image was successfully uploaded to WandbLogger.")
             except Exception:
                 error_message = traceback.format_exc()
                 logger.exception("Error with logging the image to Weight and Biases:\n", error_message)
@@ -153,7 +151,6 @@ def log_image_to_all_loggers(ml_loggers: list, tag: str, image_tensor: torch.Ten
             # log_image_to_mlflow(logger, image_tensor, tag, step)
             try:
                 ml_logger.experiment.log_image(run_id=ml_logger.run_id, image=pil_image, key=tag, step=epoch)
-                logger.debug("The image was successfully uploaded to MLFlowLogger.")
             except Exception:
                 error_message = traceback.format_exc()
                 logger.exception("Error with logging the image to MLflow:\n", error_message)

@@ -26,7 +26,6 @@ class ToTensor:
         :return: a converted torch.Tensor image and its target annotation.
         """
         image = T.ToTensor()(image)
-        logger.debug("Image converted to tensor.")
         return image, target
 
 
@@ -53,7 +52,6 @@ class Resize:
         mask = mask.squeeze(0).to(torch.uint8)
         target["mask"] = mask
 
-        logger.debug(f"The image and the mask were resized to {self.resize_to}.")
         return image, target
 
 
@@ -84,7 +82,6 @@ class RandomCrop:
         else:
             image, target = Resize(self.crop_to)(image, target)
 
-        logger.debug("Applied standard RandomCrop to image and target.")
         return image, target
 
 
@@ -109,10 +106,9 @@ class RandomCropWithObject:
         self, image: torch.Tensor, target: Dict[str, torch.Tensor]
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         if random.random() >= self.prob:
-            logger.debug(f"Skipped cropping (probability gate = {self.prob})")
             return self.resizer(image, target)
 
-        for attempt in range(self.max_tries):
+        for _ in range(self.max_tries):
             i, j, h_crop, w_crop = T.RandomCrop.get_params(image, output_size=self.crop_to)
             cropped_mask = TF.crop(target["mask"], i, j, h_crop, w_crop)
 
@@ -128,7 +124,7 @@ class RandomCropWithObject:
                     if self.add_bbox:
                         target["box"] = bbox_of_mask
 
-                    logger.debug(f"Applied crop (attempt {attempt + 1}) at (i={i}, j={j})")
+                    # logger.debug(f"Applied crop (attempt {attempt + 1}) at (i={i}, j={j})")
                     return image, target
 
         logger.warning("Fallback: all crops were empty — applied resize")
@@ -145,7 +141,7 @@ class AddBoundingBox:
     def __call__(self, image, target):
         if "box" not in target:
             target["box"] = find_bounding_box(target["mask"])
-            logger.debug("Bounding box was added to target.")
+
         return image, target
 
 
@@ -170,7 +166,7 @@ class HorizontalFlip:
         if random.random() < self.prob:
             image = TF.hflip(image)
             target["mask"] = TF.hflip(target["mask"])
-            logger.debug("The image and the mask were horizontally flipped.")
+
         return image, target
 
 
