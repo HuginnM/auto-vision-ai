@@ -115,7 +115,7 @@ def save_config_to_experiment(experiment_path: Path) -> None:
         shutil.copy(str(config_file_path), str(destination_path))
 
 
-def log_image_to_all_loggers(loggers: list, tag: str, image_tensor: torch.Tensor, epoch: int, step: int) -> None:
+def log_image_to_all_loggers(ml_loggers: list, tag: str, image_tensor: torch.Tensor, epoch: int, step: int) -> None:
     """
     Logs an image to all available loggers depending on their type.
     Supports TensorBoardLogger and WandbLogger.
@@ -129,23 +129,23 @@ def log_image_to_all_loggers(loggers: list, tag: str, image_tensor: torch.Tensor
     """
     pil_image = compress_image_for_logging(image_tensor)
 
-    for logger in loggers:
-        if isinstance(logger, TensorBoardLogger):
+    for ml_logger in ml_loggers:
+        if isinstance(ml_logger, TensorBoardLogger):
             try:
-                logger.experiment.add_image(tag, F.to_tensor(pil_image), global_step=epoch)
+                ml_logger.experiment.add_image(tag, F.to_tensor(pil_image), global_step=epoch)
             except Exception:
                 error_message = traceback.format_exc()
                 print("Error with logging the image to TensorBoard:\n", error_message)
-        elif isinstance(logger, WandbLogger):
+        elif isinstance(ml_logger, WandbLogger):
             try:
-                logger.experiment.log({tag: wandb.Image(pil_image), "epoch": epoch}, step=step)
+                ml_logger.experiment.log({tag: wandb.Image(pil_image), "epoch": epoch}, step=step)
             except Exception:
                 error_message = traceback.format_exc()
                 print("Error with logging the image to Weight and Biases:\n", error_message)
-        elif isinstance(logger, MLFlowLogger):
+        elif isinstance(ml_logger, MLFlowLogger):
             # log_image_to_mlflow(logger, image_tensor, tag, step)
             try:
-                logger.experiment.log_image(run_id=logger.run_id, image=pil_image, key=tag, step=epoch)
+                ml_logger.experiment.log_image(run_id=ml_logger.run_id, image=pil_image, key=tag, step=epoch)
             except Exception:
                 error_message = traceback.format_exc()
                 print("Error with logging the image to MLflow:\n", error_message)
