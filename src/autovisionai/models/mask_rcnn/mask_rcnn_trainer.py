@@ -7,8 +7,8 @@ from torch.optim.lr_scheduler import StepLR
 
 from autovisionai.configs.config import CONFIG
 from autovisionai.models.mask_rcnn.mask_rcnn_model import create_model
-from autovisionai.utils.logging import get_run_name, log_image_to_all_loggers
-from autovisionai.utils.utils import bboxes_iou, get_batch_images_and_pred_masks_in_a_grid, save_tensor_image
+from autovisionai.utils.logging import log_image_to_all_loggers
+from autovisionai.utils.utils import bboxes_iou, get_batch_images_and_pred_masks_in_a_grid
 
 accelerator = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -73,11 +73,6 @@ class MaskRCNNTrainer(pl.LightningModule):
                 # contains only 1 object. Take whole masks here to include all instances.
                 stacked.append(masks[0])
             else:
-                save_tensor_image(
-                    images[i],
-                    f"bad_image_{get_run_name() + '__' + str(i)}.png",
-                    r"C:\DATA\Projects\AutoVisionAI\data\bad_images",
-                )
                 _, height, witdth = images[i].shape
                 stacked.append(torch.zeros((1, height, witdth), dtype=torch.float32, device=self.device))
                 print(f"[_safe_stack_pred_masks] No masks for prediction {i}, inserting empty mask.")
@@ -85,7 +80,7 @@ class MaskRCNNTrainer(pl.LightningModule):
         return torch.stack(stacked)
 
     def _convert_targets_to_mask_rcnn_format(
-        self, targets: Tuple[Dict[str, torch.Tensor]], images
+        self, targets: Tuple[Dict[str, torch.Tensor]]
     ) -> Tuple[Dict[str, torch.Tensor]]:
         """
         Converts targets from datamodule batch to Mask-RCNN format.
@@ -113,7 +108,7 @@ class MaskRCNNTrainer(pl.LightningModule):
         images, targets = batch
 
         images = torch.stack(images)
-        valid_targets = self._convert_targets_to_mask_rcnn_format(targets, images)
+        valid_targets = self._convert_targets_to_mask_rcnn_format(targets)
 
         self.model.train()
 
@@ -178,19 +173,10 @@ class MaskRCNNTrainer(pl.LightningModule):
         self.model.eval()
         preds = self.model(images)
 
-        # Mask R-CNN returns dict of lists with predictions but we need tensors for logs.
-        try:
-            pred_masks = torch.stack([pred["masks"][0] for pred in preds])
-        except IndexError:
-            import pickle
-
-            with open(r"C:\DATA\Projects\AutoVisionAI\data\bad_images\batch\bad_batch.pkl", "wb") as b_file:
-                pickle.dump(batch, b_file)
-
         pred_masks = self._safe_stack_pred_masks(preds, images)
         images_tensor = torch.stack(images)
 
-        targets = self._convert_targets_to_mask_rcnn_format(targets, images)
+        targets = self._convert_targets_to_mask_rcnn_format(targets)
         bboxes_iou_score = torch.stack([bboxes_iou(t, o) for t, o in zip(targets, preds, strict=False)]).mean()
 
         output = {

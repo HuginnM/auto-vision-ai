@@ -40,7 +40,7 @@ mask_rcnn:
     n_classes: 2
     hidden_size: 256
   optimizer:
-    initial_lr: 0.01
+    initial_lr: 0.005
     momentum: 0.9
     weight_decay: 0.0005
   lr_scheduler:
