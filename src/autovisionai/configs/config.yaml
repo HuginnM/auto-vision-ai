@@ -54,13 +54,13 @@ logging:
   root_dir: C:\DATA\Projects\AutoVisionAI\experiments
   tensorboard:
     use: true
-    save_dir: tb_logs
+    save_dir: tensorlogs
   mlflow:
     use: true
     tracking_uri: http://127.0.0.1:8080
-    save_dir: mlruns_logs
+    save_dir: mlruns
   wandb:
     use: true
     log_model: true
-    save_dir: wandb_logs
+    save_dir: wandb
     mode: online

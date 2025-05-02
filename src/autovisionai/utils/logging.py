@@ -4,6 +4,7 @@ import os
 import shutil
 import traceback
 from pathlib import Path
+from typing import Dict
 
 import torch
 import torchvision.transforms.functional as F
@@ -20,7 +21,7 @@ def get_run_name():
     return f"run_{dt.datetime.now(tz=local_tz).strftime('%Y%m%dT%H%M%SUTC%z')}".replace("+", "")  # ISO8601 format
 
 
-def get_loggers(experiment_name: str, experiment_path: Path) -> list:
+def get_loggers(experiment_name: str, experiment_path: Path, run_name: str = "run_default") -> list:
     """
     Creates a list of loggers based on the provided config.
     Supports TensorBoard, MLflow, and Weights & Biases (W&B).
@@ -31,7 +32,6 @@ def get_loggers(experiment_name: str, experiment_path: Path) -> list:
     :return: A list of PyTorch Lightning-compatible loggers.
     """
     loggers = []
-    run_name = get_run_name()
 
     # TensorBoard Logger
     if CONFIG["logging"]["tensorboard"]["use"].get(bool):
@@ -69,7 +69,9 @@ def get_loggers(experiment_name: str, experiment_path: Path) -> list:
     return loggers
 
 
-def create_experiments_dirs(experiment_path: Path) -> None:
+def create_experiments_dirs(
+    experiment_path: Path, model_name: str = "all_models", run_name="run_default"
+) -> Dict[str, Path]:
     """
     Creates necessary directories for the experiment:
     - TensorBoard logs
@@ -93,7 +95,7 @@ def create_experiments_dirs(experiment_path: Path) -> None:
         path_dict["wandb_log_dir"] = experiment_path / CONFIG["logging"]["wandb"]["save_dir"].get(str)
         path_dict["wandb_log_dir"].mkdir(parents=True, exist_ok=True)
 
-    path_dict["weights_path"] = experiment_path / CONFIG["trainer"]["weights_folder"].get(str)
+    path_dict["weights_path"] = experiment_path / CONFIG["trainer"]["weights_folder"].get(str) / model_name / run_name
     path_dict["weights_path"].mkdir(parents=True, exist_ok=True)
 
     return path_dict

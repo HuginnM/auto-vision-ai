@@ -7,7 +7,7 @@ from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 
 from autovisionai.configs.config import CONFIG
 from autovisionai.processing.datamodule import CarsDataModule
-from autovisionai.utils.logging import create_experiments_dirs, get_loggers, save_config_to_experiment
+from autovisionai.utils.logging import create_experiments_dirs, get_loggers, get_run_name, save_config_to_experiment
 
 accelerator = "gpu" if torch.cuda.is_available() else "cpu"
 
@@ -45,10 +45,12 @@ def train_model(
 
     experiment_folder = "exp_" + experiment_name
     experiment_path = Path(CONFIG["logging"]["root_dir"].get(str)) / experiment_folder
-
-    exp_paths = create_experiments_dirs(experiment_path)  # create logging folders and weights
+    run_name = get_run_name()
+    exp_paths = create_experiments_dirs(
+        experiment_path, model._get_name(), run_name
+    )  # create logging folders and weights
     save_config_to_experiment(experiment_path)  # copy config to exp for reproducibility
-    loggers = get_loggers(experiment_name, experiment_path)
+    loggers = get_loggers(experiment_name, experiment_path, run_name)
 
     checkpoint_callback = ModelCheckpoint(
         dirpath=exp_paths["weights_path"],
@@ -89,7 +91,7 @@ if __name__ == "__main__":
         try:
             model = model()
             train_model(
-                experiment_name="three-models-training-compare",
+                experiment_name="all_model_training",
                 model=model,
                 batch_size=4,
                 use_resize=False,
