@@ -6,8 +6,9 @@ import torch
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 
 from autovisionai.configs.config import CONFIG
+from autovisionai.loggers.app_logger import logger
 from autovisionai.processing.datamodule import CarsDataModule
-from autovisionai.utils.logging import create_experiments_dirs, get_loggers, get_run_name, save_config_to_experiment
+from autovisionai.utils.ml_logging import create_experiments_dirs, get_loggers, get_run_name, save_config_to_experiment
 
 accelerator = "gpu" if torch.cuda.is_available() else "cpu"
 
@@ -33,6 +34,12 @@ def train_model(
     :param use_random_crop: specify, whether to apply image resize and random crop or not.
     :param use_hflip: specify, whether to apply image horizontal flip or not.
     """
+    run_name = get_run_name()
+    model_name = model._get_name()
+    logger.info(
+        f"Start training model ({model_name}) under experiment: '{{experiment_name}}' and run name: '{{run_name}}'."
+    )
+
     datamodule = CarsDataModule(
         data_root=CONFIG["dataset"]["data_root"].get(),
         batch_size=batch_size,
@@ -42,13 +49,12 @@ def train_model(
         hflip=use_hflip,
         bbox=True if isinstance(model, MaskRCNNTrainer) else False,
     )
+    logger.info(f"Created datamodule with resize: {use_resize}, random_crop: {use_random_crop}, hflip: {use_hflip}.")
 
     experiment_folder = "exp_" + experiment_name
     experiment_path = Path(CONFIG["logging"]["root_dir"].get(str)) / experiment_folder
-    run_name = get_run_name()
-    exp_paths = create_experiments_dirs(
-        experiment_path, model._get_name(), run_name
-    )  # create logging folders and weights
+
+    exp_paths = create_experiments_dirs(experiment_path, model_name, run_name)  # create logging folders and weights
     save_config_to_experiment(experiment_path)  # copy config to exp for reproducibility
     loggers = get_loggers(experiment_name, experiment_path, run_name)
 
@@ -76,8 +82,11 @@ def train_model(
         callbacks=[checkpoint_callback, early_stopping_callback],
     )
     trainer.fit(model, datamodule)
+    logger.info(f"The model {model_name} finished their training.")
 
-    torch.save(model.model.state_dict(), exp_paths["weights_path"] / "model.pt")
+    model_weights_path = exp_paths["weights_path"] / "model.pt"
+    torch.save(model.model.state_dict(), model_weights_path)
+    logger.info(f"The model {model_name} weights were saved to the folder: '{model_weights_path}'.")
 
 
 if __name__ == "__main__":

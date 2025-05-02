@@ -8,6 +8,7 @@ from PIL import Image
 from torchvision import transforms as T
 
 from autovisionai.configs.config import CONFIG
+from autovisionai.loggers.app_logger import logger
 from autovisionai.utils.utils import find_bounding_box
 
 
@@ -25,6 +26,7 @@ class ToTensor:
         :return: a converted torch.Tensor image and its target annotation.
         """
         image = T.ToTensor()(image)
+        logger.debug("Image converted to tensor.")
         return image, target
 
 
@@ -51,6 +53,7 @@ class Resize:
         mask = mask.squeeze(0).to(torch.uint8)
         target["mask"] = mask
 
+        logger.debug(f"The image and the mask were resized to {self.resize_to}.")
         return image, target
 
 
@@ -81,6 +84,7 @@ class RandomCrop:
         else:
             image, target = Resize(self.crop_to)(image, target)
 
+        logger.debug("Applied standard RandomCrop to image and target.")
         return image, target
 
 
@@ -105,10 +109,10 @@ class RandomCropWithObject:
         self, image: torch.Tensor, target: Dict[str, torch.Tensor]
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         if random.random() >= self.prob:
-            # print("[RandomCropWithObject] Skipped cropping (probability gate)")
+            logger.debug(f"Skipped cropping (probability gate = {self.prob})")
             return self.resizer(image, target)
 
-        for _ in range(self.max_tries):
+        for attempt in range(self.max_tries):
             i, j, h_crop, w_crop = T.RandomCrop.get_params(image, output_size=self.crop_to)
             cropped_mask = TF.crop(target["mask"], i, j, h_crop, w_crop)
 
@@ -123,10 +127,11 @@ class RandomCropWithObject:
 
                     if self.add_bbox:
                         target["box"] = bbox_of_mask
-                    # print(f"[RandomCropWithObject] Applied crop (attempt {attempt + 1}) at (i={i}, j={j})")
+
+                    logger.debug(f"Applied crop (attempt {attempt + 1}) at (i={i}, j={j})")
                     return image, target
 
-        print("[RandomCropWithObject] Fallback: all crops were empty — applied resize")
+        logger.warning("Fallback: all crops were empty — applied resize")
         return self.resizer(image, target)
 
 
@@ -140,6 +145,7 @@ class AddBoundingBox:
     def __call__(self, image, target):
         if "box" not in target:
             target["box"] = find_bounding_box(target["mask"])
+            logger.debug("Bounding box was added to target.")
         return image, target
 
 
@@ -164,7 +170,7 @@ class HorizontalFlip:
         if random.random() < self.prob:
             image = TF.hflip(image)
             target["mask"] = TF.hflip(target["mask"])
-
+            logger.debug("The image and the mask were horizontally flipped.")
         return image, target
 
 
@@ -209,6 +215,7 @@ def get_transform(resize: bool = False, random_crop: bool = False, hflip: bool =
                 ),
             )
         )
+        logger.info("Added Resize transformation.")
     elif random_crop:
         transforms.append(
             RandomCropWithObject(
@@ -220,9 +227,12 @@ def get_transform(resize: bool = False, random_crop: bool = False, hflip: bool =
                 add_bbox=bbox,
             )
         )
+        logger.info("Added RandomCropWithObject transformation.")
     if hflip:
         transforms.append(HorizontalFlip(prob=CONFIG["data_augmentation"]["h_flip_prob"].get()))
+        logger.info("Added HorizontalFlip transformation.")
     if bbox:
         transforms.append(AddBoundingBox())
+        logger.info("Added AddBoundingBox transformation.")
 
     return Compose(transforms)
