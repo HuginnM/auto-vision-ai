@@ -14,6 +14,7 @@ from pytorch_lightning.loggers import MLFlowLogger, TensorBoardLogger, WandbLogg
 
 # from pytorch_lightning.loggers.logger import LoggerCollection
 from autovisionai.configs.config import CONFIG, config_file_path
+from autovisionai.loggers.app_logger import logger
 
 
 def get_run_name():
@@ -37,7 +38,6 @@ def get_loggers(experiment_name: str, experiment_path: Path, run_name: str = "ru
     if CONFIG["logging"]["tensorboard"]["use"].get(bool):
         tb_log_dir = experiment_path / CONFIG["logging"]["tensorboard"]["save_dir"].get(str)
         loggers.append(TensorBoardLogger(save_dir=str(tb_log_dir), name=run_name))
-
     # MLflow Logger
     if CONFIG["logging"]["mlflow"]["use"].get(bool):
         mlflow_uri = CONFIG["logging"]["mlflow"]["tracking_uri"].get(str)
@@ -50,7 +50,6 @@ def get_loggers(experiment_name: str, experiment_path: Path, run_name: str = "ru
                 save_dir=str(ml_log_dir),
             )
         )
-
     # W&B Logger
     if CONFIG["logging"]["wandb"]["use"].get(bool):
         wandb_mode = CONFIG["logging"]["wandb"]["mode"].get(str)
@@ -65,7 +64,10 @@ def get_loggers(experiment_name: str, experiment_path: Path, run_name: str = "ru
                 save_dir=str(wandb_log_dir),
             )
         )
-
+    if len(loggers) > 0:
+        logger.info(f"Initialized ML loggers: {', '.join([type(log).__name__ for log in loggers])}")
+    else:
+        logger.warning("There are no enabled ML loggers. Experiments are untracked.")
     return loggers
 
 
@@ -97,6 +99,7 @@ def create_experiments_dirs(
 
     path_dict["weights_path"] = experiment_path / CONFIG["trainer"]["weights_folder"].get(str) / model_name / run_name
     path_dict["weights_path"].mkdir(parents=True, exist_ok=True)
+    logger.info(f"Created experiment dirs in {experiment_path}.")
 
     return path_dict
 
@@ -114,8 +117,10 @@ def save_config_to_experiment(experiment_path: Path) -> None:
     if not destination_path.exists():
         shutil.copy(str(config_file_path), str(destination_path))
 
+    logger.debug(f"The ML config.yaml was successfully saved to the experiment folder: {experiment_path}.")
 
-def log_image_to_all_loggers(loggers: list, tag: str, image_tensor: torch.Tensor, epoch: int, step: int) -> None:
+
+def log_image_to_all_loggers(ml_loggers: list, tag: str, image_tensor: torch.Tensor, epoch: int, step: int) -> None:
     """
     Logs an image to all available loggers depending on their type.
     Supports TensorBoardLogger and WandbLogger.
@@ -129,26 +134,26 @@ def log_image_to_all_loggers(loggers: list, tag: str, image_tensor: torch.Tensor
     """
     pil_image = compress_image_for_logging(image_tensor)
 
-    for logger in loggers:
-        if isinstance(logger, TensorBoardLogger):
+    for ml_logger in ml_loggers:
+        if isinstance(ml_logger, TensorBoardLogger):
             try:
-                logger.experiment.add_image(tag, F.to_tensor(pil_image), global_step=epoch)
+                ml_logger.experiment.add_image(tag, F.to_tensor(pil_image), global_step=epoch)
             except Exception:
                 error_message = traceback.format_exc()
-                print("Error with logging the image to TensorBoard:\n", error_message)
-        elif isinstance(logger, WandbLogger):
+                logger.exception("Error with logging the image to TensorBoard:\n", error_message)
+        elif isinstance(ml_logger, WandbLogger):
             try:
-                logger.experiment.log({tag: wandb.Image(pil_image), "epoch": epoch}, step=step)
+                ml_logger.experiment.log({tag: wandb.Image(pil_image), "epoch": epoch}, step=step)
             except Exception:
                 error_message = traceback.format_exc()
-                print("Error with logging the image to Weight and Biases:\n", error_message)
-        elif isinstance(logger, MLFlowLogger):
+                logger.exception("Error with logging the image to Weight and Biases:\n", error_message)
+        elif isinstance(ml_logger, MLFlowLogger):
             # log_image_to_mlflow(logger, image_tensor, tag, step)
             try:
-                logger.experiment.log_image(run_id=logger.run_id, image=pil_image, key=tag, step=epoch)
+                ml_logger.experiment.log_image(run_id=ml_logger.run_id, image=pil_image, key=tag, step=epoch)
             except Exception:
                 error_message = traceback.format_exc()
-                print("Error with logging the image to MLflow:\n", error_message)
+                logger.exception("Error with logging the image to MLflow:\n", error_message)
 
 
 def compress_image_for_logging(image_tensor: torch.Tensor, quality: int = 75) -> Image:

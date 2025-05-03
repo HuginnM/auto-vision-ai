@@ -7,7 +7,7 @@ from torch.optim.lr_scheduler import StepLR
 
 from autovisionai.configs.config import CONFIG
 from autovisionai.models.mask_rcnn.mask_rcnn_model import create_model
-from autovisionai.utils.logging import log_image_to_all_loggers
+from autovisionai.utils.ml_logging import log_image_to_all_loggers
 from autovisionai.utils.utils import bboxes_iou, get_batch_images_and_pred_masks_in_a_grid
 
 accelerator = "cuda" if torch.cuda.is_available() else "cpu"
@@ -207,7 +207,7 @@ class MaskRCNNTrainer(pl.LightningModule):
         imgs_grid = get_batch_images_and_pred_masks_in_a_grid(pred_masks, images, threshold=0.65)
 
         log_image_to_all_loggers(
-            loggers=self.trainer.loggers,
+            ml_loggers=self.trainer.loggers,
             tag="Predicted masks on images per epoch",
             image_tensor=imgs_grid,
             epoch=self.current_epoch,

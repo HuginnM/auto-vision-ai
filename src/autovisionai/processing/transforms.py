@@ -8,6 +8,7 @@ from PIL import Image
 from torchvision import transforms as T
 
 from autovisionai.configs.config import CONFIG
+from autovisionai.loggers.app_logger import logger
 from autovisionai.utils.utils import find_bounding_box
 
 
@@ -105,7 +106,6 @@ class RandomCropWithObject:
         self, image: torch.Tensor, target: Dict[str, torch.Tensor]
     ) -> Tuple[torch.Tensor, Dict[str, torch.Tensor]]:
         if random.random() >= self.prob:
-            # print("[RandomCropWithObject] Skipped cropping (probability gate)")
             return self.resizer(image, target)
 
         for _ in range(self.max_tries):
@@ -123,10 +123,11 @@ class RandomCropWithObject:
 
                     if self.add_bbox:
                         target["box"] = bbox_of_mask
-                    # print(f"[RandomCropWithObject] Applied crop (attempt {attempt + 1}) at (i={i}, j={j})")
+
+                    # logger.debug(f"Applied crop (attempt {attempt + 1}) at (i={i}, j={j})")
                     return image, target
 
-        print("[RandomCropWithObject] Fallback: all crops were empty — applied resize")
+        logger.warning("Fallback: all crops were empty — applied resize")
         return self.resizer(image, target)
 
 
@@ -140,6 +141,7 @@ class AddBoundingBox:
     def __call__(self, image, target):
         if "box" not in target:
             target["box"] = find_bounding_box(target["mask"])
+
         return image, target
 
 
@@ -209,6 +211,7 @@ def get_transform(resize: bool = False, random_crop: bool = False, hflip: bool =
                 ),
             )
         )
+        logger.info("Added Resize transformation.")
     elif random_crop:
         transforms.append(
             RandomCropWithObject(
@@ -220,9 +223,12 @@ def get_transform(resize: bool = False, random_crop: bool = False, hflip: bool =
                 add_bbox=bbox,
             )
         )
+        logger.info("Added RandomCropWithObject transformation.")
     if hflip:
         transforms.append(HorizontalFlip(prob=CONFIG["data_augmentation"]["h_flip_prob"].get()))
+        logger.info("Added HorizontalFlip transformation.")
     if bbox:
         transforms.append(AddBoundingBox())
+        logger.info("Added AddBoundingBox transformation.")
 
     return Compose(transforms)

@@ -8,7 +8,7 @@ from torch.optim.lr_scheduler import StepLR
 
 from autovisionai.configs.config import CONFIG
 from autovisionai.models.fast_scnn.fast_scnn_model import FastSCNN
-from autovisionai.utils.logging import log_image_to_all_loggers
+from autovisionai.utils.ml_logging import log_image_to_all_loggers
 from autovisionai.utils.utils import get_batch_images_and_pred_masks_in_a_grid, masks_iou
 
 
@@ -96,7 +96,7 @@ class FastSCNNTrainer(pl.LightningModule):
         imgs_grid = get_batch_images_and_pred_masks_in_a_grid(pred_masks, images)
 
         log_image_to_all_loggers(
-            loggers=self.trainer.loggers,
+            ml_loggers=self.trainer.loggers,
             tag="Predicted masks on images per epoch",
             image_tensor=imgs_grid,
             epoch=self.current_epoch,
