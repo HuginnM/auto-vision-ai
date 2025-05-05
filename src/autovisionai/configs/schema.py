@@ -58,6 +58,12 @@ class MaskRCNNConfig(BaseModel):
     lr_scheduler: LRSchedulerConfig
 
 
+class MLModels(BaseModel):
+    unet: UNetConfig
+    fast_scnn: FastSCNNConfig
+    mask_rcnn: MaskRCNNConfig
+
+
 class TrainerConfig(BaseModel):
     max_epoch: int
     log_every_n_steps: int
@@ -125,8 +131,6 @@ class AppConfig(BaseModel):
     data_augmentation: DataAugmentationConfig
     dataloader: DataloaderConfig
     datamodule: DataModuleConfig
-    unet: UNetConfig
-    fast_scnn: FastSCNNConfig
-    mask_rcnn: MaskRCNNConfig
+    models: MLModels
     trainer: TrainerConfig
     logging: LoggingConfig
