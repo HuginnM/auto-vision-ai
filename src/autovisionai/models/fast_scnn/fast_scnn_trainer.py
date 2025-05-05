@@ -110,8 +110,8 @@ class FastSCNNTrainer(pl.LightningModule):
 
         :return: a dict with the optimizer and lr_scheduler.
         """
-        optim_cfg: OptimizerConfig = CONFIG.models.unet.optimizer
-        lr_scheduler_cfg: LRSchedulerConfig = CONFIG.models.unet.lr_scheduler
+        optim_cfg: OptimizerConfig = CONFIG.models.fast_scnn.optimizer
+        lr_scheduler_cfg: LRSchedulerConfig = CONFIG.models.fast_scnn.lr_scheduler
 
         optimizer = Adam(
             self.model.parameters(),

@@ -1,11 +1,12 @@
 from typing import Dict, Tuple, Union
 
+import loguru as logger
 import pytorch_lightning as pl
 import torch
 from torch.optim import SGD, Optimizer
 from torch.optim.lr_scheduler import StepLR
 
-from autovisionai.configs.config import CONFIG
+from autovisionai.configs import CONFIG, LRSchedulerConfig, OptimizerConfig
 from autovisionai.loggers.ml_logging import log_image_to_all_loggers
 from autovisionai.models.mask_rcnn.mask_rcnn_model import create_model
 from autovisionai.utils.utils import bboxes_iou, get_batch_images_and_pred_masks_in_a_grid
@@ -75,7 +76,7 @@ class MaskRCNNTrainer(pl.LightningModule):
             else:
                 _, height, witdth = images[i].shape
                 stacked.append(torch.zeros((1, height, witdth), dtype=torch.float32, device=self.device))
-                print(f"[_safe_stack_pred_masks] No masks for prediction {i}, inserting empty mask.")
+                logger.warning(f"[_safe_stack_pred_masks] No masks for prediction {i}, inserting empty mask.")
 
         return torch.stack(stacked)
 
@@ -221,16 +222,19 @@ class MaskRCNNTrainer(pl.LightningModule):
         Configure the SGD optimizer and the StepLR learning rate scheduler.
         :return: a dict with the optimizer and lr_scheduler.
         """
+        optim_cfg: OptimizerConfig = CONFIG.models.mask_rcnn.optimizer
+        lr_scheduler_cfg: LRSchedulerConfig = CONFIG.models.mask_rcnn.lr_scheduler
+
         params = [p for p in self.model.parameters() if p.requires_grad]
         optimizer = SGD(
             params,
-            lr=CONFIG["mask_rcnn"]["optimizer"]["initial_lr"].get(),
-            momentum=CONFIG["mask_rcnn"]["optimizer"]["momentum"].get(),
-            weight_decay=CONFIG["mask_rcnn"]["optimizer"]["weight_decay"].get(),
+            lr=optim_cfg.initial_lr,
+            momentum=optim_cfg.momentum,
+            weight_decay=optim_cfg.weight_decay,
         )
         lr_scheduler = StepLR(
             optimizer,
-            step_size=CONFIG["mask_rcnn"]["lr_scheduler"]["step_size"].get(),
-            gamma=CONFIG["mask_rcnn"]["lr_scheduler"]["gamma"].get(),
+            step_size=lr_scheduler_cfg.step_size,
+            gamma=lr_scheduler_cfg.gamma,
         )
         return {"optimizer": optimizer, "lr_scheduler": lr_scheduler}
