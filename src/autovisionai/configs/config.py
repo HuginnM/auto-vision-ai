@@ -12,8 +12,9 @@ load_dotenv()
 ENV_MODE = os.getenv("ENV_MODE", "local")
 WANDB_API_KEY = os.getenv("WANDB_API_KEY")
 
-project_root = find_project_root()
-config_dir = project_root / "src" / "autovisionai" / "configs" / ENV_MODE
+PROJECT_ROOT: Path = find_project_root()
+CONFIG_DIR: Path = PROJECT_ROOT / "src" / "autovisionai" / "configs" / ENV_MODE
+CONFIG_FILES: list = ["data.yaml", "models.yaml", "logging.yaml"]
 
 
 def load_yaml_config(path: Path) -> dict:
@@ -23,13 +24,13 @@ def load_yaml_config(path: Path) -> dict:
 
 def load_app_config() -> AppConfig:
     merged = {}
-    for name in ["data.yaml", "models.yaml", "logging.yaml"]:
-        merged.update(load_yaml_config(config_dir / name))
+    for name in CONFIG_FILES:
+        merged.update(load_yaml_config(CONFIG_DIR / name))
 
     # Inject runtime paths
-    merged["dataset"]["data_root"] = str(project_root / "data")
-    merged["dataset"]["test_data_root"] = str(project_root / "tests" / "test_data")
-    merged["logging"]["root_dir"] = str(project_root / "experiments")
+    merged["dataset"]["data_root"] = PROJECT_ROOT / "data"
+    merged["dataset"]["test_data_root"] = PROJECT_ROOT / "tests" / "test_data"
+    merged["logging"]["root_dir"] = PROJECT_ROOT / "experiments"
 
     return AppConfig(**merged)
 
