@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Dict, List, Tuple, Union
 
 import cv2
+import loguru as logger
 import matplotlib.pyplot as plt
 import numpy as np
 import requests
@@ -31,31 +32,27 @@ def show_pic_and_original_mask(image_id: int) -> None:
     images_folder = CONFIG.dataset.data_root / CONFIG.dataset.images_folder
     masks_folder = CONFIG.dataset.data_root / CONFIG.dataset.masks_folder
 
-    imgs_list = sorted(f for f in images_folder.iterdir() if f.is_file())
-    masks_list = sorted(masks_folder.iterdir())
+    images_list = get_valid_files(images_folder, CONFIG.dataset.allowed_extensions)
+    masks_list = get_valid_files(masks_folder, CONFIG.dataset.allowed_extensions)
 
-    img_path = os.path.join(
-        CONFIG["dataset"]["data_root"].get(), CONFIG["dataset"]["images_folder"].get(), imgs_list[image_id]
-    )
-    mask_path = os.path.join(
-        CONFIG["dataset"]["data_root"].get(), CONFIG["dataset"]["masks_folder"].get(), masks_list[image_id]
-    )
+    image_path = images_folder / images_list[image_id]
+    mask_path = masks_folder / masks_list[image_id]
 
-    img = Image.open(img_path).convert("RGB")
+    img = Image.open(image_path).convert("RGB")
     img = np.asarray(img)
 
     mask = Image.open(mask_path)
     mask = np.array(mask)
 
     # get masked value (foreground)
-    img_masked = cv2.bitwise_and(img, img, mask=mask)
+    image_masked = cv2.bitwise_and(img, img, mask=mask)
 
     # add the 3d dim to mask and convert mask values to white color
     mask3 = np.stack([mask, mask, mask]).transpose((1, 2, 0))
     np.putmask(mask3, mask3 > 0, 255)
 
     # concatenate images Horizontally
-    horizontal_imgs = np.concatenate((img, img_masked, mask3), axis=1)
+    horizontal_imgs = np.concatenate((img, image_masked, mask3), axis=1)
 
     try:
         cv2.imshow("Original Image | Original Image + Mask | Mask", horizontal_imgs)
@@ -242,18 +239,9 @@ def masks_iou(target, preds, num_classes):
     probs = torch.sigmoid(preds.squeeze(1))
     pred_masks = torch.where(probs > 0.5, 1.0, 0.0)
     pred_masks = pred_masks.cpu()
-
-    # def define_task(num_classes):
-    #     if num_classes < 3:
-    #         print('IoT: Binary task.')
-    #         return 'binary'
-    #     else:
-    #         print('IoT: Multiclass task.')
-    #         return 'multiclass'
-
     iou_score = jaccard_index(
         preds=pred_masks, target=target.squeeze(1).cpu(), num_classes=num_classes, task="multiclass"
-    )  # task=define_task(num_classes))
+    )
 
     return iou_score
 
@@ -276,7 +264,7 @@ def save_tensor_image(tensor: torch.Tensor, filename: str, folder: str = "debug_
     save_image(tensor, path)
 
 
-def find_bounding_box(mask, min_size: int = CONFIG["data_augmentation"]["bbox_min_size"].get(int)):
+def find_bounding_box(mask, min_size: int = CONFIG.data_augmentation.bbox_min_size):
     if not torch.any(mask):
         print("The mask is empty. Returning the empty bbox.")
         return None
@@ -297,7 +285,7 @@ def find_bounding_box(mask, min_size: int = CONFIG["data_augmentation"]["bbox_mi
     height = ymax - ymin + 1
 
     if width < min_size or height < min_size:
-        # print("Boundary box is too small, returning empty BBOX.")
+        logger.warning("Boundary box is too small, returning empty BBOX.")
         return None
 
     bbox = torch.tensor([xmin, ymin, xmax, ymax], dtype=torch.float32)
