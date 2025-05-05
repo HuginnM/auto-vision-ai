@@ -2,13 +2,13 @@ import sys
 
 from loguru import logger
 
-from autovisionai.configs import CONFIG
+from autovisionai.configs import CONFIG, FileLoggerConfig, StdoutLoggerConfig
 from autovisionai.utils.pathing import find_project_root
 
 
 def setup_logger() -> None:
-    stdout_cfg = CONFIG.logging.global_logger.stdout
-    file_cfg = CONFIG.logging.global_logger.file
+    stdout_cfg: StdoutLoggerConfig = CONFIG.logging.app_logger.stdout
+    file_cfg: FileLoggerConfig = CONFIG.logging.app_logger.file
 
     log_file_path = find_project_root() / file_cfg.save_dir / file_cfg.file_name
     log_file_path.parent.mkdir(parents=True, exist_ok=True)

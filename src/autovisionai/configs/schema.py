@@ -122,7 +122,7 @@ class AppLoggerConfig(BaseModel):
 
 
 class LoggingConfig(BaseModel):
-    global_logger: AppLoggerConfig
+    app_logger: AppLoggerConfig
     ml_loggers: MLLoggersConfig
 
 
