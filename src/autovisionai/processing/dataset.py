@@ -35,8 +35,8 @@ class CarsDataset(Dataset):
         :param idx: an index of the sample to retrieve.
         :return: a tuple containing an PIL image and a dict with target annotations data.
         """
-        img_path = self.data_root / CONFIG.dataset.images_folder, self.imgs_list[idx]
-        mask_path = self.data_root / CONFIG.dataset.masks_folder, self.masks_list[idx]
+        img_path = self.data_root / CONFIG.dataset.images_folder / self.imgs_list[idx]
+        mask_path = self.data_root / CONFIG.dataset.masks_folder / self.masks_list[idx]
 
         img = Image.open(img_path)
         mask = Image.open(mask_path)
