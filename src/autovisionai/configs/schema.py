@@ -1,13 +1,14 @@
+from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel
 
 
 class DatasetConfig(BaseModel):
-    data_root: str
+    data_root: Path
     images_folder: str
     masks_folder: str
-    test_data_root: str
+    test_data_root: Path
     allowed_extensions: list[str]
 
 
@@ -89,7 +90,7 @@ class WandBConfig(BaseModel):
 
 
 class MLLoggersConfig(BaseModel):
-    root_dir: str
+    root_dir: Path
     tensorboard: TensorBoardConfig
     mlflow: MLFlowConfig
     wandb: WandBConfig
