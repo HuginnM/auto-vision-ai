@@ -30,7 +30,7 @@ def load_app_config() -> AppConfig:
     # Inject runtime paths
     merged["dataset"]["data_root"] = PROJECT_ROOT / "data"
     merged["dataset"]["test_data_root"] = PROJECT_ROOT / "tests" / "test_data"
-    merged["logging"]["ml_loggers"]["root_dir"] = PROJECT_ROOT / "experiments"
+    merged["ml_loggers"]["root_dir"] = PROJECT_ROOT / "experiments"
 
     return AppConfig(**merged)
 
