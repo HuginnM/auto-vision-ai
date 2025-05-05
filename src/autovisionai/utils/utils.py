@@ -1,5 +1,6 @@
 import os
 from io import BytesIO
+from pathlib import Path
 from typing import Dict, List, Tuple, Union
 
 import cv2
@@ -16,6 +17,11 @@ from torchvision.utils import save_image
 from autovisionai.configs import CONFIG
 
 
+def get_valid_files(dir_path: Path, allowed_extenstions: Union[List, Tuple]) -> List[str]:
+    """Returns sorted list of valid image filenames in a directory."""
+    return sorted(f.name for f in dir_path.iterdir() if f.is_file() and f.suffix.lower() in allowed_extenstions)
+
+
 def show_pic_and_original_mask(image_id: int) -> None:
     """
     Helper function to plot original image, original mask and bitwise picture.
@@ -25,7 +31,7 @@ def show_pic_and_original_mask(image_id: int) -> None:
     images_folder = CONFIG.dataset.data_root / CONFIG.dataset.images_folder
     masks_folder = CONFIG.dataset.data_root / CONFIG.dataset.masks_folder
 
-    imgs_list = sorted(images_folder.iterdir())
+    imgs_list = sorted(f for f in images_folder.iterdir() if f.is_file())
     masks_list = sorted(masks_folder.iterdir())
 
     img_path = os.path.join(
