@@ -13,7 +13,7 @@ from torchmetrics.functional import jaccard_index
 from torchvision.transforms import functional as F
 from torchvision.utils import save_image
 
-from autovisionai.configs.config import CONFIG
+from autovisionai.configs import CONFIG
 
 
 def show_pic_and_original_mask(image_id: int) -> None:
@@ -22,12 +22,11 @@ def show_pic_and_original_mask(image_id: int) -> None:
 
     :param image_id: an image id.
     """
-    imgs_list = sorted(
-        os.listdir(os.path.join(CONFIG["dataset"]["data_root"].get(), CONFIG["dataset"]["images_folder"].get()))
-    )
-    masks_list = sorted(
-        os.listdir(os.path.join(CONFIG["dataset"]["data_root"].get(), CONFIG["dataset"]["masks_folder"].get()))
-    )
+    images_folder = CONFIG.dataset.data_root / CONFIG.dataset.images_folder
+    masks_folder = CONFIG.dataset.data_root / CONFIG.dataset.masks_folder
+
+    imgs_list = sorted(images_folder.iterdir())
+    masks_list = sorted(masks_folder.iterdir())
 
     img_path = os.path.join(
         CONFIG["dataset"]["data_root"].get(), CONFIG["dataset"]["images_folder"].get(), imgs_list[image_id]

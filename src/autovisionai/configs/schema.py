@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Tuple
 
 from pydantic import BaseModel
 
@@ -9,7 +9,7 @@ class DatasetConfig(BaseModel):
     images_folder: str
     masks_folder: str
     test_data_root: Path
-    allowed_extensions: list[str]
+    allowed_extensions: Tuple[str]
 
 
 class DataAugmentationConfig(BaseModel):
