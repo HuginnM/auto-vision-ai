@@ -116,13 +116,13 @@ class FileLoggerConfig(BaseModel):
     enqueue: bool = True
 
 
-class GlobalLoggerConfig(BaseModel):
+class AppLoggerConfig(BaseModel):
     stdout: StdoutLoggerConfig
     file: FileLoggerConfig
 
 
 class LoggingConfig(BaseModel):
-    global_logger: GlobalLoggerConfig
+    global_logger: AppLoggerConfig
     ml_loggers: MLLoggersConfig
 
 
