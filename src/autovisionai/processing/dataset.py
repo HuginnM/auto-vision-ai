@@ -6,7 +6,7 @@ import torch
 from PIL import Image
 from torch.utils.data import Dataset
 
-from autovisionai.configs.config import CONFIG
+from autovisionai.configs import CONFIG
 
 
 class CarsDataset(Dataset):
@@ -20,10 +20,10 @@ class CarsDataset(Dataset):
         self.data_root = data_root
         self.transforms = transforms
 
-        self.allowed_extensions = tuple(CONFIG["dataset"]["allowed_extensions"].get())
+        self.allowed_extensions = tuple(CONFIG.dataset.allowed_extensions)
 
-        imgs_dir = os.path.join(data_root, CONFIG["dataset"]["images_folder"].get())
-        masks_dir = os.path.join(data_root, CONFIG["dataset"]["masks_folder"].get())
+        imgs_dir = os.path.join(data_root, CONFIG.dataset.images_folder)
+        masks_dir = os.path.join(data_root, CONFIG.dataset.masks_folder)
 
         self.imgs_list = self._get_valid_files(imgs_dir)
         self.masks_list = self._get_valid_files(masks_dir)
@@ -34,8 +34,8 @@ class CarsDataset(Dataset):
         :param idx: an index of the sample to retrieve.
         :return: a tuple containing an PIL image and a dict with target annotations data.
         """
-        img_path = os.path.join(self.data_root, CONFIG["dataset"]["images_folder"].get(), self.imgs_list[idx])
-        mask_path = os.path.join(self.data_root, CONFIG["dataset"]["masks_folder"].get(), self.masks_list[idx])
+        img_path = os.path.join(self.data_root, CONFIG.dataset.images_folder, self.imgs_list[idx])
+        mask_path = os.path.join(self.data_root, CONFIG.dataset.masks_folder, self.masks_list[idx])
 
         img = Image.open(img_path)
         mask = Image.open(mask_path)
