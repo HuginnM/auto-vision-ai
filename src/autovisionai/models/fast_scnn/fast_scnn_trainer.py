@@ -7,8 +7,8 @@ from torch.optim import Adam, Optimizer
 from torch.optim.lr_scheduler import StepLR
 
 from autovisionai.configs.config import CONFIG
+from autovisionai.loggers.ml_logging import log_image_to_all_loggers
 from autovisionai.models.fast_scnn.fast_scnn_model import FastSCNN
-from autovisionai.utils.ml_logging import log_image_to_all_loggers
 from autovisionai.utils.utils import get_batch_images_and_pred_masks_in_a_grid, masks_iou
 
 

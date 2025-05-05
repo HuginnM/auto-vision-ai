@@ -6,8 +6,8 @@ from torch.optim import SGD, Optimizer
 from torch.optim.lr_scheduler import StepLR
 
 from autovisionai.configs.config import CONFIG
+from autovisionai.loggers.ml_logging import log_image_to_all_loggers
 from autovisionai.models.mask_rcnn.mask_rcnn_model import create_model
-from autovisionai.utils.ml_logging import log_image_to_all_loggers
 from autovisionai.utils.utils import bboxes_iou, get_batch_images_and_pred_masks_in_a_grid
 
 accelerator = "cuda" if torch.cuda.is_available() else "cpu"
