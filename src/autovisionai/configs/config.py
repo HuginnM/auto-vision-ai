@@ -1,16 +1,18 @@
 import os
 from pathlib import Path
 
-import confuse
 import yaml
 from dotenv import load_dotenv
 
+from autovisionai.configs.schema import AppConfig
+
 load_dotenv()
 
-ENV_MODE = os.getenv("ENV_MODE")
+ENV_MODE = os.getenv("ENV_MODE", "local")
 WANDB_API_KEY = os.getenv("WANDB_API_KEY")
 
 
+# Project root discovery
 def find_project_root(anchor_filename="pyproject.toml") -> Path:
     current = Path(__file__).resolve()
     for parent in current.parents:
@@ -19,23 +21,26 @@ def find_project_root(anchor_filename="pyproject.toml") -> Path:
     raise FileNotFoundError(f"Could not find {anchor_filename} in parent folders.")
 
 
-# Get root
 project_root = find_project_root()
+config_dir = project_root / "src" / "autovisionai" / "configs" / ENV_MODE
 
-config_file_path = project_root / "src" / "autovisionai" / "configs" / "config.yaml"
-config_folder_path = project_root / "src" / "autovisionai" / "configs"
-data_folder_path = project_root / "data"
-test_data_folder_path = project_root / "tests" / "test_data"
-experiments_folder_path = project_root / "experiments"
 
-with open(config_file_path) as f:
-    config = yaml.load(f, Loader=yaml.FullLoader)
+def load_yaml_config(path: Path) -> dict:
+    with open(path, "r") as f:
+        return yaml.safe_load(f)
 
-config["dataset"]["data_root"] = str(data_folder_path)
-config["dataset"]["test_data_root"] = str(test_data_folder_path)
-config["logging"]["root_dir"] = str(experiments_folder_path)
 
-with open(config_file_path, "w") as f:
-    yaml.dump(config, stream=f, default_flow_style=False, sort_keys=False)
+def load_app_config() -> AppConfig:
+    merged = {}
+    for name in ["data.yaml", "models.yaml", "logging.yaml"]:
+        merged.update(load_yaml_config(config_dir / name))
 
-CONFIG = confuse.Configuration(str(config_folder_path))
+    # Inject runtime paths
+    merged["dataset"]["data_root"] = str(project_root / "data")
+    merged["dataset"]["test_data_root"] = str(project_root / "tests" / "test_data")
+    merged["logging"]["root_dir"] = str(project_root / "experiments")
+
+    return AppConfig(**merged)
+
+
+CONFIG = load_app_config()
