@@ -66,30 +66,40 @@ class TrainerConfig(BaseModel):
 
 class TensorBoardConfig(BaseModel):
     use: bool
-    save_dir: str
+    save_dir: str = "tensorlogs"
 
 
 class MLFlowConfig(BaseModel):
     use: bool
     tracking_uri: str
-    save_dir: str
+    save_dir: str = "mlruns"
 
 
 class WandBConfig(BaseModel):
     use: bool
     log_model: bool
-    save_dir: str
+    save_dir: str = "wandb"
     mode: Literal["offline", "online"]
 
 
 class MLLoggersConfig(BaseModel):
+    root_dir: str
     tensorboard: TensorBoardConfig
     mlflow: MLFlowConfig
     wandb: WandBConfig
 
 
+class GlobalLoggerConfig(BaseModel):
+    level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
+    save_dir: str = "logs"
+    file_name: str = "app.log"
+    rotation: str = "10 MB"
+    retention: str = "7 days"
+    format: str = "[{time:YYYY-MM-DD HH:mm:ss}] {level} {message}"
+
+
 class LoggingConfig(BaseModel):
-    root_dir: str
+    global_logger: GlobalLoggerConfig
     ml_loggers: MLLoggersConfig
 
 
