@@ -46,3 +46,6 @@ jobs:
         with:
           path: ~/.cache/uv
           key: ${{ runner.os }}-uv-${{ hashFiles('pyproject.toml') }}
+
+      - name: Conventional Commitlint
+        uses: opensource-nepal/commitlint@v1
