@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Dict, List, Tuple, Union
 
 import cv2
-import loguru as logger
 import matplotlib.pyplot as plt
 import numpy as np
 import requests
@@ -15,6 +14,7 @@ from torchvision.transforms import functional as F
 from torchvision.utils import save_image
 
 from autovisionai.configs import CONFIG
+from autovisionai.loggers.app_logger import logger
 
 
 def get_valid_files(dir_path: Path, allowed_extenstions: Union[List, Tuple]) -> List[str]:
