@@ -89,13 +89,30 @@ class MLLoggersConfig(BaseModel):
     wandb: WandBConfig
 
 
+class StdoutLoggerConfig(BaseModel):
+    level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+    format: str
+    backtrace: bool = True
+    diagnose: bool = True
+    enqueue: bool = True
+
+
+class FileLoggerConfig(BaseModel):
+    level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+    save_dir: str
+    file_name: str
+    format: str
+    rotation: str
+    retention: str
+    encoding: str = "utf-8"
+    backtrace: bool = True
+    diagnose: bool = True
+    enqueue: bool = True
+
+
 class GlobalLoggerConfig(BaseModel):
-    level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
-    save_dir: str = "logs"
-    file_name: str = "app.log"
-    rotation: str = "10 MB"
-    retention: str = "7 days"
-    format: str = "[{time:YYYY-MM-DD HH:mm:ss}] {level} {message}"
+    stdout: StdoutLoggerConfig
+    file: FileLoggerConfig
 
 
 class LoggingConfig(BaseModel):

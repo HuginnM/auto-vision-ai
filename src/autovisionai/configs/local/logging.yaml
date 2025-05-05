@@ -1,10 +1,23 @@
 global_logger:
-  level: INFO
-  save_dir: logs
-  file_name: app.log
-  rotation: 10 MB
-  retention: 7 days
-  format: "[{time:YYYY-MM-DD HH:mm:ss}] {level} {message}"
+  stdout:
+    level: INFO
+    format: "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>"
+    backtrace: true
+    diagnose: true
+    enqueue: true
+
+  file:
+    level: DEBUG
+    save_dir: logs
+    file_name: app.log
+    format: "{time:YYYY-MM-DD HH:mm:ss} | {level} | {name}:{function}:{line} - {message}"
+    rotation: "10 MB"
+    retention: "10 days"
+    encoding: "utf-8"
+    backtrace: true
+    diagnose: true
+    enqueue: true
+
 
 ml_loggers:
   tensorboard:

@@ -5,21 +5,12 @@ import yaml
 from dotenv import load_dotenv
 
 from autovisionai.configs.schema import AppConfig
+from autovisionai.utils.pathing import find_project_root
 
 load_dotenv()
 
 ENV_MODE = os.getenv("ENV_MODE", "local")
 WANDB_API_KEY = os.getenv("WANDB_API_KEY")
-
-
-# Project root discovery
-def find_project_root(anchor_filename="pyproject.toml") -> Path:
-    current = Path(__file__).resolve()
-    for parent in current.parents:
-        if (parent / anchor_filename).exists():
-            return parent
-    raise FileNotFoundError(f"Could not find {anchor_filename} in parent folders.")
-
 
 project_root = find_project_root()
 config_dir = project_root / "src" / "autovisionai" / "configs" / ENV_MODE
