@@ -9,7 +9,7 @@ class DatasetConfig(BaseModel):
     images_folder: str
     masks_folder: str
     test_data_root: Path
-    allowed_extensions: Tuple[str]
+    allowed_extensions: Tuple[str, ...]
 
 
 class DataAugmentationConfig(BaseModel):

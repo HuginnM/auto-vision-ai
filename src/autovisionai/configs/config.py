@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import List
 
 import yaml
 from dotenv import load_dotenv
@@ -14,7 +15,7 @@ WANDB_API_KEY = os.getenv("WANDB_API_KEY")
 
 PROJECT_ROOT: Path = find_project_root()
 CONFIG_DIR: Path = PROJECT_ROOT / "src" / "autovisionai" / "configs" / ENV_MODE
-CONFIG_FILES: list = ["data.yaml", "models.yaml", "logging.yaml"]
+CONFIG_FILES: List = ["data.yaml", "models.yaml", "logging.yaml"]
 
 
 def load_yaml_config(path: Path) -> dict:
@@ -30,9 +31,9 @@ def load_app_config() -> AppConfig:
     # Inject runtime paths
     merged["dataset"]["data_root"] = PROJECT_ROOT / "data"
     merged["dataset"]["test_data_root"] = PROJECT_ROOT / "tests" / "test_data"
-    merged["ml_loggers"]["root_dir"] = PROJECT_ROOT / "experiments"
+    merged["logging"]["ml_loggers"]["root_dir"] = PROJECT_ROOT / "experiments"
 
     return AppConfig(**merged)
 
 
-CONFIG = load_app_config()
+CONFIG: AppConfig = load_app_config()
