@@ -1,4 +1,3 @@
-import os
 from io import BytesIO
 from pathlib import Path
 from typing import Dict, List, Tuple, Union
@@ -246,7 +245,7 @@ def masks_iou(target, preds, num_classes):
     return iou_score
 
 
-def save_tensor_image(tensor: torch.Tensor, filename: str, folder: str = "debug_failed_samples"):
+def save_tensor_image(tensor: torch.Tensor, filename: str, folder: str = "debug_failed_samples") -> None:
     """
     Saves a tensor image [C, H, W] to a PNG file in the specified folder.
 
@@ -254,14 +253,14 @@ def save_tensor_image(tensor: torch.Tensor, filename: str, folder: str = "debug_
     :param filename: File name (e.g., 'bad_sample_001.png')
     :param folder: Folder to save into (default = 'debug_failed_samples')
     """
-    os.makedirs(folder, exist_ok=True)
+    folder_path = Path(folder)
+    folder_path.mkdir(parents=True, exist_ok=True)
 
     tensor = tensor.detach().cpu().float()
     if tensor.max() > 1:
         tensor = tensor / 255.0
 
-    path = os.path.join(folder, filename)
-    save_image(tensor, path)
+    save_image(tensor, folder_path / filename)
 
 
 def find_bounding_box(mask, min_size: int = CONFIG.data_augmentation.bbox_min_size):
