@@ -4,7 +4,7 @@ import pytorch_lightning as pl
 import torch
 from torch.utils.data import DataLoader, Subset
 
-from autovisionai.configs.config import CONFIG
+from autovisionai.configs import CONFIG
 from autovisionai.processing.dataset import CarsDataset
 from autovisionai.processing.transforms import get_transform
 
@@ -67,7 +67,7 @@ class CarsDataModule(pl.LightningDataModule):
             self.full_data = CarsDataset(self.data_root, transforms)
 
             n_sample = len(self.full_data)
-            split_idx = round(n_sample * CONFIG["datamodule"]["training_set_size"].get())
+            split_idx = round(n_sample * CONFIG.datamodule.training_set_size)
 
             self.data_train = Subset(self.full_data, range(n_sample)[:split_idx])
             self.data_val = Subset(self.full_data, range(n_sample)[split_idx:])

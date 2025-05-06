@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from torchvision import transforms as T
 
-from autovisionai.configs.config import CONFIG
+from autovisionai.configs import CONFIG
 from autovisionai.loggers.app_logger import logger
 from autovisionai.models.unet.unet_model import Unet
 
@@ -16,12 +16,12 @@ def model_inference(trained_model_path: str, image: torch.Tensor) -> np.ndarray:
     :return: predicted mask for an input image.
     """
 
-    model = Unet(CONFIG["unet"]["model"]["in_channels"].get(), CONFIG["unet"]["model"]["n_classes"].get())
+    model = Unet(CONFIG.models.unet.in_channels, CONFIG.models.unet.n_classes)
     model.load_state_dict(torch.load(trained_model_path))
     logger.info(f"The UNET model has been loaded with trained params from {trained_model_path}.")
     model.eval()
 
-    resize_to = (CONFIG["data_augmentation"]["resize_to"].get(), CONFIG["data_augmentation"]["resize_to"].get())
+    resize_to = (CONFIG.data_augmentation.resize_to, CONFIG.data_augmentation.resize_to)
 
     resized_image = T.Resize(resize_to)(image)
 

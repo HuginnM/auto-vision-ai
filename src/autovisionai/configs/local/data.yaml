@@ -1,0 +1,19 @@
+dataset:
+  data_root: ./data
+  test_data_root: ./tests/test_data
+  images_folder: images
+  masks_folder: masks
+  allowed_extensions:
+  - .jpg
+  - .jpeg
+  - .png
+data_augmentation:
+  bbox_min_size: 20
+  h_flip_prob: 0.5
+  random_crop_prob: 0.5
+  resize_to: 512
+  random_crop_crop_to: 512
+dataloader:
+  num_workers: 2
+datamodule:
+  training_set_size: 0.8
