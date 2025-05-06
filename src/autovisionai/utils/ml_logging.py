@@ -13,7 +13,7 @@ from PIL import Image
 from pytorch_lightning.loggers import MLFlowLogger, TensorBoardLogger, WandbLogger
 
 # from pytorch_lightning.loggers.logger import LoggerCollection
-from autovisionai.configs import CONFIG, CONFIG_DIR, MLLoggersConfig
+from autovisionai.configs.config import CONFIG, config_file_path
 from autovisionai.loggers.app_logger import logger
 
 
@@ -33,34 +33,34 @@ def get_loggers(experiment_name: str, experiment_path: Path, run_name: str = "ru
     :return: A list of PyTorch Lightning-compatible loggers.
     """
     loggers = []
-    ml_loggers_cfg: MLLoggersConfig = CONFIG.logging.ml_loggers
 
     # TensorBoard Logger
-    if ml_loggers_cfg.tensorboard.use:
-        tb_log_dir = experiment_path / ml_loggers_cfg.tensorboard.save_dir
+    if CONFIG["logging"]["tensorboard"]["use"].get(bool):
+        tb_log_dir = experiment_path / CONFIG["logging"]["tensorboard"]["save_dir"].get(str)
         loggers.append(TensorBoardLogger(save_dir=str(tb_log_dir), name=run_name))
     # MLflow Logger
-    if ml_loggers_cfg.mlflow.use:
-        ml_log_dir = experiment_path / ml_loggers_cfg.mlflow.save_dir
+    if CONFIG["logging"]["mlflow"]["use"].get(bool):
+        mlflow_uri = CONFIG["logging"]["mlflow"]["tracking_uri"].get(str)
+        ml_log_dir = experiment_path / CONFIG["logging"]["mlflow"]["save_dir"].get(str)
         loggers.append(
             MLFlowLogger(
                 experiment_name=experiment_name,
-                tracking_uri=ml_loggers_cfg.mlflow.tracking_uri,
+                tracking_uri=mlflow_uri,
                 run_name=run_name,
                 save_dir=str(ml_log_dir),
             )
         )
     # W&B Logger
-    if ml_loggers_cfg.wandb.use:
-        wandb_mode = ml_loggers_cfg.wandb.mode
+    if CONFIG["logging"]["wandb"]["use"].get(bool):
+        wandb_mode = CONFIG["logging"]["wandb"]["mode"].get(str)
         os.environ["WANDB_MODE"] = wandb_mode
-        wandb_log_dir = experiment_path / ml_loggers_cfg.wandb.save_dir
+        wandb_log_dir = experiment_path / CONFIG["logging"]["wandb"]["save_dir"].get(str)
 
         loggers.append(
             WandbLogger(
                 project=experiment_name,
                 name=run_name,
-                log_model=ml_loggers_cfg.wandb.log_model,
+                log_model=CONFIG["logging"]["wandb"]["log_model"].get(bool),
                 save_dir=str(wandb_log_dir),
             )
         )
@@ -84,21 +84,20 @@ def create_experiments_dirs(
     :param experiment_path: Base directory of the current experiment.
     """
     path_dict = {}
-    ml_loggers_cfg: MLLoggersConfig = CONFIG.logging.ml_loggers
 
-    if ml_loggers_cfg.tensorboard.use:
-        path_dict["tb_log_dir"] = experiment_path / ml_loggers_cfg.tensorboard.save_dir
+    if CONFIG["logging"]["tensorboard"]["use"].get(bool):
+        path_dict["tb_log_dir"] = experiment_path / CONFIG["logging"]["tensorboard"]["save_dir"].get(str)
         path_dict["tb_log_dir"].mkdir(parents=True, exist_ok=True)
 
-    if ml_loggers_cfg.mlflow.use:
-        path_dict["ml_log_dir"] = experiment_path / ml_loggers_cfg.mlflow.save_dir
+    if CONFIG["logging"]["mlflow"]["use"].get(bool):
+        path_dict["ml_log_dir"] = experiment_path / CONFIG["logging"]["mlflow"]["save_dir"].get(str)
         path_dict["ml_log_dir"].mkdir(parents=True, exist_ok=True)
 
-    if ml_loggers_cfg.wandb.use:
-        path_dict["wandb_log_dir"] = experiment_path / ml_loggers_cfg.wandb.save_dir
+    if CONFIG["logging"]["wandb"]["use"].get(bool):
+        path_dict["wandb_log_dir"] = experiment_path / CONFIG["logging"]["wandb"]["save_dir"].get(str)
         path_dict["wandb_log_dir"].mkdir(parents=True, exist_ok=True)
 
-    path_dict["weights_path"] = experiment_path / CONFIG.trainer.weights_folder / model_name / run_name
+    path_dict["weights_path"] = experiment_path / CONFIG["trainer"]["weights_folder"].get(str) / model_name / run_name
     path_dict["weights_path"].mkdir(parents=True, exist_ok=True)
     logger.info(f"Created experiment dirs in {experiment_path}.")
 
@@ -110,13 +109,13 @@ def save_config_to_experiment(experiment_path: Path) -> None:
     Copies the config.yaml file into the experiment folder for reproducibility.
 
     :param experiment_path: Path to the experiment base folder.
-    :param config_path: Path to the source configs/env folder.
+    :param config_path: Path to the source config.yaml file.
     """
-    destination_path = experiment_path / "configs"
+    destination_path = experiment_path / "config.yaml"
 
     # Copy only if not already exists
     if not destination_path.exists():
-        shutil.copytree(str(CONFIG_DIR), str(destination_path))
+        shutil.copy(str(config_file_path), str(destination_path))
 
     logger.debug(f"The ML config.yaml was successfully saved to the experiment folder: {experiment_path}.")
 

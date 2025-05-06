@@ -1,13 +1,12 @@
-from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+import os
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import torch
 from PIL import Image
 from torch.utils.data import Dataset
 
-from autovisionai.configs import CONFIG
-from autovisionai.utils.utils import get_valid_files
+from autovisionai.configs.config import CONFIG
 
 
 class CarsDataset(Dataset):
@@ -17,17 +16,17 @@ class CarsDataset(Dataset):
     :param transforms: torchvision transforms.
     """
 
-    def __init__(self, data_root: Path, transforms: Optional[Any] = None) -> None:
+    def __init__(self, data_root: str, transforms: Optional[Any] = None) -> None:
         self.data_root = data_root
         self.transforms = transforms
 
-        self.allowed_extensions = CONFIG.dataset.allowed_extensions
+        self.allowed_extensions = tuple(CONFIG["dataset"]["allowed_extensions"].get())
 
-        imgs_dir = data_root / CONFIG.dataset.images_folder
-        masks_dir = data_root / CONFIG.dataset.masks_folder
+        imgs_dir = os.path.join(data_root, CONFIG["dataset"]["images_folder"].get())
+        masks_dir = os.path.join(data_root, CONFIG["dataset"]["masks_folder"].get())
 
-        self.imgs_list = get_valid_files(imgs_dir, self.allowed_extensions)
-        self.masks_list = get_valid_files(masks_dir, self.allowed_extensions)
+        self.imgs_list = self._get_valid_files(imgs_dir)
+        self.masks_list = self._get_valid_files(masks_dir)
 
     def __getitem__(self, idx: int) -> Tuple[Image.Image, Dict[str, torch.Tensor]]:
         """
@@ -35,8 +34,8 @@ class CarsDataset(Dataset):
         :param idx: an index of the sample to retrieve.
         :return: a tuple containing an PIL image and a dict with target annotations data.
         """
-        img_path = self.data_root / CONFIG.dataset.images_folder / self.imgs_list[idx]
-        mask_path = self.data_root / CONFIG.dataset.masks_folder / self.masks_list[idx]
+        img_path = os.path.join(self.data_root, CONFIG["dataset"]["images_folder"].get(), self.imgs_list[idx])
+        mask_path = os.path.join(self.data_root, CONFIG["dataset"]["masks_folder"].get(), self.masks_list[idx])
 
         img = Image.open(img_path)
         mask = Image.open(mask_path)
@@ -56,3 +55,7 @@ class CarsDataset(Dataset):
         """
         samples_number = len(self.imgs_list)
         return samples_number
+
+    def _get_valid_files(self, directory: str) -> List[str]:
+        """Returns sorted list of valid image filenames in a directory."""
+        return sorted([f for f in os.listdir(directory) if f.lower().endswith(self.allowed_extensions)])
