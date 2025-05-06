@@ -95,16 +95,17 @@ def train_model(
 
 
 if __name__ == "__main__":
+    from autovisionai.models.fast_scnn.fast_scnn_trainer import FastSCNNTrainer
     from autovisionai.models.mask_rcnn.mask_rcnn_trainer import MaskRCNNTrainer
     from autovisionai.models.unet.unet_trainer import UnetTrainer
 
-    models = [UnetTrainer]  # , FastSCNNTrainer, MaskRCNNTrainer]
+    models = [UnetTrainer, FastSCNNTrainer, MaskRCNNTrainer]
 
     for model in models:
         try:
             model = model()
             train_model(
-                experiment_name="all_model_training",
+                experiment_name="compare_all_models",
                 model=model,
                 batch_size=4,
                 use_resize=False,
@@ -113,4 +114,4 @@ if __name__ == "__main__":
             )
         except Exception:
             error_message = traceback.format_exc()
-            logger.exception(f"For the model {model} the training was unsuccessfull.\n", error_message)
+            logger.exception(f"For the model {model._get_name()} the training was unsuccessfull.\n", error_message)
