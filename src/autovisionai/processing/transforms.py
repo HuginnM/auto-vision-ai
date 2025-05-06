@@ -7,7 +7,7 @@ import torchvision.transforms.functional as TF
 from PIL import Image
 from torchvision import transforms as T
 
-from autovisionai.configs.config import CONFIG
+from autovisionai.configs import CONFIG
 from autovisionai.loggers.app_logger import logger
 from autovisionai.utils.utils import find_bounding_box
 
@@ -206,8 +206,8 @@ def get_transform(resize: bool = False, random_crop: bool = False, hflip: bool =
         transforms.append(
             Resize(
                 resize_to=(
-                    CONFIG["data_augmentation"]["resize_to"].get(),
-                    CONFIG["data_augmentation"]["resize_to"].get(),
+                    CONFIG.data_augmentation.resize_to,
+                    CONFIG.data_augmentation.resize_to,
                 ),
             )
         )
@@ -215,17 +215,17 @@ def get_transform(resize: bool = False, random_crop: bool = False, hflip: bool =
     elif random_crop:
         transforms.append(
             RandomCropWithObject(
-                prob=CONFIG["data_augmentation"]["random_crop_prob"].get(),
+                prob=CONFIG.data_augmentation.random_crop_prob,
                 crop_to=(
-                    CONFIG["data_augmentation"]["random_crop_crop_to"].get(),
-                    CONFIG["data_augmentation"]["random_crop_crop_to"].get(),
+                    CONFIG.data_augmentation.random_crop_crop_to,
+                    CONFIG.data_augmentation.random_crop_crop_to,
                 ),
                 add_bbox=bbox,
             )
         )
         logger.info("Added RandomCropWithObject transformation.")
     if hflip:
-        transforms.append(HorizontalFlip(prob=CONFIG["data_augmentation"]["h_flip_prob"].get()))
+        transforms.append(HorizontalFlip(prob=CONFIG.data_augmentation.h_flip_prob))
         logger.info("Added HorizontalFlip transformation.")
     if bbox:
         transforms.append(AddBoundingBox())

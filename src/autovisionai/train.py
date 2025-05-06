@@ -1,15 +1,19 @@
 import traceback
-from pathlib import Path
 from typing import Any
 
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 
-from autovisionai.configs.config import CONFIG
+from autovisionai.configs import CONFIG
 from autovisionai.loggers.app_logger import logger
+from autovisionai.loggers.ml_logging import (
+    create_experiments_dirs,
+    get_loggers,
+    get_run_name,
+    save_config_to_experiment,
+)
 from autovisionai.processing.datamodule import CarsDataModule
-from autovisionai.utils.ml_logging import create_experiments_dirs, get_loggers, get_run_name, save_config_to_experiment
 
 accelerator = "gpu" if torch.cuda.is_available() else "cpu"
 
@@ -42,9 +46,9 @@ def train_model(
     )
 
     datamodule = CarsDataModule(
-        data_root=CONFIG["dataset"]["data_root"].get(),
+        data_root=CONFIG.dataset.data_root,
         batch_size=batch_size,
-        num_workers=CONFIG["dataloader"]["num_workers"].get(),
+        num_workers=CONFIG.dataloader.num_workers,
         resize=use_resize,
         random_crop=use_random_crop,
         hflip=use_hflip,
@@ -53,7 +57,7 @@ def train_model(
     logger.info(f"Created datamodule with resize: {use_resize}, random_crop: {use_random_crop}, hflip: {use_hflip}.")
 
     experiment_folder = "exp_" + experiment_name
-    experiment_path = Path(CONFIG["logging"]["root_dir"].get(str)) / experiment_folder
+    experiment_path = CONFIG.logging.ml_loggers.root_dir / experiment_folder
 
     exp_paths = create_experiments_dirs(experiment_path, model_name, run_name)  # create logging folders and weights
     save_config_to_experiment(experiment_path)  # copy config to exp for reproducibility
@@ -75,11 +79,11 @@ def train_model(
     )
 
     trainer = pl.Trainer(
-        max_epochs=CONFIG["trainer"]["max_epoch"].get(int),
+        max_epochs=CONFIG.trainer.max_epoch,
         accelerator=accelerator,
         devices=1,
         logger=loggers,
-        log_every_n_steps=CONFIG["trainer"]["log_every_n_steps"].get(),
+        log_every_n_steps=CONFIG.trainer.log_every_n_steps,
         callbacks=[checkpoint_callback, early_stopping_callback],
     )
     trainer.fit(model, datamodule)
@@ -91,16 +95,17 @@ def train_model(
 
 
 if __name__ == "__main__":
+    from autovisionai.models.fast_scnn.fast_scnn_trainer import FastSCNNTrainer
     from autovisionai.models.mask_rcnn.mask_rcnn_trainer import MaskRCNNTrainer
     from autovisionai.models.unet.unet_trainer import UnetTrainer
 
-    models = [UnetTrainer]  # , FastSCNNTrainer, MaskRCNNTrainer]
+    models = [UnetTrainer, FastSCNNTrainer, MaskRCNNTrainer]
 
     for model in models:
         try:
             model = model()
             train_model(
-                experiment_name="all_model_training",
+                experiment_name="compare_all_models",
                 model=model,
                 batch_size=4,
                 use_resize=False,
@@ -109,4 +114,4 @@ if __name__ == "__main__":
             )
         except Exception:
             error_message = traceback.format_exc()
-            logger.exception(f"For the model {model} the training was unsuccessfull.\n", error_message)
+            logger.exception(f"For the model {model._get_name()} the training was unsuccessfull.\n", error_message)
