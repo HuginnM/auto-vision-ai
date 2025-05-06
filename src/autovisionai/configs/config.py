@@ -1,39 +1,41 @@
 import os
 from pathlib import Path
-from typing import List
 
+import confuse
 import yaml
 from dotenv import load_dotenv
 
-from autovisionai.configs.schema import AppConfig
-from autovisionai.utils.pathing import find_project_root
-
 load_dotenv()
 
-ENV_MODE = os.getenv("ENV_MODE", "local")
+ENV_MODE = os.getenv("ENV_MODE")
 WANDB_API_KEY = os.getenv("WANDB_API_KEY")
 
-PROJECT_ROOT: Path = find_project_root()
-CONFIG_DIR: Path = PROJECT_ROOT / "src" / "autovisionai" / "configs" / ENV_MODE
-CONFIG_FILES: List = ["data.yaml", "models.yaml", "logging.yaml"]
+
+def find_project_root(anchor_filename="pyproject.toml") -> Path:
+    current = Path(__file__).resolve()
+    for parent in current.parents:
+        if (parent / anchor_filename).exists():
+            return parent
+    raise FileNotFoundError(f"Could not find {anchor_filename} in parent folders.")
 
 
-def load_yaml_config(path: Path) -> dict:
-    with open(path, "r") as f:
-        return yaml.safe_load(f)
+# Get root
+project_root = find_project_root()
 
+config_file_path = project_root / "src" / "autovisionai" / "configs" / "config.yaml"
+config_folder_path = project_root / "src" / "autovisionai" / "configs"
+data_folder_path = project_root / "data"
+test_data_folder_path = project_root / "tests" / "test_data"
+experiments_folder_path = project_root / "experiments"
 
-def load_app_config() -> AppConfig:
-    merged = {}
-    for name in CONFIG_FILES:
-        merged.update(load_yaml_config(CONFIG_DIR / name))
+with open(config_file_path) as f:
+    config = yaml.load(f, Loader=yaml.FullLoader)
 
-    # Inject runtime paths
-    merged["dataset"]["data_root"] = PROJECT_ROOT / "data"
-    merged["dataset"]["test_data_root"] = PROJECT_ROOT / "tests" / "test_data"
-    merged["logging"]["ml_loggers"]["root_dir"] = PROJECT_ROOT / "experiments"
+config["dataset"]["data_root"] = str(data_folder_path)
+config["dataset"]["test_data_root"] = str(test_data_folder_path)
+config["logging"]["root_dir"] = str(experiments_folder_path)
 
-    return AppConfig(**merged)
+with open(config_file_path, "w") as f:
+    yaml.dump(config, stream=f, default_flow_style=False, sort_keys=False)
 
-
-CONFIG: AppConfig = load_app_config()
+CONFIG = confuse.Configuration(str(config_folder_path))

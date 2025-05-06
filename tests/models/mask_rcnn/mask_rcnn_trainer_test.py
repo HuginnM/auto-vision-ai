@@ -1,7 +1,7 @@
 import torch
 from numpy.testing import assert_almost_equal
 
-from autovisionai.configs import CONFIG
+from autovisionai.configs.config import CONFIG
 from autovisionai.models.mask_rcnn.mask_rcnn_trainer import MaskRCNNTrainer
 from autovisionai.processing.datamodule import CarsDataModule
 
@@ -11,7 +11,7 @@ def set_seed(seed):
 
 
 def generate_test_batch():
-    dm = CarsDataModule(data_root=CONFIG.dataset.test_data_root, batch_size=2, num_workers=2, bbox=True)
+    dm = CarsDataModule(data_root=CONFIG["dataset"]["test_data_root"].get(), batch_size=2, num_workers=2, bbox=True)
     dm.setup()
     test_batch = next(iter(dm.train_dataloader()))
     return test_batch

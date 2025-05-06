@@ -6,9 +6,9 @@ import torch.nn as nn
 from torch.optim import Adam, Optimizer
 from torch.optim.lr_scheduler import StepLR
 
-from autovisionai.configs import CONFIG, LRSchedulerConfig, OptimizerConfig
-from autovisionai.loggers.ml_logging import log_image_to_all_loggers
+from autovisionai.configs.config import CONFIG
 from autovisionai.models.fast_scnn.fast_scnn_model import FastSCNN
+from autovisionai.utils.ml_logging import log_image_to_all_loggers
 from autovisionai.utils.utils import get_batch_images_and_pred_masks_in_a_grid, masks_iou
 
 
@@ -110,19 +110,16 @@ class FastSCNNTrainer(pl.LightningModule):
 
         :return: a dict with the optimizer and lr_scheduler.
         """
-        optim_cfg: OptimizerConfig = CONFIG.models.fast_scnn.optimizer
-        lr_scheduler_cfg: LRSchedulerConfig = CONFIG.models.fast_scnn.lr_scheduler
-
         optimizer = Adam(
             self.model.parameters(),
-            lr=optim_cfg.initial_lr,
-            weight_decay=optim_cfg.weight_decay,
+            lr=CONFIG["unet"]["optimizer"]["initial_lr"].get(),
+            weight_decay=CONFIG["unet"]["optimizer"]["weight_decay"].get(),
         )
 
         lr_scheduler = StepLR(
             optimizer,
-            step_size=lr_scheduler_cfg.step_size,
-            gamma=lr_scheduler_cfg.gamma,
+            step_size=CONFIG["unet"]["lr_scheduler"]["step_size"].get(),
+            gamma=CONFIG["unet"]["lr_scheduler"]["gamma"].get(),
         )
 
         return {"optimizer": optimizer, "lr_scheduler": lr_scheduler}

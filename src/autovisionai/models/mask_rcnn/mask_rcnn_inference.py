@@ -3,7 +3,7 @@ from typing import Tuple
 import numpy as np
 import torch
 
-from autovisionai.configs import CONFIG
+from autovisionai.configs.config import CONFIG
 from autovisionai.loggers.app_logger import logger
 from autovisionai.models.mask_rcnn.mask_rcnn_model import create_model
 
@@ -18,7 +18,7 @@ def model_inference(trained_model_path: str, image: torch.Tensor) -> Tuple[np.nd
     :return: predicted numpy boxes, labels, scores, masks for an input image.
     """
 
-    model = create_model(n_classes=CONFIG.models.mask_rcnn.n_classes, pretrained=False)
+    model = create_model(n_classes=CONFIG["mask_rcnn"]["model"]["n_classes"].get(), pretrained=False)
     model.load_state_dict(torch.load(trained_model_path))
     logger.info(f"The Mask R-CNN model has been loaded with trained params from {trained_model_path}.")
     model.eval()
