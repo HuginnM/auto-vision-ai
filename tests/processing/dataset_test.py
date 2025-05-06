@@ -1,10 +1,10 @@
 import torch
 from PIL import Image
 
-from autovisionai.configs.config import CONFIG
+from autovisionai.configs import CONFIG
 from autovisionai.processing.dataset import CarsDataset
 
-dataset = CarsDataset(data_root=CONFIG["dataset"]["test_data_root"].get())
+dataset = CarsDataset(data_root=CONFIG.dataset.test_data_root)
 image, annotation = dataset[10]
 
 

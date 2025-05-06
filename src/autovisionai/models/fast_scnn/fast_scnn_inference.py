@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from torchvision import transforms as T
 
-from autovisionai.configs.config import CONFIG
+from autovisionai.configs import CONFIG
 from autovisionai.loggers.app_logger import logger
 from autovisionai.models.fast_scnn.fast_scnn_model import FastSCNN
 
@@ -15,13 +15,12 @@ def model_inference(trained_model_path: str, image: torch.Tensor) -> np.ndarray:
     :param image: a torch tensor with a shape [1, 3, H, W].
     :return: predicted mask for an input image.
     """
-
-    model = FastSCNN(CONFIG["fast_scnn"]["model"]["n_classes"].get())
+    model = FastSCNN(CONFIG.models.fast_scnn.n_classes)
     model.load_state_dict(torch.load(trained_model_path))
     logger.info(f"The Fast SCNN model has been loaded with trained params from {trained_model_path}.")
     model.eval()
 
-    resize_to = (CONFIG["data_augmentation"]["resize_to"].get(), CONFIG["data_augmentation"]["resize_to"].get())
+    resize_to = (CONFIG.data_augmentation.resize_to, CONFIG.data_augmentation.resize_to)
 
     resized_image = T.Resize(resize_to)(image)
 
