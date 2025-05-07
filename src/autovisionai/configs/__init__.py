@@ -1,5 +1,6 @@
-from autovisionai.configs.config import CONFIG, CONFIG_DIR, CONFIG_FILES, PROJECT_ROOT
+from autovisionai.configs.config import CONFIG, CONFIG_DIR, CONFIG_FILES, PROJECT_NAME, PROJECT_ROOT, PROJECT_VERSION
 from autovisionai.configs.schema import (
+    AppLoggerConfig,
     FileLoggerConfig,
     LRSchedulerConfig,
     MLLoggersConfig,
@@ -8,7 +9,7 @@ from autovisionai.configs.schema import (
     UNetConfig,
 )
 
-__ALL__ = [
+__all__ = [
     CONFIG,
     UNetConfig,
     OptimizerConfig,
@@ -16,7 +17,10 @@ __ALL__ = [
     StdoutLoggerConfig,
     FileLoggerConfig,
     MLLoggersConfig,
+    AppLoggerConfig,
     PROJECT_ROOT,
     CONFIG_DIR,
     CONFIG_FILES,
+    PROJECT_NAME,
+    PROJECT_VERSION,
 ]

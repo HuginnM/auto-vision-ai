@@ -1,10 +1,13 @@
+import logging
+
 import numpy as np
 import torch
 from torchvision import transforms as T
 
 from autovisionai.configs import CONFIG
-from autovisionai.loggers.app_logger import logger
 from autovisionai.models.fast_scnn.fast_scnn_model import FastSCNN
+
+logger = logging.getLogger(__name__)
 
 
 def model_inference(trained_model_path: str, image: torch.Tensor) -> np.ndarray:

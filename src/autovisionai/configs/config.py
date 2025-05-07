@@ -1,12 +1,13 @@
 import os
+import tomllib
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 
 import yaml
 from dotenv import load_dotenv
 
 from autovisionai.configs.schema import AppConfig
-from autovisionai.utils.pathing import find_project_root
+from autovisionai.utils.common import find_project_root
 
 load_dotenv()
 
@@ -36,4 +37,15 @@ def load_app_config() -> AppConfig:
     return AppConfig(**merged)
 
 
+def read_project_meta() -> Tuple[str, str]:
+    pyproject_path = PROJECT_ROOT / "pyproject.toml"
+
+    with pyproject_path.open("rb") as f:
+        data = tomllib.load(f)
+
+    project = data.get("project") or {}
+    return project.get("name", "unknown"), project.get("version", "0.0.0")
+
+
+PROJECT_NAME, PROJECT_VERSION = read_project_meta()
 CONFIG: AppConfig = load_app_config()

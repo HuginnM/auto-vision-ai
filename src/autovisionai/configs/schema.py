@@ -1,7 +1,9 @@
 from pathlib import Path
 from typing import Literal, Tuple
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
+
+from autovisionai.utils.common import parse_size
 
 
 class DatasetConfig(BaseModel):
@@ -99,9 +101,6 @@ class MLLoggersConfig(BaseModel):
 class StdoutLoggerConfig(BaseModel):
     level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
     format: str
-    backtrace: bool = True
-    diagnose: bool = True
-    enqueue: bool = True
 
 
 class FileLoggerConfig(BaseModel):
@@ -110,11 +109,14 @@ class FileLoggerConfig(BaseModel):
     file_name: str
     format: str
     rotation: str
-    retention: str
+    backup_count: int
     encoding: str = "utf-8"
-    backtrace: bool = True
-    diagnose: bool = True
-    enqueue: bool = True
+
+    @field_validator("rotation")
+    @classmethod
+    def validate_rotation(cls, v: str) -> str:
+        _ = parse_size(v)
+        return v
 
 
 class AppLoggerConfig(BaseModel):

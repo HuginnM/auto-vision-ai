@@ -1,3 +1,4 @@
+import logging
 from io import BytesIO
 from pathlib import Path
 from typing import Dict, List, Tuple, Union
@@ -14,7 +15,8 @@ from torchvision.transforms import functional as F
 from torchvision.utils import save_image
 
 from autovisionai.configs import CONFIG
-from autovisionai.loggers.app_logger import logger
+
+logger = logging.getLogger(__name__)
 
 
 def get_valid_files(dir_path: Path, allowed_extenstions: Union[List, Tuple]) -> List[str]:
@@ -284,7 +286,7 @@ def find_bounding_box(mask, min_size: int = CONFIG.data_augmentation.bbox_min_si
     height = ymax - ymin + 1
 
     if width < min_size or height < min_size:
-        logger.warning("Boundary box is too small, returning empty BBOX.")
+        logger.debug("Boundary box is too small, returning empty BBOX.")
         return None
 
     bbox = torch.tensor([xmin, ymin, xmax, ymax], dtype=torch.float32)

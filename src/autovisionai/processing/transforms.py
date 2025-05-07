@@ -1,3 +1,4 @@
+import logging
 import random
 from typing import Dict, Optional, Tuple, Union
 
@@ -8,8 +9,9 @@ from PIL import Image
 from torchvision import transforms as T
 
 from autovisionai.configs import CONFIG
-from autovisionai.loggers.app_logger import logger
 from autovisionai.utils.utils import find_bounding_box
+
+logger = logging.getLogger(__name__)
 
 
 class ToTensor:
