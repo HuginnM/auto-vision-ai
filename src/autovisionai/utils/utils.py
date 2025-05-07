@@ -1,3 +1,4 @@
+import logging
 from io import BytesIO
 from pathlib import Path
 from typing import Dict, List, Tuple, Union
@@ -14,7 +15,8 @@ from torchvision.transforms import functional as F
 from torchvision.utils import save_image
 
 from autovisionai.configs import CONFIG
-from autovisionai.loggers.app_logger import logger
+
+logger = logging.get_logger(__name__)
 
 
 def get_valid_files(dir_path: Path, allowed_extenstions: Union[List, Tuple]) -> List[str]:

@@ -1,3 +1,4 @@
+import logging
 import traceback
 from typing import Any
 
@@ -6,7 +7,6 @@ import torch
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 
 from autovisionai.configs import CONFIG
-from autovisionai.loggers.app_logger import logger
 from autovisionai.loggers.ml_logging import (
     create_experiments_dirs,
     get_loggers,
@@ -14,6 +14,8 @@ from autovisionai.loggers.ml_logging import (
     save_config_to_experiment,
 )
 from autovisionai.processing.datamodule import CarsDataModule
+
+logger = logging.get_logger(__name__)
 
 accelerator = "gpu" if torch.cuda.is_available() else "cpu"
 

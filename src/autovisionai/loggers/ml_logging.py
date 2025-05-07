@@ -1,5 +1,6 @@
 import datetime as dt
 import io
+import logging
 import os
 import shutil
 import traceback
@@ -12,9 +13,9 @@ import wandb
 from PIL import Image
 from pytorch_lightning.loggers import MLFlowLogger, TensorBoardLogger, WandbLogger
 
-# from pytorch_lightning.loggers.logger import LoggerCollection
 from autovisionai.configs import CONFIG, CONFIG_DIR, MLLoggersConfig
-from autovisionai.loggers.app_logger import logger
+
+logger = logging.get_logger(__name__)
 
 
 def get_run_name():

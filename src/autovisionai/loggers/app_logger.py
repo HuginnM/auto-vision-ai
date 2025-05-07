@@ -1,5 +1,3 @@
-# autovisionai/loggers/app_logger.py
-
 import logging
 import os
 import sys
