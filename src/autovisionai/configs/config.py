@@ -6,7 +6,7 @@ import yaml
 from dotenv import load_dotenv
 
 from autovisionai.configs.schema import AppConfig
-from autovisionai.utils.pathing import find_project_root
+from autovisionai.utils.common import find_project_root
 
 load_dotenv()
 
