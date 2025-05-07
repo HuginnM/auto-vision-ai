@@ -52,12 +52,29 @@ class AppLogger:
     @staticmethod
     def _parse_size(size_str: str) -> int:
         """
-        Parses size like "10 MB" into bytes.
+        Parses a human-readable size string like '10 MB' or '1024 B' into bytes.
+        Supports B, KB, MB, GB, TB.
         """
         size_str = size_str.strip().upper()
-        num, unit = size_str.split()
-        factor = {"KB": 1024, "MB": 1024**2, "GB": 1024**3}
-        return int(float(num) * factor[unit])
+        try:
+            num_str, unit = size_str.split()
+        except ValueError as err:
+            raise ValueError(f"Invalid size format: '{size_str}', expected format like '10 MB'") from err
+
+        num = float(num_str)
+
+        byte_factors = {
+            "B": 1,
+            "KB": 1024,
+            "MB": 1024**2,
+            "GB": 1024**3,
+            "TB": 1024**4,
+        }
+
+        if unit not in byte_factors:
+            raise ValueError(f"Unsupported unit '{unit}'. Supported: {', '.join(byte_factors.keys())}")
+
+        return int(num * byte_factors[unit])
 
 
 def setup_app_logger(config: AppLoggerConfig):
