@@ -53,14 +53,14 @@ def cleanup_logger_and_logs(mock_config):
     """
     yield  # run the test
     # Clean up autovisionai logger handlers
-    project_logger = logging.getLogger("autovisionai")
+    project_logger = logging.getLogger(PROJECT_NAME)
     for handler in project_logger.handlers:
         handler.close()
     project_logger.handlers.clear()
 
     # Attempt to remove test log file if it exists
     for handler in logging.Logger.manager.loggerDict.copy():
-        if handler.startswith("autovisionai"):
+        if handler.startswith(PROJECT_NAME):
             del logging.Logger.manager.loggerDict[handler]
 
     temp_log_dir = mock_config.file.save_dir
@@ -92,15 +92,15 @@ def test_app_logger_initializes(mock_config):
 
 def test_logger_idempotent(mock_config):
     AppLogger(mock_config)
-    count_1 = len(logging.getLogger().handlers)
+    count_1 = len(logging.getLogger(PROJECT_NAME).handlers)
     AppLogger(mock_config)
-    count_2 = len(logging.getLogger().handlers)
+    count_2 = len(logging.getLogger(PROJECT_NAME).handlers)
     assert count_1 == count_2
 
 
 def test_logger_outputs_to_stream():
     stream = StringIO()
-    logger = logging.getLogger("test.stream")
+    logger = logging.getLogger("autovisionai.stream")
     logger.setLevel(logging.INFO)
 
     handler = logging.StreamHandler(stream)

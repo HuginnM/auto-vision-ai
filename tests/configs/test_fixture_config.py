@@ -56,7 +56,7 @@ def minimal_valid_config_dict():
                     "file_name": "app.log",
                     "format": "{time} - {level} - {message}",
                     "rotation": "10 MB",
-                    "retention": "10 days",
+                    "backup_count": 2,
                 },
             },
             "ml_loggers": {
@@ -93,5 +93,10 @@ def test_app_config_invalid_type(minimal_valid_config_dict):
 def test_app_logger_defaults(minimal_valid_config_dict):
     config = AppConfig(**minimal_valid_config_dict)
     stdout = config.logging.app_logger.stdout
-    assert stdout.enqueue is True
-    assert stdout.backtrace is True
+    assert stdout.level == "INFO"
+
+    file = config.logging.app_logger.file
+    assert file.level == "DEBUG"
+    assert file.rotation == "10 MB"
+    assert file.backup_count == 2
+    assert file.file_name == "app.log"
