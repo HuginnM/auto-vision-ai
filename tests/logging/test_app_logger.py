@@ -5,6 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from autovisionai.configs import PROJECT_NAME
 from autovisionai.loggers.app_logger import AppLogger
 
 
@@ -83,7 +84,7 @@ def cleanup_logger_and_logs(mock_config):
 
 def test_app_logger_initializes(mock_config):
     AppLogger(mock_config)
-    handlers = logging.getLogger().handlers
+    handlers = logging.getLogger(PROJECT_NAME).handlers
     assert len(handlers) == 2
     assert any(isinstance(h, logging.StreamHandler) for h in handlers)
     assert any(isinstance(h, logging.FileHandler) for h in handlers)

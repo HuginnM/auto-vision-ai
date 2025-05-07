@@ -3,14 +3,14 @@ import sys
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-from autovisionai.configs import PROJECT_ROOT, AppLoggerConfig
+from autovisionai.configs import PROJECT_NAME, PROJECT_ROOT, AppLoggerConfig
 from autovisionai.utils.common import parse_size
 
 
 class AppLogger:
     def __init__(self, config: AppLoggerConfig):
         self.config = config
-        self.logger = logging.getLogger("autovisionai")
+        self.logger = logging.getLogger(PROJECT_NAME)
 
         if self.logger.handlers:
             return  # Already configured
