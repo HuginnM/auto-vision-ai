@@ -1,37 +1,67 @@
+# autovisionai/loggers/app_logger.py
+
+import logging
+import os
 import sys
+from logging.handlers import RotatingFileHandler
 
-from loguru import logger
-
-from autovisionai.configs import CONFIG, FileLoggerConfig, StdoutLoggerConfig
-from autovisionai.utils.pathing import find_project_root
+from autovisionai.configs import AppLoggerConfig
 
 
-def setup_logger() -> None:
-    stdout_cfg: StdoutLoggerConfig = CONFIG.logging.app_logger.stdout
-    file_cfg: FileLoggerConfig = CONFIG.logging.app_logger.file
+class AppLogger:
+    def __init__(self, config: AppLoggerConfig):
+        self.config = config
+        self.logger = logging.getLogger()
 
-    log_file_path = find_project_root() / file_cfg.save_dir / file_cfg.file_name
-    log_file_path.parent.mkdir(parents=True, exist_ok=True)
+        if self.logger.handlers:
+            return  # Already configured
 
-    logger.remove()
+        self.logger.setLevel(logging.DEBUG)  # Capture everything; handlers filter by own level
 
-    logger.add(
-        sys.stdout,
-        level=stdout_cfg.level,
-        format=stdout_cfg.format,
-        backtrace=stdout_cfg.backtrace,
-        diagnose=stdout_cfg.diagnose,
-        enqueue=stdout_cfg.enqueue,
-    )
+        self._setup_stdout_handler()
+        self._setup_file_handler()
+        self.logger.propagate = False
 
-    logger.add(
-        str(log_file_path),
-        level=file_cfg.level,
-        format=file_cfg.format,
-        rotation=file_cfg.rotation,
-        retention=file_cfg.retention,
-        encoding=file_cfg.encoding,
-        backtrace=file_cfg.backtrace,
-        diagnose=file_cfg.diagnose,
-        enqueue=file_cfg.enqueue,
-    )
+        self.logger.info(
+            "AppLogger initialized", extra={"stdout_level": self.config.stdout.level, "file_path": self._log_file_path}
+        )
+
+    def _setup_stdout_handler(self):
+        handler = logging.StreamHandler(sys.stdout)
+        formatter = logging.Formatter(self.config.stdout.format, datefmt="%Y-%m-%d %H:%M:%S")
+        handler.setFormatter(formatter)
+        handler.setLevel(self.config.stdout.level)
+        self.logger.addHandler(handler)
+
+    def _setup_file_handler(self):
+        os.makedirs(self.config.file.save_dir, exist_ok=True)
+        self._log_file_path = os.path.join(self.config.file.save_dir, self.config.file.file_name)
+
+        handler = RotatingFileHandler(
+            self._log_file_path,
+            maxBytes=self._parse_size(self.config.file.rotation),
+            backupCount=self._parse_retention(self.config.file.retention),
+            encoding=self.config.file.encoding,
+        )
+
+        formatter = logging.Formatter(self.config.file.format, datefmt="%Y-%m-%d %H:%M:%S")
+        handler.setFormatter(formatter)
+        handler.setLevel(self.config.file.level)
+        self.logger.addHandler(handler)
+
+    @staticmethod
+    def _parse_size(size_str: str) -> int:
+        """
+        Parses size like "10 MB" into bytes.
+        """
+        size_str = size_str.strip().upper()
+        num, unit = size_str.split()
+        factor = {"KB": 1024, "MB": 1024**2, "GB": 1024**3}
+        return int(float(num) * factor[unit])
+
+
+def setup_app_logger(config: AppLoggerConfig):
+    """
+    Public entrypoint for logger setup using AppLoggerConfig from AppConfig.
+    """
+    AppLogger(config)

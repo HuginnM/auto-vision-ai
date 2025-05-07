@@ -1,5 +1,6 @@
 from autovisionai.configs.config import CONFIG, CONFIG_DIR, CONFIG_FILES, PROJECT_ROOT
 from autovisionai.configs.schema import (
+    AppLoggerConfig,
     FileLoggerConfig,
     LRSchedulerConfig,
     MLLoggersConfig,
@@ -16,6 +17,7 @@ __ALL__ = [
     StdoutLoggerConfig,
     FileLoggerConfig,
     MLLoggersConfig,
+    AppLoggerConfig,
     PROJECT_ROOT,
     CONFIG_DIR,
     CONFIG_FILES,
