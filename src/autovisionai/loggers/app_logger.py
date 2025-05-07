@@ -40,7 +40,7 @@ class AppLogger:
         handler = RotatingFileHandler(
             self._log_file_path,
             maxBytes=self._parse_size(self.config.file.rotation),
-            backupCount=self._parse_retention(self.config.file.retention),
+            backupCount=self.config.file.backup_count,
             encoding=self.config.file.encoding,
         )
 
