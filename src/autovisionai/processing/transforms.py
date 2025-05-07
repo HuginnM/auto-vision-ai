@@ -11,7 +11,7 @@ from torchvision import transforms as T
 from autovisionai.configs import CONFIG
 from autovisionai.utils.utils import find_bounding_box
 
-logger = logging.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class ToTensor:

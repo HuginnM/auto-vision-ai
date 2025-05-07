@@ -15,7 +15,7 @@ from autovisionai.loggers.ml_logging import (
 )
 from autovisionai.processing.datamodule import CarsDataModule
 
-logger = logging.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 accelerator = "gpu" if torch.cuda.is_available() else "cpu"
 

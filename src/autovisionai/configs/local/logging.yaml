@@ -6,7 +6,7 @@ logging:
 
     file:
       level: DEBUG
-      save_dir: logs
+      save_dir: ./logs
       file_name: app.log
       format: "%(asctime)s | %(levelname)s | %(name)s:%(funcName)s:%(lineno)d - %(message)s"
       rotation: "10 MB"

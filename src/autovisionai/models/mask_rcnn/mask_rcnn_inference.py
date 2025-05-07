@@ -7,7 +7,7 @@ import torch
 from autovisionai.configs import CONFIG
 from autovisionai.models.mask_rcnn.mask_rcnn_model import create_model
 
-logger = logging.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def model_inference(trained_model_path: str, image: torch.Tensor) -> Tuple[np.ndarray, ...]:

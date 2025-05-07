@@ -16,7 +16,7 @@ from torchvision.utils import save_image
 
 from autovisionai.configs import CONFIG
 
-logger = logging.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def get_valid_files(dir_path: Path, allowed_extenstions: Union[List, Tuple]) -> List[str]:

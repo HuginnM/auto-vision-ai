@@ -15,7 +15,7 @@ from pytorch_lightning.loggers import MLFlowLogger, TensorBoardLogger, WandbLogg
 
 from autovisionai.configs import CONFIG, CONFIG_DIR, MLLoggersConfig
 
-logger = logging.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def get_run_name():

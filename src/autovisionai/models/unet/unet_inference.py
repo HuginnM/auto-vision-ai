@@ -7,7 +7,7 @@ from torchvision import transforms as T
 from autovisionai.configs import CONFIG
 from autovisionai.models.unet.unet_model import Unet
 
-logger = logging.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def model_inference(trained_model_path: str, image: torch.Tensor) -> np.ndarray:
