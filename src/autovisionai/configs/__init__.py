@@ -9,7 +9,7 @@ from autovisionai.configs.schema import (
     UNetConfig,
 )
 
-__ALL__ = [
+__all__ = [
     CONFIG,
     UNetConfig,
     OptimizerConfig,

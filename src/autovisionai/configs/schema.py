@@ -3,8 +3,6 @@ from typing import Literal, Tuple
 
 from pydantic import BaseModel, field_validator
 
-from autovisionai.loggers.app_logger import AppLogger
-
 
 class DatasetConfig(BaseModel):
     data_root: Path
@@ -115,8 +113,9 @@ class FileLoggerConfig(BaseModel):
     @field_validator("rotation")
     @classmethod
     def validate_rotation(cls, v: str) -> str:
-        # Reuse your size parsing function for validation
-        _ = AppLogger._parse_size(v)  # or use parse_size() from utils
+        from autovisionai.loggers.app_logger import AppLogger
+
+        _ = AppLogger._parse_size(v)
         return v
 
 
