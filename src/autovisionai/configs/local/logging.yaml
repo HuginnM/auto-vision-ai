@@ -2,13 +2,13 @@ logging:
   app_logger:
     stdout:
       level: INFO
-      format: "[%(asctime)s] %(levelname)-8s %(name)s: %(funcName)s:%(lineno)d - %(message)s"
+      format: "[%(asctime)s] %(levelname)s | %(name)s | pid=%(process)d | %(funcName)s:%(lineno)d - %(message)s"
 
     file:
       level: DEBUG
       save_dir: ./logs
       file_name: app.log
-      format: "%(asctime)s | %(levelname)s | %(name)s:%(funcName)s:%(lineno)d - %(message)s"
+      format: "%(asctime)s | %(levelname)s | %(name)s | pid=%(process)d | %(funcName)s:%(lineno)d - %(message)s"
       rotation: "10 MB"
       backup_count: 3
       encoding: "utf-8"

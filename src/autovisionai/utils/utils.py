@@ -286,7 +286,7 @@ def find_bounding_box(mask, min_size: int = CONFIG.data_augmentation.bbox_min_si
     height = ymax - ymin + 1
 
     if width < min_size or height < min_size:
-        logger.warning("Boundary box is too small, returning empty BBOX.")
+        logger.debug("Boundary box is too small, returning empty BBOX.")
         return None
 
     bbox = torch.tensor([xmin, ymin, xmax, ymax], dtype=torch.float32)
