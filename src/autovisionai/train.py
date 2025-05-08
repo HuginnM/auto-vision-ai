@@ -79,7 +79,7 @@ class ModelTrainer:
         model: PyTorch Lightning model to train
         device: Training device (GPU/CPU)
         experiment_path: Path to experiment directory
-        loggers: List of active loggers
+        loggers: List of active ML loggers
         callbacks: List of training callbacks
     """
 
@@ -139,7 +139,7 @@ class ModelTrainer:
 
     def _setup_loggers(self) -> None:
         """Set up logging backends."""
-        self.loggers = get_loggers(self.config.experiment_name, self.experiment_path, self.run_name)
+        self.ml_loggers = get_loggers(self.config.experiment_name, self.experiment_path, self.run_name)
 
     def _setup_callbacks(self) -> None:
         """Set up training callbacks."""
@@ -200,9 +200,9 @@ class ModelTrainer:
         """
         try:
             # Log training start if we have loggers
-            if self.loggers:
-                for logger in self.loggers:
-                    logger.log_hyperparams(self.config.__dict__)
+            if self.ml_loggers:
+                for ml_logger in self.ml_loggers:
+                    ml_logger.log_hyperparams(self.config.__dict__)
 
             # Create data module
             datamodule = self._create_datamodule()
@@ -212,7 +212,7 @@ class ModelTrainer:
                 max_epochs=self.config.max_epochs,
                 accelerator=self.device,
                 devices=1,
-                logger=self.loggers,
+                logger=self.ml_loggers,
                 log_every_n_steps=self.config.log_every_n_steps,
                 callbacks=self.callbacks,
             )
@@ -222,8 +222,8 @@ class ModelTrainer:
 
             # Save and log model weights
             model_weights_path = self._save_model_weights()
-            if self.loggers:
-                log_model_weights(self.loggers, self.model_name, str(model_weights_path))
+            if self.ml_loggers:
+                log_model_weights(self.ml_loggers, self.model_name, str(model_weights_path))
 
         except Exception as e:
             raise RuntimeError(f"Training failed: {str(e)}") from e
