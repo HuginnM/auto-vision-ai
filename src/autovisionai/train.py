@@ -11,6 +11,7 @@ from autovisionai.loggers.ml_logging import (
     create_experiments_dirs,
     get_loggers,
     get_run_name,
+    log_model_weights,
     save_config_to_experiment,
 )
 from autovisionai.processing.datamodule import CarsDataModule
@@ -94,6 +95,9 @@ def train_model(
     model_weights_path = exp_paths["weights_path"] / "model.pt"
     torch.save(model.model.state_dict(), model_weights_path)
     logger.info(f"The model {model_name} weights were saved to the folder: '{model_weights_path}'.")
+
+    # Log model weights to wandb/mlflow
+    log_model_weights(loggers, model, str(model_weights_path), model_name)
 
 
 if __name__ == "__main__":

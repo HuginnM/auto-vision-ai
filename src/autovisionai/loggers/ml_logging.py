@@ -5,7 +5,7 @@ import os
 import shutil
 import traceback
 from pathlib import Path
-from typing import Dict
+from typing import Any, Dict
 
 import torch
 import torchvision.transforms.functional as F
@@ -172,3 +172,41 @@ def compress_image_for_logging(image_tensor: torch.Tensor, quality: int = 75) ->
     buffer.seek(0)
 
     return Image.open(buffer)
+
+
+def log_model_weights(loggers: list, model: Any, model_weights_path: str, model_name: str) -> None:
+    """
+    Logs model weights to Weights & Biases and/or MLflow based on configuration.
+
+    :param loggers: List of active loggers
+    :param model: The trained model
+    :param model_weights_path: Path to the saved model weights
+    :param model_name: Name of the model
+    """
+    for logger in loggers:
+        if isinstance(logger, WandbLogger):
+            try:
+                # Log the model to wandb with production tag
+                artifact = wandb.Artifact(
+                    name=f"{model_name}-weights",
+                    type="model",
+                    description=f"Model weights for {model_name}",
+                    metadata={"model_type": model_name},
+                )
+                artifact.add_file(model_weights_path)
+                logger.experiment.log_artifact(artifact, aliases=["latest", "production"])
+                logger.info("Logged model weights to Weights & Biases with production tag")
+            except Exception as e:
+                logger.error(f"Failed to log model to Weights & Biases: {str(e)}")
+
+        elif isinstance(logger, MLFlowLogger):
+            try:
+                # Log the model to MLflow
+                logger.experiment.log_artifact(
+                    run_id=logger.run_id, local_path=model_weights_path, artifact_path="model_weights"
+                )
+                # Add production tag
+                logger.experiment.set_tag(logger.run_id, "production", "true")
+                logger.info("Logged model weights to MLflow with production tag")
+            except Exception as e:
+                logger.error(f"Failed to log model to MLflow: {str(e)}")
