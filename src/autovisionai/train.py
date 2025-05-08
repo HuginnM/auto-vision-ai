@@ -19,7 +19,7 @@ Typical usage:
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 import pytorch_lightning as pl
 import torch
@@ -92,6 +92,8 @@ class ModelTrainer:
         use_resize: bool = False,
         use_random_crop: bool = False,
         use_hflip: bool = False,
+        max_epochs: int = CONFIG.trainer.max_epoch,
+        datamodule: Optional[CarsDataModule] = None,
     ) -> None:
         """Initialize the model trainer.
 
@@ -103,6 +105,8 @@ class ModelTrainer:
             use_resize: Whether to apply image resizing
             use_random_crop: Whether to apply random cropping
             use_hflip: Whether to apply horizontal flipping
+            max_epochs: Maximum number of training epochs (defaults to CONFIG.trainer.max_epoch)
+            datamodule: Optional data module for testing purposes
         """
         self.config = TrainingConfig(
             experiment_name=experiment_name,
@@ -111,9 +115,11 @@ class ModelTrainer:
             use_resize=use_resize,
             use_random_crop=use_random_crop,
             use_hflip=use_hflip,
+            max_epochs=max_epochs,
         )
         self.model = model
         self.device = "gpu" if torch.cuda.is_available() else "cpu"
+        self._datamodule = datamodule
         self._setup_training_environment()
 
     def _setup_training_environment(self) -> None:
@@ -159,6 +165,9 @@ class ModelTrainer:
         Returns:
             Configured CarsDataModule instance
         """
+        if self._datamodule is not None:
+            return self._datamodule
+
         return CarsDataModule(
             data_root=CONFIG.dataset.data_root,
             batch_size=self.config.batch_size,
@@ -190,9 +199,10 @@ class ModelTrainer:
         5. Logs model weights to configured backends
         """
         try:
-            # Log training start
-            for logger in self.loggers:
-                logger.log_hyperparams(self.config.__dict__)
+            # Log training start if we have loggers
+            if self.loggers:
+                for logger in self.loggers:
+                    logger.log_hyperparams(self.config.__dict__)
 
             # Create data module
             datamodule = self._create_datamodule()
@@ -212,7 +222,8 @@ class ModelTrainer:
 
             # Save and log model weights
             model_weights_path = self._save_model_weights()
-            log_model_weights(self.loggers, self.model, str(model_weights_path), self.model_name)
+            if self.loggers:
+                log_model_weights(self.loggers, self.model_name, str(model_weights_path))
 
         except Exception as e:
             raise RuntimeError(f"Training failed: {str(e)}") from e
