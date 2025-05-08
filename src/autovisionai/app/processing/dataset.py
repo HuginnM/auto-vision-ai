@@ -6,8 +6,8 @@ import torch
 from PIL import Image
 from torch.utils.data import Dataset
 
-from autovisionai.configs import CONFIG
-from autovisionai.utils.utils import get_valid_files
+from autovisionai.app.configs import CONFIG
+from autovisionai.app.utils.utils import get_valid_files
 
 
 class CarsDataset(Dataset):

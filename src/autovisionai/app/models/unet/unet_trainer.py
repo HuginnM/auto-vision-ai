@@ -6,40 +6,33 @@ import torch.nn as nn
 from torch.optim import Adam, Optimizer
 from torch.optim.lr_scheduler import StepLR
 
-from autovisionai.configs import CONFIG, LRSchedulerConfig, OptimizerConfig
-from autovisionai.loggers.ml_logging import log_image_to_all_loggers
-from autovisionai.models.fast_scnn.fast_scnn_model import FastSCNN
-from autovisionai.utils.utils import get_batch_images_and_pred_masks_in_a_grid, masks_iou
+from autovisionai.app.configs import CONFIG, LRSchedulerConfig, OptimizerConfig
+from autovisionai.app.loggers.ml_logging import log_image_to_all_loggers
+from autovisionai.app.models.unet.unet_model import Unet
+from autovisionai.app.utils.utils import get_batch_images_and_pred_masks_in_a_grid, masks_iou
 
 
-class FastSCNNTrainer(pl.LightningModule):
+class UnetTrainer(pl.LightningModule):
     """
-    Pytorch Lightning version of the FastSCNN model.
+    Pytorch Lightning version of the UNet model.
 
-    :param n_classes: number of classes to predict.
+    :param in_channels: a number of input channels.
+    :param n_classes: a number of classes to predict.
     """
 
-    def __init__(self, n_classes: int = 1):
+    def __init__(self, in_channels: int = 3, n_classes: int = 1):
         super().__init__()
+        self.in_channels = in_channels
         self.n_classes = n_classes
-        self.model = FastSCNN(n_classes)
+        self.model = Unet(self.in_channels, self.n_classes)
         self.criterion = nn.BCEWithLogitsLoss()
         self.training_losses = []
         self.val_outputs = []
 
     def training_step(
-        self, batch: Tuple[Tuple[torch.Tensor, ...], Tuple[Dict[str, torch.Tensor]]], batch_idx: int
+        self, batch: Tuple[Tuple[torch.Tensor, ...], Tuple[Dict[str, torch.Tensor], ...]], batch_idx: int
     ) -> torch.Tensor:
-        """
-        Takes a batch and inputs it into the model.
-        Retrieves losses after one training step and logs them.
-
-        :param batch: a batch of images and targets with annotations.
-        :param batch_idx: an index of the current batch.
-        :return: step loss.
-        """
         images, targets = batch
-
         images_tensor = torch.stack(images)
         masks_tensor = torch.stack([pair["mask"] for pair in targets])
 
@@ -56,19 +49,9 @@ class FastSCNNTrainer(pl.LightningModule):
             self.training_losses.clear()
 
     def validation_step(
-        self, batch: Tuple[Tuple[torch.Tensor, ...], Tuple[Dict[str, torch.Tensor]]], batch_idx: int
+        self, batch: Tuple[Tuple[torch.Tensor, ...], Tuple[Dict[str, torch.Tensor], ...]]
     ) -> Dict[str, torch.Tensor]:
-        """
-        Take a batch from the validation dataset and input its images into the model.
-        Retrieves losses after one validation step and mask IoU score.
-
-        :param batch: a batch of images and targets with annotations.
-        :param batch_idx: an index of the current batch.
-        :return: dict with epoch loss value and masks IoU score and
-        predicted masks for one batch step.
-        """
         images, targets = batch
-
         images_tensor = torch.stack(images)
         masks_tensor = torch.stack([pair["mask"] for pair in targets])
 
@@ -102,16 +85,12 @@ class FastSCNNTrainer(pl.LightningModule):
             epoch=self.current_epoch,
             step=self.global_step,
         )
+
         self.val_outputs.clear()
 
     def configure_optimizers(self) -> Dict[str, Union[Optimizer, object]]:
-        """
-        Configure the Adam optimizer and the StepLR learning rate scheduler.
-
-        :return: a dict with the optimizer and lr_scheduler.
-        """
-        optim_cfg: OptimizerConfig = CONFIG.models.fast_scnn.optimizer
-        lr_scheduler_cfg: LRSchedulerConfig = CONFIG.models.fast_scnn.lr_scheduler
+        optim_cfg: OptimizerConfig = CONFIG.models.unet.optimizer
+        lr_scheduler_cfg: LRSchedulerConfig = CONFIG.models.unet.lr_scheduler
 
         optimizer = Adam(
             self.model.parameters(),

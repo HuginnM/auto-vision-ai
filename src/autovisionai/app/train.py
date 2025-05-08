@@ -6,14 +6,14 @@ import pytorch_lightning as pl
 import torch
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 
-from autovisionai.configs import CONFIG
-from autovisionai.loggers.ml_logging import (
+from autovisionai.app.configs import CONFIG
+from autovisionai.app.loggers.ml_logging import (
     create_experiments_dirs,
     get_loggers,
     get_run_name,
     save_config_to_experiment,
 )
-from autovisionai.processing.datamodule import CarsDataModule
+from autovisionai.app.processing.datamodule import CarsDataModule
 
 logger = logging.getLogger(__name__)
 
@@ -97,9 +97,9 @@ def train_model(
 
 
 if __name__ == "__main__":
-    from autovisionai.models.fast_scnn.fast_scnn_trainer import FastSCNNTrainer
-    from autovisionai.models.mask_rcnn.mask_rcnn_trainer import MaskRCNNTrainer
-    from autovisionai.models.unet.unet_trainer import UnetTrainer
+    from autovisionai.app.models.fast_scnn.fast_scnn_trainer import FastSCNNTrainer
+    from autovisionai.app.models.mask_rcnn.mask_rcnn_trainer import MaskRCNNTrainer
+    from autovisionai.app.models.unet.unet_trainer import UnetTrainer
 
     models = [UnetTrainer, FastSCNNTrainer, MaskRCNNTrainer]
 

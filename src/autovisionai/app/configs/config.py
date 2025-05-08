@@ -6,8 +6,8 @@ from typing import List, Tuple
 import yaml
 from dotenv import load_dotenv
 
-from autovisionai.configs.schema import AppConfig
-from autovisionai.utils.common import find_project_root
+from autovisionai.app.configs.schema import AppConfig
+from autovisionai.app.utils.common import find_project_root
 
 load_dotenv()
 

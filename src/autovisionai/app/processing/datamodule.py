@@ -4,9 +4,9 @@ import pytorch_lightning as pl
 import torch
 from torch.utils.data import DataLoader, Subset
 
-from autovisionai.configs import CONFIG
-from autovisionai.processing.dataset import CarsDataset
-from autovisionai.processing.transforms import get_transform
+from autovisionai.app.configs import CONFIG
+from autovisionai.app.processing.dataset import CarsDataset
+from autovisionai.app.processing.transforms import get_transform
 
 
 def collate_fn(

@@ -14,7 +14,7 @@ from torchmetrics.functional import jaccard_index
 from torchvision.transforms import functional as F
 from torchvision.utils import save_image
 
-from autovisionai.configs import CONFIG
+from autovisionai.app.configs import CONFIG
 
 logger = logging.getLogger(__name__)
 
