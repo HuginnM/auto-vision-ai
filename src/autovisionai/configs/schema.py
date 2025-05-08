@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Literal, Tuple
+from typing import List, Literal, Tuple
 
 from pydantic import BaseModel, field_validator
 
@@ -62,6 +62,7 @@ class MaskRCNNConfig(BaseModel):
 
 
 class MLModelsConfig(BaseModel):
+    available: List
     unet: UNetConfig
     fast_scnn: FastSCNNConfig
     mask_rcnn: MaskRCNNConfig
