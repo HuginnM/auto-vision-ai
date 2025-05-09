@@ -2,8 +2,8 @@ import numpy as np
 import torch
 from PIL import Image
 
-from autovisionai.processing.transforms import HorizontalFlip, RandomCrop, Resize, ToTensor
-from autovisionai.utils.utils import find_bounding_box
+from autovisionai.core.processing.transforms import HorizontalFlip, RandomCrop, Resize, ToTensor
+from autovisionai.core.utils.utils import find_bounding_box
 
 NUMPY_IMAGE = np.array(
     [

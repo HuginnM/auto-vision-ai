@@ -1,7 +1,7 @@
 import torch
 from numpy.testing import assert_almost_equal
 
-from autovisionai.models.fast_scnn.fast_scnn_trainer import FastSCNNTrainer
+from autovisionai.core.models.fast_scnn.fast_scnn_trainer import FastSCNNTrainer
 
 
 def set_seed(seed):

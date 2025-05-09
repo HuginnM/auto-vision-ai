@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from autovisionai.configs.schema import (
+from autovisionai.core.configs.schema import (
     AppConfig,
 )
 
