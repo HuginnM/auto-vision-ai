@@ -4,8 +4,8 @@ from typing import Tuple
 import numpy as np
 import torch
 
-from autovisionai.app.configs import CONFIG
-from autovisionai.app.models.mask_rcnn.mask_rcnn_model import create_model
+from autovisionai.core.configs import CONFIG
+from autovisionai.core.models.mask_rcnn.mask_rcnn_model import create_model
 
 logger = logging.getLogger(__name__)
 

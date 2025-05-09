@@ -4,8 +4,8 @@ import numpy as np
 import torch
 from torchvision import transforms as T
 
-from autovisionai.app.configs import CONFIG
-from autovisionai.app.models.unet.unet_model import Unet
+from autovisionai.core.configs import CONFIG
+from autovisionai.core.models.unet.unet_model import Unet
 
 logger = logging.getLogger(__name__)
 

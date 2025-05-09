@@ -6,10 +6,10 @@ import torch.nn as nn
 from torch.optim import Adam, Optimizer
 from torch.optim.lr_scheduler import StepLR
 
-from autovisionai.app.configs import CONFIG, LRSchedulerConfig, OptimizerConfig
-from autovisionai.app.loggers.ml_logging import log_image_to_all_loggers
-from autovisionai.app.models.fast_scnn.fast_scnn_model import FastSCNN
-from autovisionai.app.utils.utils import get_batch_images_and_pred_masks_in_a_grid, masks_iou
+from autovisionai.core.configs import CONFIG, LRSchedulerConfig, OptimizerConfig
+from autovisionai.core.loggers.ml_logging import log_image_to_all_loggers
+from autovisionai.core.models.fast_scnn.fast_scnn_model import FastSCNN
+from autovisionai.core.utils.utils import get_batch_images_and_pred_masks_in_a_grid, masks_iou
 
 
 class FastSCNNTrainer(pl.LightningModule):

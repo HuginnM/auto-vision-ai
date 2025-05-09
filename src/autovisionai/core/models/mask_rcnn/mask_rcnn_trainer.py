@@ -6,10 +6,10 @@ import torch
 from torch.optim import SGD, Optimizer
 from torch.optim.lr_scheduler import StepLR
 
-from autovisionai.app.configs import CONFIG, LRSchedulerConfig, OptimizerConfig
-from autovisionai.app.loggers.ml_logging import log_image_to_all_loggers
-from autovisionai.app.models.mask_rcnn.mask_rcnn_model import create_model
-from autovisionai.app.utils.utils import bboxes_iou, get_batch_images_and_pred_masks_in_a_grid
+from autovisionai.core.configs import CONFIG, LRSchedulerConfig, OptimizerConfig
+from autovisionai.core.loggers.ml_logging import log_image_to_all_loggers
+from autovisionai.core.models.mask_rcnn.mask_rcnn_model import create_model
+from autovisionai.core.utils.utils import bboxes_iou, get_batch_images_and_pred_masks_in_a_grid
 
 
 class MaskRCNNTrainer(pl.LightningModule):

@@ -7,9 +7,9 @@ import numpy as np
 import wandb
 from PIL import Image
 
-from autovisionai.app.models.fast_scnn.fast_scnn_inference import model_inference as fast_scnn_inference
-from autovisionai.app.models.mask_rcnn.mask_rcnn_inference import model_inference as mask_rcnn_inference
-from autovisionai.app.models.unet.unet_inference import model_inference as unet_inference
+from autovisionai.core.models.fast_scnn.fast_scnn_inference import model_inference as fast_scnn_inference
+from autovisionai.core.models.mask_rcnn.mask_rcnn_inference import model_inference as mask_rcnn_inference
+from autovisionai.core.models.unet.unet_inference import model_inference as unet_inference
 
 logger = logging.getLogger(__name__)
 

@@ -4,8 +4,8 @@ import numpy as np
 import torch
 from torchvision import transforms as T
 
-from autovisionai.app.configs import CONFIG
-from autovisionai.app.models.fast_scnn.fast_scnn_model import FastSCNN
+from autovisionai.core.configs import CONFIG
+from autovisionai.core.models.fast_scnn.fast_scnn_model import FastSCNN
 
 logger = logging.getLogger(__name__)
 

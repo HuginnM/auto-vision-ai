@@ -1,4 +1,4 @@
-from autovisionai.app.configs.config import (
+from autovisionai.core.configs.config import (
     CONFIG,
     CONFIG_DIR,
     CONFIG_FILES,
@@ -6,7 +6,7 @@ from autovisionai.app.configs.config import (
     PROJECT_ROOT,
     PROJECT_VERSION,
 )
-from autovisionai.app.configs.schema import (
+from autovisionai.core.configs.schema import (
     AppLoggerConfig,
     FileLoggerConfig,
     LRSchedulerConfig,

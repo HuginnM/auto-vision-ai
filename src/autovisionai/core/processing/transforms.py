@@ -8,8 +8,8 @@ import torchvision.transforms.functional as TF
 from PIL import Image
 from torchvision import transforms as T
 
-from autovisionai.app.configs import CONFIG
-from autovisionai.app.utils.utils import find_bounding_box
+from autovisionai.core.configs import CONFIG
+from autovisionai.core.utils.utils import find_bounding_box
 
 logger = logging.getLogger(__name__)
 

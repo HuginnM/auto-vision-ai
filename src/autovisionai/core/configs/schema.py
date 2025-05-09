@@ -3,7 +3,7 @@ from typing import List, Literal, Tuple
 
 from pydantic import BaseModel, field_validator
 
-from autovisionai.app.utils.common import parse_size
+from autovisionai.core.utils.common import parse_size
 
 
 class DatasetConfig(BaseModel):
