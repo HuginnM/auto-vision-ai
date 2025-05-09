@@ -28,10 +28,10 @@ class MockModel(LightningModule):
     def __init__(self):
         super().__init__()
         self.model = torch.nn.Linear(10, 2)
-        self._name = "MockModel"
+        self.model_name = "mock_model"
 
     def _get_name(self) -> str:
-        return self._name
+        return self.model_name
 
     def training_step(self, batch, batch_idx):
         """Required PyTorch Lightning method."""
@@ -173,7 +173,7 @@ class TestModelTrainer:
         assert model_trainer.device in ["gpu", "cpu"]
         assert isinstance(model_trainer.model, LightningModule)
         assert model_trainer.run_name is not None
-        assert model_trainer.model_name == "MockModel"
+        assert model_trainer.model_name == "mock_model"
 
     def test_max_epochs_override(self, mock_model):
         """Test that max_epochs parameter properly overrides the config default."""
@@ -214,7 +214,7 @@ class TestModelTrainer:
         mock_loggers = [MagicMock(spec=Logger)]
         mock_get_loggers.return_value = mock_loggers
         model_trainer._setup_loggers()
-        assert model_trainer.loggers == mock_loggers
+        assert model_trainer.ml_loggers == mock_loggers
         mock_get_loggers.assert_called_once()
 
     @patch("autovisionai.train.CarsDataModule")
