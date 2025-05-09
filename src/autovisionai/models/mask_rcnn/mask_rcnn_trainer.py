@@ -24,6 +24,7 @@ class MaskRCNNTrainer(pl.LightningModule):
         self.model = create_model(n_classes=n_classes)
         self.training_losses = []
         self.val_outputs = []
+        self.model_name = "mask_rcnn"
 
     def _create_valid_target(self, target: Dict) -> Dict[str, torch.Tensor]:
         """
