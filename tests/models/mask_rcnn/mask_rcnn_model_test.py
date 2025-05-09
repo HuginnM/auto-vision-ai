@@ -1,7 +1,7 @@
 import torch
 from numpy.testing import assert_almost_equal
 
-from autovisionai.models.mask_rcnn.mask_rcnn_model import *
+from autovisionai.core.models.mask_rcnn.mask_rcnn_model import *
 
 
 def set_seed(seed):

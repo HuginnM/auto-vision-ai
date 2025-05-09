@@ -1,6 +1,6 @@
 from numpy.testing import assert_almost_equal
 
-from autovisionai.models.unet.unet_model import *
+from autovisionai.core.models.unet.unet_model import *
 
 
 def set_seed(seed):

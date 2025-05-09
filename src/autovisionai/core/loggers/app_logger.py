@@ -3,8 +3,8 @@ import sys
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-from autovisionai.configs import PROJECT_NAME, PROJECT_ROOT, AppLoggerConfig
-from autovisionai.utils.common import parse_size
+from autovisionai.core.configs import PROJECT_NAME, PROJECT_ROOT, AppLoggerConfig
+from autovisionai.core.utils.common import parse_size
 
 
 class AppLogger:

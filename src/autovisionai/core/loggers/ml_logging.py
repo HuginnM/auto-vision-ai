@@ -14,7 +14,7 @@ from mlflow.tracking import MlflowClient
 from PIL import Image
 from pytorch_lightning.loggers import MLFlowLogger, TensorBoardLogger, WandbLogger
 
-from autovisionai.configs import CONFIG, CONFIG_DIR, MLLoggersConfig
+from autovisionai.core.configs import CONFIG, CONFIG_DIR, MLLoggersConfig
 
 logger = logging.getLogger(__name__)
 

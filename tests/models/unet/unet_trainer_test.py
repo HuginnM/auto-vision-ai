@@ -1,7 +1,7 @@
 import torch
 from numpy.testing import assert_almost_equal
 
-from autovisionai.models.unet.unet_trainer import UnetTrainer
+from autovisionai.core.models.unet.unet_trainer import UnetTrainer
 
 
 def set_seed(seed):

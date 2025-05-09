@@ -1,5 +1,5 @@
-from autovisionai.configs import CONFIG
-from autovisionai.processing.datamodule import CarsDataModule
+from autovisionai.core.configs import CONFIG
+from autovisionai.core.processing.datamodule import CarsDataModule
 
 datamodule = CarsDataModule(data_root=CONFIG.dataset.test_data_root, batch_size=2, num_workers=2)
 datamodule.setup()

@@ -1,4 +1,4 @@
-from autovisionai.models.fast_scnn.fast_scnn_model import *
+from autovisionai.core.models.fast_scnn.fast_scnn_model import *
 
 
 def test_conv_bn_relu():

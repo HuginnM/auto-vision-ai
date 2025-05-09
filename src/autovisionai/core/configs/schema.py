@@ -1,9 +1,9 @@
 from pathlib import Path
-from typing import Literal, Tuple
+from typing import List, Literal, Tuple
 
 from pydantic import BaseModel, field_validator
 
-from autovisionai.utils.common import parse_size
+from autovisionai.core.utils.common import parse_size
 
 
 class DatasetConfig(BaseModel):
@@ -62,6 +62,7 @@ class MaskRCNNConfig(BaseModel):
 
 
 class MLModelsConfig(BaseModel):
+    available: List
     unet: UNetConfig
     fast_scnn: FastSCNNConfig
     mask_rcnn: MaskRCNNConfig

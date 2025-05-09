@@ -1,4 +1,5 @@
 models:
+  available: ["unet", "fast_scnn", "mask_rcnn"]
   unet:
     in_channels: 3
     n_classes: 1
