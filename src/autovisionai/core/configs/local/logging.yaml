@@ -29,4 +29,4 @@ logging:
       use: true
       log_model: true
       save_dir: wandb
-      mode: offline
+      mode: online  # offline

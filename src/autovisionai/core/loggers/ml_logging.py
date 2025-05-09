@@ -10,6 +10,7 @@ from typing import Dict
 import torch
 import torchvision.transforms.functional as F
 import wandb
+from mlflow.tracking import MlflowClient
 from PIL import Image
 from pytorch_lightning.loggers import MLFlowLogger, TensorBoardLogger, WandbLogger
 
@@ -172,3 +173,81 @@ def compress_image_for_logging(image_tensor: torch.Tensor, quality: int = 75) ->
     buffer.seek(0)
 
     return Image.open(buffer)
+
+
+def log_register_model_in_mlflow(
+    ml_logger: MLFlowLogger,
+    model_name: str,
+    model_weights_path: Path,
+    run_id: str,
+    artifact_subpath: str = "model/model.pt",
+) -> None:
+    """
+    Registers a .pt model file in MLflow Model Registry manually using MlflowClient.
+
+    Args:
+        model_name (str): The name to register the model under in MLflow.
+        model_weights_path (Path): Path to the local .pt model weights file.
+        run_id (str): MLflow run ID from an active MLFlowLogger.
+        artifact_subpath (str): Path under the run's artifact directory where the file will be saved.
+    """
+    client: MlflowClient = ml_logger.experiment
+
+    # Log artifact (weights file) under 'model/' artifact path
+    logger.info(f"Logging model weights to MLflow run {run_id}...")
+    client.log_artifact(run_id, local_path=str(model_weights_path), artifact_path="model")
+
+    # Ensure model name is lowercase for consistency
+    model_name = model_name.lower()
+
+    try:
+        # Try to get existing model
+        client.get_registered_model(model_name)
+        logger.info(f"Found existing model: {model_name}")
+    except Exception:
+        # Create new model if it doesn't exist
+        logger.info(f"Creating new registered model: {model_name}")
+        client.create_registered_model(model_name)
+
+    # Register new model version from the artifact URI
+    model_uri = f"runs:/{run_id}/{artifact_subpath}"
+    logger.info(f"Registering model version from {model_uri}...")
+    version_info = client.create_model_version(name=model_name, source=model_uri, run_id=run_id)
+
+    version = version_info.version
+    logger.info(f"Created version {version} of model '{model_name}'")
+
+
+def log_model_artifacts(ml_loggers: list, model_name: str, model_weights_path: str) -> None:
+    """
+    Logs model weights to Weights & Biases and/or MLflow based on configuration.
+
+    :param loggers: List of active ML loggers
+    :param model_name: Name of the model
+    :param model_weights_path: Path to the saved model weights
+    """
+    for ml_logger in ml_loggers:
+        if isinstance(ml_logger, WandbLogger):
+            try:
+                artifact = wandb.Artifact(
+                    name=f"{model_name}-weights",
+                    type="model",
+                    description=f"Model weights for {model_name}",
+                    metadata={"model_type": model_name},
+                )
+                artifact.add_file(model_weights_path)
+                ml_logger.experiment.log_artifact(artifact, aliases=["latest"])
+                logger.info(f"Logged model to Weights & Biases as '{model_name}:latest'")
+            except Exception as e:
+                logger.error(f"Failed to log model to Weights & Biases: {str(e)}")
+
+        elif isinstance(ml_logger, MLFlowLogger):
+            try:
+                log_register_model_in_mlflow(
+                    ml_logger,
+                    model_name,
+                    model_weights_path,
+                    ml_logger.run_id,
+                )
+            except Exception as e:
+                logger.error(f"Failed to log model to MLflow Model Registry: {str(e)}")
