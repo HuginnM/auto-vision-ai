@@ -28,6 +28,7 @@ class UnetTrainer(pl.LightningModule):
         self.criterion = nn.BCEWithLogitsLoss()
         self.training_losses = []
         self.val_outputs = []
+        self.model_name = "unet"
 
     def training_step(
         self, batch: Tuple[Tuple[torch.Tensor, ...], Tuple[Dict[str, torch.Tensor], ...]], batch_idx: int

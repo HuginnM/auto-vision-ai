@@ -30,7 +30,7 @@ from autovisionai.loggers.ml_logging import (
     create_experiments_dirs,
     get_loggers,
     get_run_name,
-    log_model_weights,
+    log_model_artifacts,
     save_config_to_experiment,
 )
 from autovisionai.models.mask_rcnn.mask_rcnn_trainer import MaskRCNNTrainer
@@ -125,7 +125,7 @@ class ModelTrainer:
     def _setup_training_environment(self) -> None:
         """Set up the training environment including directories and loggers."""
         self.run_name = get_run_name()
-        self.model_name = self.model._get_name()
+        self.model_name = self.model.model_name
         self._setup_experiment_directories()
         self._setup_loggers()
         self._setup_callbacks()
@@ -223,7 +223,7 @@ class ModelTrainer:
             # Save and log model weights
             model_weights_path = self._save_model_weights()
             if self.ml_loggers:
-                log_model_weights(self.ml_loggers, self.model_name, str(model_weights_path))
+                log_model_artifacts(self.ml_loggers, self.model_name, str(model_weights_path))
 
         except Exception as e:
             raise RuntimeError(f"Training failed: {str(e)}") from e
@@ -232,21 +232,31 @@ class ModelTrainer:
 def main() -> None:
     """Main entry point for training multiple models."""
     from autovisionai.models.fast_scnn.fast_scnn_trainer import FastSCNNTrainer
-    from autovisionai.models.mask_rcnn.mask_rcnn_trainer import MaskRCNNTrainer
-    from autovisionai.models.unet.unet_trainer import UnetTrainer
 
-    models = [UnetTrainer, FastSCNNTrainer, MaskRCNNTrainer]
+    # models = [UnetTrainer, FastSCNNTrainer, MaskRCNNTrainer]
+    models = [FastSCNNTrainer]
 
+    # Test datamodule with only 16 images for fast test-training
+    # test_datamodule = CarsDataModule(
+    #     data_root=CONFIG.dataset.test_data_root,
+    #     batch_size=1,
+    #     num_workers=1,
+    #     resize=False,
+    #     random_crop=True,
+    #     hflip=True,
+    # )
     for model_class in models:
         try:
             model = model_class()
             trainer = ModelTrainer(
-                experiment_name="compare_all_models",
+                experiment_name="final_test",
                 model=model,
                 batch_size=4,
                 use_resize=False,
                 use_random_crop=True,
                 use_hflip=True,
+                max_epochs=1,
+                # datamodule=test_datamodule
             )
             trainer.train()
         except Exception as e:

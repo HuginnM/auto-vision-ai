@@ -26,6 +26,7 @@ class FastSCNNTrainer(pl.LightningModule):
         self.criterion = nn.BCEWithLogitsLoss()
         self.training_losses = []
         self.val_outputs = []
+        self.model_name = "fast_scnn"
 
     def training_step(
         self, batch: Tuple[Tuple[torch.Tensor, ...], Tuple[Dict[str, torch.Tensor]]], batch_idx: int
