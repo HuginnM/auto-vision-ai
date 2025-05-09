@@ -24,6 +24,8 @@ from autovisionai.train import ModelTrainer, TrainingConfig
 os.environ["WANDB_MODE"] = "disabled"
 os.environ["MLFLOW_TRACKING_URI"] = "file:./mlruns"
 CONFIG.logging.ml_loggers.wandb.use = False
+CONFIG.logging.ml_loggers.mlflow.use = False
+
 
 logger = logging.getLogger(__name__)
 
