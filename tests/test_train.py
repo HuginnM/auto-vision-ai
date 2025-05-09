@@ -5,6 +5,7 @@ It includes unit tests, integration tests, and mock tests for various scenarios.
 """
 
 import logging
+import os
 import shutil
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -18,6 +19,11 @@ from pytorch_lightning.loggers import Logger
 from autovisionai.configs import CONFIG
 from autovisionai.processing.datamodule import CarsDataModule
 from autovisionai.train import ModelTrainer, TrainingConfig
+
+# Disable ML logging for tests
+os.environ["WANDB_MODE"] = "disabled"
+os.environ["MLFLOW_TRACKING_URI"] = "file:./mlruns"
+CONFIG.logging.ml_loggers.wandb.use = False
 
 logger = logging.getLogger(__name__)
 
