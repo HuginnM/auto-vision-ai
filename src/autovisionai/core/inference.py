@@ -1,5 +1,3 @@
-# app/inference/dispatcher.py
-
 import logging
 from pathlib import Path
 

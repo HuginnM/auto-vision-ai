@@ -16,9 +16,9 @@ from pytorch_lightning import LightningModule
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from pytorch_lightning.loggers import Logger
 
-from autovisionai.configs import CONFIG
-from autovisionai.processing.datamodule import CarsDataModule
-from autovisionai.train import ModelTrainer, TrainingConfig
+from autovisionai.core.configs import CONFIG
+from autovisionai.core.processing.datamodule import CarsDataModule
+from autovisionai.core.train import ModelTrainer, TrainingConfig
 
 # Disable ML logging for tests
 os.environ["WANDB_MODE"] = "disabled"
