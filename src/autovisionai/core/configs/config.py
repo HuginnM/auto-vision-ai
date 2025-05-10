@@ -15,7 +15,7 @@ ENV_MODE = os.getenv("ENV_MODE", "local")
 WANDB_API_KEY = os.getenv("WANDB_API_KEY")
 
 PROJECT_ROOT: Path = find_project_root()
-CONFIG_DIR: Path = PROJECT_ROOT / "src" / "autovisionai" / "configs" / ENV_MODE
+CONFIG_DIR: Path = PROJECT_ROOT / "src" / "autovisionai" / "core" / "configs" / ENV_MODE
 CONFIG_FILES: List = ["data.yaml", "models.yaml", "logging.yaml"]
 
 
