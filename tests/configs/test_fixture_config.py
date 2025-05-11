@@ -28,6 +28,7 @@ def minimal_valid_config_dict():
         "dataloader": {"num_workers": 4},
         "datamodule": {"training_set_size": 0.8},
         "models": {
+            "available": ["unet", "fast_scnn", "mask_rcnn"],
             "unet": {
                 "in_channels": 3,
                 "n_classes": 1,
@@ -36,7 +37,7 @@ def minimal_valid_config_dict():
             },
             "fast_scnn": {
                 "n_classes": 1,
-                "optimizer": {"initial_lr": 0.01},
+                "optimizer": {"initial_lr": 0.01, "weight_decay": 0.0005},
                 "lr_scheduler": {"step_size": 3, "gamma": 0.5},
             },
             "mask_rcnn": {
