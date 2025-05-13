@@ -11,6 +11,7 @@ import mlflow
 import torch
 import torchvision.transforms.functional as F
 from mlflow.tracking import MlflowClient
+from numpy.typing import NDArray
 from PIL import Image
 from pytorch_lightning.loggers import MLFlowLogger, TensorBoardLogger, WandbLogger
 from torch.utils.tensorboard import SummaryWriter
@@ -21,9 +22,9 @@ from autovisionai.core.configs import CONFIG, CONFIG_DIR, MLLoggersConfig
 logger = logging.getLogger(__name__)
 
 
-def get_run_name():
+def get_run_name(name="run"):
     local_tz = dt.datetime.now().astimezone().tzinfo
-    return f"run_{dt.datetime.now(tz=local_tz).strftime('%Y%m%dT%H%M%SUTC%z')}".replace("+", "")  # ISO8601 format
+    return f"{name}_{dt.datetime.now(tz=local_tz).strftime('%Y%m%dT%H%M%SUTC%z')}".replace("+", "")  # ISO8601 format
 
 
 def get_loggers(experiment_name: str, experiment_path: Path, run_name: str = "run_default") -> list:
@@ -256,8 +257,8 @@ def log_model_artifacts(ml_loggers: list, model_name: str, model_weights_path: s
 
 
 def log_inference_results(
-    input_image: Image.Image,
-    output_mask: Image.Image,
+    input_image: NDArray,
+    output_mask: NDArray,
     model_name: str,
     model_version: str,
     inference_time: float,
@@ -276,16 +277,12 @@ def log_inference_results(
     """
     ml_loggers_cfg: MLLoggersConfig = CONFIG.logging.ml_loggers
 
-    # Convert PIL Images to tensors for logging
-    input_tensor = F.to_tensor(input_image)
-    output_tensor = F.to_tensor(output_mask)
-
     # TensorBoard logging
     if ml_loggers_cfg.tensorboard.use:
         try:
             writer = SummaryWriter(log_dir=str(Path("logs") / "tensorboard"))
-            writer.add_image("inference/input", input_tensor, step)
-            writer.add_image("inference/output", output_tensor, step)
+            writer.add_image("inference/input", F.to_tensor(input_image), step)
+            writer.add_image("inference/output", F.to_tensor(output_mask), step)
             writer.add_scalar("inference/time", inference_time, step)
             writer.add_text("inference/model_info", f"Model: {model_name}\nVersion: {model_version}")
             writer.close()
@@ -313,10 +310,13 @@ def log_inference_results(
     # MLflow logging
     if ml_loggers_cfg.mlflow.use:
         try:
-            with mlflow.start_run(run_name=f"inference_{model_name}_{model_version}"):
+            mlflow.set_tracking_uri(CONFIG.logging.ml_loggers.mlflow.tracking_uri)
+            mlflow.set_experiment("autovisionai_inference")
+
+            with mlflow.start_run(run_name=get_run_name(model_name)):
                 mlflow.log_metric("inference_time", inference_time, step=step)
                 mlflow.log_params({"model_name": model_name, "model_version": model_version})
-                mlflow.log_image(input_image, "inference/input.png")
+                mlflow.log_image(input_image.squeeze(), "inference/input.png")
                 mlflow.log_image(output_mask, "inference/output.png")
         except Exception:
             error_message = traceback.format_exc()
