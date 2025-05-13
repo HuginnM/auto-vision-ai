@@ -29,10 +29,10 @@ class InferenceEngine:
         """
         logger.info(f"Fetching best weights for '{self.model_name}' from W&B")
 
-        self.artifact_ref = f"wandb-registry-model/AutoVisionAI:{self.model_name}"
+        self.artifact_ref = f"wandb-registry-model/{self.model_name}:production"
 
         try:
-            artifact = wandb.use_artifact(self.artifact_ref, type="model", aliases=["production", self.model_name])
+            artifact = wandb.use_artifact(self.artifact_ref, type="model")
         except Exception as e:
             logger.error(f"Failed to load artifact {self.artifact_ref}: {str(e)}")
 
@@ -141,7 +141,7 @@ if __name__ == "__main__":
     # Example usage
     from autovisionai.core.utils.utils import get_input_image_for_inference
 
-    model = "fast_scnn"
+    model = "mask_rcnn"
     image = get_input_image_for_inference(local_path=r"C:\DATA\Projects\AutoVisionAI\data\images\0cdf5b5d0ce1_04.jpg")
     engine = InferenceEngine(model)
     pred_mask = engine.infer(image, return_binary=False)

@@ -60,13 +60,15 @@ def get_loggers(experiment_name: str, experiment_path: Path, run_name: str = "ru
         wandb_mode = ml_loggers_cfg.wandb.mode
         os.environ["WANDB_MODE"] = wandb_mode
         wandb_log_dir = experiment_path / ml_loggers_cfg.wandb.save_dir
-
+        print("------------------------------------")
+        print(os.getenv("WANDB_ENTITY"))
         loggers.append(
             WandbLogger(
                 project=experiment_name,
                 name=run_name,
                 log_model=ml_loggers_cfg.wandb.log_model,
                 save_dir=str(wandb_log_dir),
+                entity=os.getenv("WANDB_ENTITY"),
             )
         )
     if len(loggers) > 0:
