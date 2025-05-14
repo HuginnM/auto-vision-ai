@@ -52,6 +52,7 @@ data/*
 !data/images/.gitkeep
 !data/masks/.gitkeep
 wandb/
+artifacts/
 mlruns/
 mlartifacts/
 *.csv

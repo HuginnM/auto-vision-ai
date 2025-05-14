@@ -28,14 +28,13 @@ jobs:
         run: |
           uv venv
           source .venv/bin/activate
-          uv pip install -e .
 
       - name: Install dependencies via uv
         run: |
           uv pip install -e ".[all]"
 
       - name: Run pre-commit
-        run: uv run pre-commit run --all-files
+        run: uv run pre-commit run --all-files -v
 
       - name: Run tests
         run: |

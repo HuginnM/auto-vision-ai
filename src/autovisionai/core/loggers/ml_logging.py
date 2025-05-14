@@ -7,21 +7,24 @@ import traceback
 from pathlib import Path
 from typing import Dict
 
+import mlflow
 import torch
 import torchvision.transforms.functional as F
 import wandb
 from mlflow.tracking import MlflowClient
+from numpy.typing import NDArray
 from PIL import Image
 from pytorch_lightning.loggers import MLFlowLogger, TensorBoardLogger, WandbLogger
+from torch.utils.tensorboard import SummaryWriter
 
-from autovisionai.configs import CONFIG, CONFIG_DIR, MLLoggersConfig
+from autovisionai.core.configs import CONFIG, CONFIG_DIR, MLLoggersConfig
 
 logger = logging.getLogger(__name__)
 
 
-def get_run_name():
+def get_run_name(name="run"):
     local_tz = dt.datetime.now().astimezone().tzinfo
-    return f"run_{dt.datetime.now(tz=local_tz).strftime('%Y%m%dT%H%M%SUTC%z')}".replace("+", "")  # ISO8601 format
+    return f"{name}_{dt.datetime.now(tz=local_tz).strftime('%Y%m%dT%H%M%SUTC%z')}".replace("+", "")  # ISO8601 format
 
 
 def get_loggers(experiment_name: str, experiment_path: Path, run_name: str = "run_default") -> list:
@@ -57,13 +60,15 @@ def get_loggers(experiment_name: str, experiment_path: Path, run_name: str = "ru
         wandb_mode = ml_loggers_cfg.wandb.mode
         os.environ["WANDB_MODE"] = wandb_mode
         wandb_log_dir = experiment_path / ml_loggers_cfg.wandb.save_dir
-
+        print("------------------------------------")
+        print(os.getenv("WANDB_ENTITY"))
         loggers.append(
             WandbLogger(
                 project=experiment_name,
                 name=run_name,
                 log_model=ml_loggers_cfg.wandb.log_model,
                 save_dir=str(wandb_log_dir),
+                entity=os.getenv("WANDB_ENTITY"),
             )
         )
     if len(loggers) > 0:
@@ -230,9 +235,9 @@ def log_model_artifacts(ml_loggers: list, model_name: str, model_weights_path: s
         if isinstance(ml_logger, WandbLogger):
             try:
                 artifact = wandb.Artifact(
-                    name=f"{model_name}-weights",
+                    name=f"{model_name}",
                     type="model",
-                    description=f"Model weights for {model_name}",
+                    description=f"Model {model_name}",
                     metadata={"model_type": model_name},
                 )
                 artifact.add_file(model_weights_path)
@@ -251,3 +256,70 @@ def log_model_artifacts(ml_loggers: list, model_name: str, model_weights_path: s
                 )
             except Exception as e:
                 logger.error(f"Failed to log model to MLflow Model Registry: {str(e)}")
+
+
+def log_inference_results(
+    input_image: NDArray,
+    output_mask: NDArray,
+    model_name: str,
+    model_version: str,
+    inference_time: float,
+    step: int = 0,
+) -> None:
+    """
+    Logs inference results using native APIs for each platform (TensorBoard, MLflow, W&B).
+
+    Args:
+        input_image: Input image used for inference
+        output_mask: Generated mask from inference
+        model_name: Name of the model used
+        model_version: Version of the model used
+        inference_time: Time taken for inference in seconds
+        step: Step number for logging (default: 0)
+    """
+    ml_loggers_cfg: MLLoggersConfig = CONFIG.logging.ml_loggers
+
+    # TensorBoard logging
+    if ml_loggers_cfg.tensorboard.use:
+        try:
+            writer = SummaryWriter(log_dir=str(Path("logs") / "tensorboard"))
+            writer.add_image("inference/input", F.to_tensor(input_image), step)
+            writer.add_image("inference/output", F.to_tensor(output_mask), step)
+            writer.add_scalar("inference/time", inference_time, step)
+            writer.add_text("inference/model_info", f"Model: {model_name}\nVersion: {model_version}")
+            writer.close()
+        except Exception:
+            error_message = traceback.format_exc()
+            logger.exception("Error with logging to TensorBoard:\n", error_message)
+
+    # W&B logging
+    if ml_loggers_cfg.wandb.use:
+        try:
+            wandb.log(
+                {
+                    "inference/input": wandb.Image(input_image),
+                    "inference/output": wandb.Image(output_mask),
+                    "inference/time": inference_time,
+                    "inference/model_name": model_name,
+                    "inference/model_version": model_version,
+                },
+                step=step,
+            )
+        except Exception:
+            error_message = traceback.format_exc()
+            logger.exception("Error with logging to Weight and Biases:\n", error_message)
+
+    # MLflow logging
+    if ml_loggers_cfg.mlflow.use:
+        try:
+            mlflow.set_tracking_uri(CONFIG.logging.ml_loggers.mlflow.tracking_uri)
+            mlflow.set_experiment("autovisionai_inference")
+
+            with mlflow.start_run(run_name=get_run_name(model_name)):
+                mlflow.log_metric("inference_time", inference_time, step=step)
+                mlflow.log_params({"model_name": model_name, "model_version": model_version})
+                mlflow.log_image(input_image.squeeze(), "inference/input.png")
+                mlflow.log_image(output_mask, "inference/output.png")
+        except Exception:
+            error_message = traceback.format_exc()
+            logger.exception("Error with logging to MLflow:\n", error_message)

@@ -25,16 +25,16 @@ import pytorch_lightning as pl
 import torch
 from pytorch_lightning.callbacks import Callback, EarlyStopping, ModelCheckpoint
 
-from autovisionai.configs import CONFIG
-from autovisionai.loggers.ml_logging import (
+from autovisionai.core.configs import CONFIG
+from autovisionai.core.loggers.ml_logging import (
     create_experiments_dirs,
     get_loggers,
     get_run_name,
     log_model_artifacts,
     save_config_to_experiment,
 )
-from autovisionai.models.mask_rcnn.mask_rcnn_trainer import MaskRCNNTrainer
-from autovisionai.processing.datamodule import CarsDataModule
+from autovisionai.core.models.mask_rcnn.mask_rcnn_trainer import MaskRCNNTrainer
+from autovisionai.core.processing.datamodule import CarsDataModule
 
 logger = logging.getLogger(__name__)
 
@@ -231,10 +231,11 @@ class ModelTrainer:
 
 def main() -> None:
     """Main entry point for training multiple models."""
-    from autovisionai.models.fast_scnn.fast_scnn_trainer import FastSCNNTrainer
+    from autovisionai.core.models.fast_scnn.fast_scnn_trainer import FastSCNNTrainer
+    from autovisionai.core.models.mask_rcnn.mask_rcnn_trainer import MaskRCNNTrainer
+    from autovisionai.core.models.unet.unet_trainer import UnetTrainer
 
-    # models = [UnetTrainer, FastSCNNTrainer, MaskRCNNTrainer]
-    models = [FastSCNNTrainer]
+    models = [UnetTrainer, FastSCNNTrainer, MaskRCNNTrainer]
 
     # Test datamodule with only 16 images for fast test-training
     # test_datamodule = CarsDataModule(
@@ -249,7 +250,7 @@ def main() -> None:
         try:
             model = model_class()
             trainer = ModelTrainer(
-                experiment_name="final_test",
+                experiment_name="test_models",
                 model=model,
                 batch_size=4,
                 use_resize=False,

@@ -5,8 +5,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from autovisionai.configs import PROJECT_NAME
-from autovisionai.loggers.app_logger import AppLogger
+from autovisionai.core.configs import PROJECT_NAME
+from autovisionai.core.loggers.app_logger import AppLogger
 
 
 @pytest.fixture(autouse=True)

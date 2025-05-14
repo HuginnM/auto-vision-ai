@@ -1,0 +1,5 @@
+*.py	eol=lf
+*.rst	eol=lf
+*.md	eol=lf
+*.mdx   eol=lf
+* text=auto eol=lf

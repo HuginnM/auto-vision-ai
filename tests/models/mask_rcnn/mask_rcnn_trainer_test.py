@@ -1,9 +1,9 @@
 import torch
 from numpy.testing import assert_almost_equal
 
-from autovisionai.configs import CONFIG
-from autovisionai.models.mask_rcnn.mask_rcnn_trainer import MaskRCNNTrainer
-from autovisionai.processing.datamodule import CarsDataModule
+from autovisionai.core.configs import CONFIG
+from autovisionai.core.models.mask_rcnn.mask_rcnn_trainer import MaskRCNNTrainer
+from autovisionai.core.processing.datamodule import CarsDataModule
 
 
 def set_seed(seed):

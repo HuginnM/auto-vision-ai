@@ -16,9 +16,9 @@ from pytorch_lightning import LightningModule
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 from pytorch_lightning.loggers import Logger
 
-from autovisionai.configs import CONFIG
-from autovisionai.processing.datamodule import CarsDataModule
-from autovisionai.train import ModelTrainer, TrainingConfig
+from autovisionai.core.configs import CONFIG
+from autovisionai.core.processing.datamodule import CarsDataModule
+from autovisionai.core.train import ModelTrainer, TrainingConfig
 
 # Disable ML logging for tests
 os.environ["WANDB_MODE"] = "disabled"
@@ -216,7 +216,7 @@ class TestModelTrainer:
         assert any(isinstance(cb, ModelCheckpoint) for cb in model_trainer.callbacks)
         assert any(isinstance(cb, EarlyStopping) for cb in model_trainer.callbacks)
 
-    @patch("autovisionai.train.get_loggers")
+    @patch("autovisionai.core.train.get_loggers")
     def test_setup_loggers(self, mock_get_loggers, model_trainer):
         """Test that loggers are set up correctly."""
         mock_loggers = [MagicMock(spec=Logger)]
@@ -225,7 +225,7 @@ class TestModelTrainer:
         assert model_trainer.ml_loggers == mock_loggers
         mock_get_loggers.assert_called_once()
 
-    @patch("autovisionai.train.CarsDataModule")
+    @patch("autovisionai.core.train.CarsDataModule")
     def test_create_datamodule(self, mock_datamodule, model_trainer):
         """Test that data module is created correctly."""
         mock_instance = MagicMock()
@@ -241,8 +241,8 @@ class TestModelTrainer:
         assert weights_path.exists()
         assert weights_path.suffix == ".pt"
 
-    @patch("autovisionai.train.pl.Trainer")
-    @patch("autovisionai.train.CarsDataModule")
+    @patch("autovisionai.core.train.pl.Trainer")
+    @patch("autovisionai.core.train.CarsDataModule")
     def test_train_success(self, mock_datamodule, mock_trainer, model_trainer):
         """Test successful training execution."""
         # Setup mocks
@@ -258,8 +258,8 @@ class TestModelTrainer:
         mock_trainer.assert_called_once()
         mock_trainer_instance.fit.assert_called_once_with(model_trainer.model, mock_datamodule_instance)
 
-    @patch("autovisionai.train.pl.Trainer")
-    @patch("autovisionai.train.CarsDataModule")
+    @patch("autovisionai.core.train.pl.Trainer")
+    @patch("autovisionai.core.train.CarsDataModule")
     def test_train_failure(self, mock_datamodule, mock_trainer, model_trainer):
         """Test training failure handling."""
         # Setup mocks to raise an exception

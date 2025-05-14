@@ -1,5 +1,5 @@
-from autovisionai.configs.config import load_app_config
-from autovisionai.configs.schema import AppConfig
+from autovisionai.core.configs.config import load_app_config
+from autovisionai.core.configs.schema import AppConfig
 
 
 def test_load_real_app_config():
