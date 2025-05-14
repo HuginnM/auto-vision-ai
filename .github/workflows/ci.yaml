@@ -35,7 +35,7 @@ jobs:
           uv pip install -e ".[all]"
 
       - name: Run pre-commit
-        run: uv run pre-commit run --all-files
+        run: uv run pre-commit run --all-files -v
 
       - name: Run tests
         run: |
