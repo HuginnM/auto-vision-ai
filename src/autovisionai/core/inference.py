@@ -1,4 +1,5 @@
 import logging
+import os
 from pathlib import Path
 
 import numpy as np
@@ -18,10 +19,11 @@ logger = logging.getLogger(__name__)
 class InferenceEngine:
     def __init__(self, model_name: str):
         self.model_name = model_name
-        self.run = wandb.init(project="autovisionai_inference", entity="arthur-sobol-private")
+        self.run = wandb.init(project="autovisionai_inference", entity=os.getenv("WANDB_ENTITY"))
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         logger.info(f"Using device: {self.device}")
-        self.weights = self._load_weights_from_wandb()
+        self.weights = None
+        self.model_version = None
 
     def _load_weights_from_wandb(self) -> dict:
         """
@@ -33,13 +35,11 @@ class InferenceEngine:
 
         try:
             artifact = wandb.use_artifact(self.artifact_ref, type="model")
+            self.model_version = artifact.version
+            artifact_dir = artifact.download()
         except Exception as e:
             logger.error(f"Failed to load artifact {self.artifact_ref}: {str(e)}")
-
-        self.model_version = artifact.version
-
-        # Download artifact directly to memory
-        artifact_dir = artifact.download()
+            raise  # Re-raise the exception to be handled by the caller
 
         weights_path = Path(artifact_dir) / "model.pt"
 
@@ -94,6 +94,14 @@ class InferenceEngine:
             np.ndarray: Either raw mask or processed binary mask depending on return_processed flag
         """
         logger.info(f"Running inference for '{self.model_name}' on {self.device}")
+
+        # Check if model is supported before loading weights
+        if self.model_name not in CONFIG.models.available:
+            raise ValueError(f"Unsupported model '{self.model_name}'.\nAvailable models: {CONFIG.models.available}.")
+
+        # Load weights if not already loaded
+        if self.weights is None:
+            self.weights = self._load_weights_from_wandb()
 
         import time
 
