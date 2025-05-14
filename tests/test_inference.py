@@ -51,11 +51,14 @@ class TestInferenceEngine:
 
     @patch("wandb.init")
     @patch("wandb.use_artifact")
-    def test_initialization(self, mock_use_artifact, mock_wandb_init, mock_artifact):
+    @patch("autovisionai.core.inference.unet_inference")
+    def test_initialization(self, mock_unet_inference, mock_use_artifact, mock_wandb_init, mock_artifact):
         """Test that InferenceEngine initializes correctly."""
         # Setup mocks
         mock_wandb_init.return_value = MagicMock()
+        mock_artifact.version = "v1"
         mock_use_artifact.return_value = mock_artifact
+        mock_unet_inference.return_value = np.random.rand(1, 1, 224, 224)
 
         # Create test weights file
         weights_path = Path("mock_artifact_dir") / "model.pt"
@@ -66,9 +69,15 @@ class TestInferenceEngine:
             engine = InferenceEngine("unet")
             assert engine.model_name == "unet"
             assert engine.device.type in ["cuda", "cpu"]  # Check device type instead of device object
-            assert engine.model_version == "v1"
+            assert engine.model_version is None  # Model version is not set during initialization
+
+            # Call infer to trigger weights loading
+            engine.infer(torch.randn(1, 3, 224, 224))
+            assert engine.model_version == "v1"  # Model version is set after loading weights
+
             mock_wandb_init.assert_called_once()
             mock_use_artifact.assert_called_once()
+            mock_unet_inference.assert_called_once()
         finally:
             # Cleanup
             if weights_path.exists():
@@ -85,7 +94,8 @@ class TestInferenceEngine:
         mock_use_artifact.side_effect = Exception("Failed to load artifact")
 
         with pytest.raises(Exception) as exc_info:
-            InferenceEngine("unet")
+            engine = InferenceEngine("unet")
+            engine.infer(torch.randn(1, 3, 224, 224))  # Try to load weights during inference
         assert "Failed to load artifact" in str(exc_info.value)
         mock_use_artifact.assert_called_once_with("wandb-registry-model/unet:production", type="model")
 
