@@ -52,7 +52,13 @@ class TestInferenceEngine:
     @patch("wandb.init")
     @patch("wandb.use_artifact")
     @patch("autovisionai.core.inference.unet_inference")
-    def test_initialization(self, mock_unet_inference, mock_use_artifact, mock_wandb_init, mock_artifact):
+    def test_initialization(
+        self,
+        mock_unet_inference,
+        mock_use_artifact,
+        mock_wandb_init,
+        mock_artifact,
+    ):
         """Test that InferenceEngine initializes correctly."""
         # Setup mocks
         mock_wandb_init.return_value = MagicMock()
