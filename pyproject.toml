@@ -107,6 +107,8 @@ all = ["autovisionai[dev]"]
 default-groups = "all"
 
 [tool.ruff]
+src = ["src"]
+target-version = "py312"
 line-length = 120
 exclude = [
     "./.git",

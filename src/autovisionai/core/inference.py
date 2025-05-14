@@ -4,8 +4,8 @@ from pathlib import Path
 
 import numpy as np
 import torch
-
 import wandb
+
 from autovisionai.core.configs import CONFIG
 from autovisionai.core.loggers.ml_logging import log_inference_results
 from autovisionai.core.models.fast_scnn.fast_scnn_inference import model_inference as fast_scnn_inference

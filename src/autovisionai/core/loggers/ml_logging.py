@@ -10,13 +10,13 @@ from typing import Dict
 import mlflow
 import torch
 import torchvision.transforms.functional as F
+import wandb
 from mlflow.tracking import MlflowClient
 from numpy.typing import NDArray
 from PIL import Image
 from pytorch_lightning.loggers import MLFlowLogger, TensorBoardLogger, WandbLogger
 from torch.utils.tensorboard import SummaryWriter
 
-import wandb
 from autovisionai.core.configs import CONFIG, CONFIG_DIR, MLLoggersConfig
 
 logger = logging.getLogger(__name__)
