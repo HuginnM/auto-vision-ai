@@ -16,6 +16,19 @@ async def inference_endpoint(
     file: Optional[UploadFile] = File(None),  # noqa: B008
     image_url: Optional[str] = Form(None),  # noqa: B008
 ):
+    """Run inference on an image using a specified model.
+
+    Args:
+        model_name (str): Name of the model to use for inference
+        file (Optional[UploadFile], optional): Image file upload. Defaults to None.
+        image_url (Optional[str], optional): URL of image to process. Defaults to None.
+
+    Returns:
+        InferenceResponse: Response containing inference status, details and mask shape
+
+    Raises:
+        HTTPException: If neither file nor image_url is provided
+    """
     tmp_path = None
     result = None
     if file is not None:
