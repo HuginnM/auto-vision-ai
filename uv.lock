@@ -139,6 +139,7 @@ name = "autovisionai"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "fastapi" },
     { name = "loguru" },
     { name = "matplotlib" },
     { name = "mlflow" },
@@ -182,6 +183,7 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "autovisionai", extras = ["dev"], marker = "extra == 'all'" },
+    { name = "fastapi", specifier = ">=0.115.12" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "matplotlib", specifier = ">=3.10.1" },
     { name = "mlflow", specifier = ">=2.21.3" },
