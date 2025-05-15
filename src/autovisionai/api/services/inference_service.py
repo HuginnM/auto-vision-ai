@@ -1,6 +1,6 @@
 from typing import Optional
 
-from autovisionai.core.inference import InferenceEngine
+from autovisionai.core.inference import ModelRegistry
 from autovisionai.core.utils.utils import get_input_image_for_inference
 
 
@@ -29,7 +29,7 @@ def run_inference_service(model_name: str, image_path: Optional[str] = None, ima
                 "detail": "No image_path or image_url provided.",
                 "mask_shape": None,
             }
-        engine = InferenceEngine(model_name)
+        engine = ModelRegistry.get_model(model_name)
         mask = engine.infer(image_tensor, return_binary=True)
         return {
             "status": "success",

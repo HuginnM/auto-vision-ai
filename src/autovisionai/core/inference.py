@@ -1,6 +1,9 @@
+import asyncio
 import logging
 import os
+import threading
 from pathlib import Path
+from typing import ClassVar, Dict
 
 import numpy as np
 import torch
@@ -135,6 +138,43 @@ class InferenceEngine:
         )
 
         return binary_mask if return_binary else processed_mask
+
+
+class ModelRegistry:
+    _engines: ClassVar[Dict[str, InferenceEngine]] = {}
+    _initialized: ClassVar[bool] = False
+    _lock: ClassVar[threading.Lock] = threading.Lock()  # protects first-time loads
+
+    @classmethod
+    def get_model(cls, model_name: str) -> InferenceEngine:
+        if model_name not in CONFIG.models.available:
+            raise ValueError(f"{model_name} not in {CONFIG.models.available}")
+
+        # Double-checked locking so we don't take the lock on every call
+        engine = cls._engines.get(model_name)
+        if engine is None:
+            with cls._lock:
+                engine = cls._engines.get(model_name)  # re-check
+                if engine is None:
+                    engine = InferenceEngine(model_name)
+                    cls._engines[model_name] = engine
+        return engine
+
+    @classmethod
+    async def initialize_models(cls) -> None:
+        """Pre-load all models concurrently (call once at startup)."""
+        if cls._initialized:
+            return
+
+        async def _load(name):
+            # run blocking InferenceEngine creation in a thread so event-loop isn't blocked
+            return await asyncio.to_thread(InferenceEngine, name)
+
+        tasks = [asyncio.create_task(_load(name)) for name in CONFIG.models.available]
+        engines = await asyncio.gather(*tasks)
+
+        cls._engines = dict(zip(CONFIG.models.available, engines, strict=False))
+        cls._initialized = True
 
 
 def main(model: str, image=None):
