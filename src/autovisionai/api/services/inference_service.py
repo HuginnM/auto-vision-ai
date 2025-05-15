@@ -34,7 +34,7 @@ def run_inference_service(model_name: str, image_path: Optional[str] = None, ima
         return {
             "status": "success",
             "detail": "Inference completed.",
-            "mask_shape": list(mask.shape),
+            "mask": mask,
         }
     except Exception as e:
         return {

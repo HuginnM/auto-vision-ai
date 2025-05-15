@@ -4,8 +4,9 @@ import tempfile
 from typing import Optional
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
-from src.autovisionai.api.schemas.inference import InferenceResponse
-from src.autovisionai.api.services.inference_service import run_inference_service
+
+from autovisionai.api.schemas.inference import InferenceResponse
+from autovisionai.api.services.inference_service import run_inference_service
 
 router = APIRouter(prefix="/inference", tags=["inference"])
 
