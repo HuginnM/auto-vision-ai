@@ -167,8 +167,11 @@ class ModelRegistry:
             return
 
         async def _load(name):
-            # run blocking InferenceEngine creation in a thread so event-loop isn't blocked
-            return await asyncio.to_thread(InferenceEngine, name)
+            # Create engine and preload weights
+            engine = await asyncio.to_thread(InferenceEngine, name)
+            # Preload weights
+            await asyncio.to_thread(engine._load_weights_from_wandb)
+            return engine
 
         tasks = [asyncio.create_task(_load(name)) for name in CONFIG.models.available]
         engines = await asyncio.gather(*tasks)
