@@ -14,7 +14,7 @@ import pytest
 import torch
 
 from autovisionai.core.configs import CONFIG
-from autovisionai.core.inference import InferenceEngine
+from autovisionai.core.inference import InferenceEngine, ModelRegistry
 
 # Disable ML logging for tests
 os.environ["WANDB_MODE"] = "disabled"
@@ -325,3 +325,70 @@ class TestInferenceEngineIntegration:
                 weights_path.unlink()
             if weights_path.parent.exists():
                 weights_path.parent.rmdir()
+
+
+class TestModelRegistry:
+    """Tests for the ModelRegistry class."""
+
+    @pytest.fixture(autouse=True)
+    def setup_teardown(self):
+        """Set up and tear down test environment."""
+        # Reset ModelRegistry state before each test
+        ModelRegistry._engines = {}
+        ModelRegistry._initialized = False
+        yield
+
+    @patch("autovisionai.core.inference.InferenceEngine")
+    def test_get_model(self, mock_inference_engine):
+        """Test getting a model from the registry."""
+        # Setup mock
+        mock_engine = MagicMock()
+        mock_inference_engine.return_value = mock_engine
+
+        # Test getting a model
+        engine = ModelRegistry.get_model("unet")
+        assert engine == mock_engine
+        mock_inference_engine.assert_called_once_with("unet")
+
+        # Test getting the same model again (should return cached instance)
+        engine2 = ModelRegistry.get_model("unet")
+        assert engine2 == mock_engine
+        assert mock_inference_engine.call_count == 1  # Should not create new instance
+
+    def test_get_model_unsupported(self):
+        """Test getting an unsupported model."""
+        with pytest.raises(ValueError) as exc_info:
+            ModelRegistry.get_model("unsupported_model")
+        assert "not in" in str(exc_info.value)
+
+    @patch("autovisionai.core.inference.InferenceEngine")
+    @pytest.mark.asyncio
+    async def test_initialize_models(self, mock_inference_engine):
+        """Test initializing all models."""
+        # Setup mock
+        mock_engine = MagicMock()
+        mock_inference_engine.return_value = mock_engine
+
+        # Initialize models
+        await ModelRegistry.initialize_models()
+
+        # Verify all models were initialized
+        assert ModelRegistry._initialized
+        assert len(ModelRegistry._engines) == len(CONFIG.models.available)
+        assert all(model in ModelRegistry._engines for model in CONFIG.models.available)
+        assert mock_inference_engine.call_count == len(CONFIG.models.available)
+
+    @patch("autovisionai.core.inference.InferenceEngine")
+    @pytest.mark.asyncio
+    async def test_initialize_models_idempotent(self, mock_inference_engine):
+        """Test that initialize_models is idempotent."""
+        # Setup mock
+        mock_engine = MagicMock()
+        mock_inference_engine.return_value = mock_engine
+
+        # Initialize models twice
+        await ModelRegistry.initialize_models()
+        await ModelRegistry.initialize_models()
+
+        # Verify models were only initialized once
+        assert mock_inference_engine.call_count == len(CONFIG.models.available)
