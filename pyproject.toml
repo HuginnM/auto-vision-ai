@@ -89,6 +89,8 @@ explicit = true
 #     "mlflow>=2.21.3",
 #     "python-dotenv>=1.1.0",
 #     "pytest-asyncio>=0.26.0",
+#     "websocket>=0.2.1",
+#     "websocket-client>=1.8.0",
 # ]
 # lint = [
 #     "ruff>=0.11.6",
@@ -104,6 +106,8 @@ dev = [
   "pre-commit>=4.2.0",
   "python-dotenv>=1.1.0",
   "pytest-asyncio>=0.26.0",
+  "websocket>=0.2.1",
+  "websocket-client>=1.8.0",
 ]
 all = ["autovisionai[dev]"]
 
@@ -160,4 +164,9 @@ ignore = [
 [tool.pytest.ini_options]
 markers = [
     "integration: mark a test as an integration test"
+]
+
+[dependency-groups]
+dev = [
+    "ipykernel>=6.29.5",
 ]

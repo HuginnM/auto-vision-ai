@@ -1,10 +1,13 @@
 import asyncio
+import logging
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 
 from autovisionai.api.schemas.train import TrainingRequest, TrainingResponse
 from autovisionai.api.services.train_service import training_service
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/train", tags=["training"])
 
@@ -43,11 +46,15 @@ async def training_progress_websocket(websocket: WebSocket, experiment_name: str
         websocket (WebSocket): WebSocket connection
         experiment_name (str): Name of the experiment to track
     """
+    logger.info(f"WebSocket connection request for experiment: {experiment_name}")
     await websocket.accept()
+    logger.info(f"WebSocket connection accepted for experiment: {experiment_name}")
+
     try:
         while True:
             progress = training_service.get_training_progress(experiment_name)
             if progress:
+                logger.info(f"Sending progress update: {progress.__dict__}")
                 await websocket.send_json(
                     {
                         "current_epoch": progress.current_epoch,
@@ -59,11 +66,15 @@ async def training_progress_websocket(websocket: WebSocket, experiment_name: str
                     }
                 )
                 if progress.status in ["completed", "error"]:
+                    logger.info(f"Training {progress.status}, closing WebSocket")
                     break
-            await asyncio.sleep(1)  # Update every second
+            else:
+                logger.debug(f"No progress found for experiment: {experiment_name}")
+            await asyncio.sleep(0.1)
     except WebSocketDisconnect:
-        pass  # Client disconnected
+        logger.info(f"WebSocket disconnected for experiment: {experiment_name}")
     except Exception as e:
+        logger.error(f"WebSocket error: {str(e)}", exc_info=True)
         await websocket.send_json(
             {
                 "status": "error",
