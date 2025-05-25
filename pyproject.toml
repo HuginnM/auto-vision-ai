@@ -88,6 +88,7 @@ explicit = true
 #     "wandb>=0.19.10",
 #     "mlflow>=2.21.3",
 #     "python-dotenv>=1.1.0",
+#     "pytest-asyncio>=0.26.0",
 # ]
 # lint = [
 #     "ruff>=0.11.6",
@@ -102,6 +103,7 @@ dev = [
   "ruff>=0.11.9",
   "pre-commit>=4.2.0",
   "python-dotenv>=1.1.0",
+  "pytest-asyncio>=0.26.0",
 ]
 all = ["autovisionai[dev]"]
 
