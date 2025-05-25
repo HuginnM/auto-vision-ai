@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from autovisionai.api.endpoints.inference import router as inference_router
+from autovisionai.api.endpoints.train import router as train_router
 from autovisionai.core.inference import ModelRegistry
 
 
@@ -18,3 +19,4 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="AutoVisionAI API", version="0.1.0", lifespan=lifespan)
 
 app.include_router(inference_router)
+app.include_router(train_router)
