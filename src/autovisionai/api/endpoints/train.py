@@ -4,12 +4,14 @@ import logging
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 
-from autovisionai.api.schemas.train import TrainingRequest, TrainingResponse
+from autovisionai.api.schemas.train import TrainingProgress, TrainingRequest, TrainingResponse
 from autovisionai.api.services.train_service import training_service
+from autovisionai.api.services.websocket_manager import WebSocketManager
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/train", tags=["training"])
+manager = WebSocketManager()  # Create WebSocket manager instance
 
 
 @router.post("/", response_model=TrainingResponse)
@@ -23,8 +25,13 @@ async def train_endpoint(request: TrainingRequest):
         TrainingResponse: Initial response with training status
     """
     try:
-        # Start training in background
-        result = await training_service.train_model(request)
+        # Create WebSocket callback function
+        async def progress_callback(progress: TrainingProgress):
+            # Send progress update through WebSocket
+            await manager.broadcast(progress.__dict__)
+
+        # Start training in background with progress callback
+        result = await training_service.train_model(request, progress_callback)
         return TrainingResponse(**result)
     except Exception as e:
         return JSONResponse(
@@ -47,37 +54,32 @@ async def training_progress_websocket(websocket: WebSocket, experiment_name: str
         experiment_name (str): Name of the experiment to track
     """
     logger.info(f"WebSocket connection request for experiment: {experiment_name}")
-    await websocket.accept()
-    logger.info(f"WebSocket connection accepted for experiment: {experiment_name}")
 
     try:
+        # Accept the connection first
+        await manager.connect(websocket)
+        logger.info(f"WebSocket connection accepted for experiment: {experiment_name}")
+
+        # Wait for training to start (up to 30 seconds)
+        for _ in range(30):
+            if experiment_name in training_service.active_trainings:
+                logger.info(f"Training {experiment_name} found in active trainings")
+                break
+            await asyncio.sleep(1)
+        else:
+            logger.warning(f"Training {experiment_name} did not start within timeout")
+            return
+
+        # Keep connection alive while training is active
         while True:
-            progress = training_service.get_training_progress(experiment_name)
-            if progress:
-                logger.info(f"Sending progress update: {progress.__dict__}")
-                await websocket.send_json(
-                    {
-                        "current_epoch": progress.current_epoch,
-                        "total_epochs": progress.total_epochs,
-                        "current_loss": progress.current_loss,
-                        "best_loss": progress.best_loss,
-                        "status": progress.status,
-                        "detail": progress.detail,
-                    }
-                )
-                if progress.status in ["completed", "error"]:
-                    logger.info(f"Training {progress.status}, closing WebSocket")
-                    break
-            else:
-                logger.debug(f"No progress found for experiment: {experiment_name}")
-            await asyncio.sleep(0.1)
+            if experiment_name not in training_service.active_trainings:
+                # Give a small delay to ensure final update is sent
+                await asyncio.sleep(0.5)
+                break
+            await asyncio.sleep(1)
+
+        logger.info(f"Training {experiment_name} completed or not found in active trainings")
     except WebSocketDisconnect:
         logger.info(f"WebSocket disconnected for experiment: {experiment_name}")
-    except Exception as e:
-        logger.error(f"WebSocket error: {str(e)}", exc_info=True)
-        await websocket.send_json(
-            {
-                "status": "error",
-                "detail": str(e),
-            }
-        )
+    finally:
+        await manager.disconnect(websocket)  # Ensure we always disconnect
