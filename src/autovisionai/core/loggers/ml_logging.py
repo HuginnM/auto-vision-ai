@@ -156,7 +156,6 @@ def log_image_to_all_loggers(ml_loggers: list, tag: str, image_tensor: torch.Ten
                 error_message = traceback.format_exc()
                 logger.exception("Error with logging the image to Weight and Biases:\n", error_message)
         elif isinstance(ml_logger, MLFlowLogger):
-            # log_image_to_mlflow(logger, image_tensor, tag, step)
             try:
                 ml_logger.experiment.log_image(run_id=ml_logger.run_id, image=pil_image, key=tag, step=epoch)
             except Exception:
