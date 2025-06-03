@@ -124,23 +124,38 @@ def main():
     st.markdown("---")
     st.subheader("🖥️ System Status")
 
+    # Button at the top
+    check_endpoints = st.button("🔄 Check Endpoints", type="secondary", use_container_width=False)
+
     col1, col2 = st.columns(2)
 
     with col1:
         st.markdown("**API Endpoints Status**")
 
-        endpoints = [
-            ("/docs", "API Documentation"),
-            ("/inference", "Inference Endpoint"),
-            ("/train", "Training Endpoint"),
-        ]
+        if check_endpoints:
+            # Show actual status when button is pressed
+            endpoints = [
+                ("/docs", "API Documentation"),
+                ("/inference", "Inference Endpoint"),
+                ("/train", "Training Endpoint"),
+            ]
 
-        for endpoint, description in endpoints:
-            with st.spinner(f"Checking {endpoint} connection..."):
-                if check_api_endpoint(endpoint):
-                    st.success(f"✅ {description}")
-                else:
-                    st.error(f"❌ {description}")
+            for endpoint, description in endpoints:
+                with st.spinner(f"Checking {endpoint} connection..."):
+                    if check_api_endpoint(endpoint):
+                        st.success(f"✅ {description}")
+                    else:
+                        st.error(f"❌ {description}")
+        else:
+            # Placeholder content before button is pressed
+            st.markdown("""
+            📋 **Available Endpoints:**
+            - 📚 API Documentation (`/docs`)
+            - 🔍 Inference Endpoint (`/inference`)
+            - 🎯 Training Endpoint (`/train`)
+
+            Click the button above to test connectivity to each endpoint.
+            """)
 
     with col2:
         st.markdown("**System Information**")

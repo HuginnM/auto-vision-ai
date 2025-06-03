@@ -16,6 +16,7 @@ def main():
 
     if not app_path.exists():
         print(f"Error: Streamlit app not found at {app_path}")
+        print("Make sure you're running this from the project root directory.")
         sys.exit(1)
 
     # Launch Streamlit
