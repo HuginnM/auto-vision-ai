@@ -128,12 +128,11 @@ def check_api_endpoint(endpoint: str) -> bool:
 
 
 def add_sidebar_api_status():
-    """Add API status sidebar with non-blocking checks."""
+    """Add API status sidebar with manual check to avoid page load delays."""
     with st.sidebar:
         st.markdown("## 🏎️ AutoVisionAI")
         st.markdown("---")
 
-        # Initialize API URL in session state if not exists
         if "api_base_url" not in st.session_state:
             st.session_state.api_base_url = "http://localhost:8000"
 
@@ -146,14 +145,18 @@ def add_sidebar_api_status():
         )
         st.session_state.api_base_url = api_url
 
-        # Connection status with spinner for better UX
         st.markdown("**Connection Status:**")
-        with st.spinner("Checking API connection..."):
-            try:
-                response = requests.get(f"{api_url}/docs", timeout=2)
-                if response.status_code == 200:
-                    st.success("✅ API Connected")
-                else:
-                    st.error("❌ API Not Responding")
-            except requests.exceptions.RequestException:
-                st.error("❌ API Offline")
+
+        # Manual check button
+        if st.button("🔄 Check API Connection"):
+            with st.spinner("Checking..."):
+                try:
+                    response = requests.get(f"{api_url}/docs", timeout=2)
+                    if response.status_code == 200:
+                        st.success("✅ API Connected")
+                    else:
+                        st.error(f"❌ Unexpected response: {response.status_code}")
+                except requests.exceptions.RequestException as e:
+                    st.error(f"❌ API Offline or Error: {e}")
+        else:
+            st.info("🔍 Click the button to check API status")
