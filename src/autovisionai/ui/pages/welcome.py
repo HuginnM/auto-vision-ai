@@ -6,7 +6,7 @@ from autovisionai.ui.utils import add_sidebar_api_status, check_api_endpoint
 
 
 def main():
-    st.set_page_config(page_title="AutoVisionAI", page_icon="🚗", layout="wide", initial_sidebar_state="expanded")
+    st.set_page_config(page_title="AutoVisionAI", page_icon="🏎️", layout="wide", initial_sidebar_state="expanded")
 
     # API configuration in sidebar (shared across all pages)
     if "api_base_url" not in st.session_state:
@@ -15,7 +15,7 @@ def main():
     add_sidebar_api_status()
 
     # Main page content
-    st.title("📚 Welcome to AutoVisionAI")
+    st.title("👋 Welcome to AutoVisionAI")
     st.markdown("**Advanced Car Segmentation with Deep Learning**")
 
     # Hero section with project description

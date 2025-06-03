@@ -130,7 +130,7 @@ def check_api_endpoint(endpoint: str) -> bool:
 def add_sidebar_api_status():
     """Add API status sidebar with non-blocking checks."""
     with st.sidebar:
-        st.title("AutoVisionAI")
+        st.markdown("## 🏎️ AutoVisionAI")
         st.markdown("---")
 
         # Initialize API URL in session state if not exists
