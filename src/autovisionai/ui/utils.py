@@ -3,6 +3,8 @@
 import threading
 from typing import Callable, Optional
 
+import requests
+import streamlit as st
 import websocket
 
 
@@ -113,3 +115,45 @@ def get_model_info(model_name: str) -> dict:
     return model_info.get(
         model_name, {"name": model_name, "description": "Unknown model", "params": "Unknown", "speed": "Unknown"}
     )
+
+
+def check_api_endpoint(endpoint: str) -> bool:
+    """Check if an API endpoint is accessible."""
+    try:
+        api_url = st.session_state.get("api_base_url", "http://localhost:8000")
+        response = requests.options(f"{api_url}{endpoint}", timeout=2)
+        return response.status_code in (200, 204, 405)
+    except requests.RequestException:
+        return False
+
+
+def add_sidebar_api_status():
+    """Add API status sidebar with non-blocking checks."""
+    with st.sidebar:
+        st.title("AutoVisionAI")
+        st.markdown("---")
+
+        # Initialize API URL in session state if not exists
+        if "api_base_url" not in st.session_state:
+            st.session_state.api_base_url = "http://localhost:8000"
+
+        st.subheader("⚙️ API Settings")
+        api_url = st.text_input(
+            "API Base URL",
+            value=st.session_state.api_base_url,
+            help="Base URL of the AutoVisionAI API",
+            key="global_api_url",
+        )
+        st.session_state.api_base_url = api_url
+
+        # Connection status with spinner for better UX
+        st.markdown("**Connection Status:**")
+        with st.spinner("Checking API connection..."):
+            try:
+                response = requests.get(f"{api_url}/docs", timeout=2)
+                if response.status_code == 200:
+                    st.success("✅ API Connected")
+                else:
+                    st.error("❌ API Not Responding")
+            except requests.exceptions.RequestException:
+                st.error("❌ API Offline")
