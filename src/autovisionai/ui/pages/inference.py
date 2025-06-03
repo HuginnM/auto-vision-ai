@@ -215,25 +215,6 @@ st.title("🔍 Inference")
 st.markdown("Upload an image or provide a URL to run car segmentation inference.")
 
 add_sidebar_api_status()
-# Model selection
-col1, col2 = st.columns([2, 1])
-
-with col2:
-    model_name = st.selectbox(
-        "🤖 Select Model",
-        ["unet", "fast_scnn", "mask_rcnn"],
-        index=0,
-        help="Choose the model architecture for inference",
-        key="inference_model_select",
-    )
-
-    # Model info
-    model_info = get_model_info(model_name)
-    with st.expander("📋 Model Information", expanded=False):
-        st.write(f"**Name:** {model_info['name']}")
-        st.write(f"**Description:** {model_info['description']}")
-        st.write(f"**Parameters:** {model_info['params']}")
-        st.write(f"**Speed:** {model_info['speed']}")
 
 # Main content
 col1, col2 = st.columns([1, 1])
@@ -279,6 +260,27 @@ with col1:
                 st.image(image, caption="Image from URL", use_container_width=True)
             except Exception as e:
                 st.error(f"Failed to load image from URL: {e}")
+
+    def format_model_name(name):
+        model_names_transform = {"unet": "U-Net", "fast_scnn": "Fast-SCNN", "mask_rcnn": "Mask R-CNN"}
+        return model_names_transform[name]
+
+    model_name = st.selectbox(
+        "🤖 Select Model",
+        ["unet", "fast_scnn", "mask_rcnn"],
+        index=0,
+        help="Choose the model architecture for inference",
+        key="inference_model_select",
+        format_func=format_model_name,
+    )
+
+    # Model info
+    model_info = get_model_info(model_name)
+    with st.expander("📋 Model Information", expanded=False):
+        st.write(f"**Name:** {model_info['name']}")
+        st.write(f"**Description:** {model_info['description']}")
+        st.write(f"**Parameters:** {model_info['params']}")
+        st.write(f"**Speed:** {model_info['speed']}")
 
     # Run inference button
     if image is not None and st.button(
