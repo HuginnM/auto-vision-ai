@@ -1,6 +1,7 @@
 from typing import Optional
 
 from autovisionai.core.inference import ModelRegistry
+from autovisionai.core.utils.encoding import encode_array_to_base64
 from autovisionai.core.utils.utils import get_input_image_for_inference
 
 
@@ -16,7 +17,7 @@ def run_inference_service(model_name: str, image_path: Optional[str] = None, ima
         dict: Dictionary containing:
             - status (str): "success" or "error"
             - detail (str): Description of the result or error message
-            - mask_shape (Optional[List[int]]): Shape of output mask if successful, None if error
+            - mask_data (Optional[List[List[int]]]): Binary mask as 2D list
     """
     try:
         if image_path:
@@ -27,18 +28,20 @@ def run_inference_service(model_name: str, image_path: Optional[str] = None, ima
             return {
                 "status": "error",
                 "detail": "No image_path or image_url provided.",
-                "mask_shape": None,
+                "mask_data": None,
             }
+
         engine = ModelRegistry.get_model(model_name)
         mask = engine.infer(image_tensor, return_binary=True)
+
         return {
             "status": "success",
             "detail": "Inference completed.",
-            "mask": mask,
+            "mask_data": encode_array_to_base64(mask),
         }
     except Exception as e:
         return {
             "status": "error",
             "detail": str(e),
-            "mask_shape": None,
+            "mask_data": None,
         }
