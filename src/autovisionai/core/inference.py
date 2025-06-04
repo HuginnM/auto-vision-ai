@@ -62,7 +62,7 @@ class InferenceEngine:
             threshold: Threshold for binary mask conversion
 
         Returns:
-            tuple: (processed_image, processed_mask, binary_mask)
+            tuple: (processed_image, binary_mask)
         """
         # Convert image tensor to numpy and handle dimensions
         processed_image = image_tensor.cpu().numpy().squeeze(0)  # Remove batch dim
@@ -82,7 +82,7 @@ class InferenceEngine:
         # Create binary mask for visualization
         binary_mask = (raw_mask > threshold).astype(np.uint8) * 255
 
-        return processed_image, raw_mask, binary_mask
+        return processed_image, binary_mask
 
     def infer(self, image_tensor: torch.Tensor, threshold: float = 0.5, return_binary: bool = False) -> np.ndarray:
         """
@@ -126,7 +126,7 @@ class InferenceEngine:
         inference_time = time.time() - start_time  # Stop timer
 
         # Process results for logging
-        processed_image, processed_mask, binary_mask = self.process_results(image_tensor, image_mask, threshold)
+        processed_image, binary_mask = self.process_results(image_tensor, image_mask, threshold)
 
         # Log results using ML loggers
         log_inference_results(
@@ -137,7 +137,7 @@ class InferenceEngine:
             inference_time=inference_time,
         )
 
-        return binary_mask if return_binary else processed_mask
+        return image_mask
 
 
 class ModelRegistry:
