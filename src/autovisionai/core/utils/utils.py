@@ -65,6 +65,36 @@ def show_pic_and_original_mask(image_id: int) -> None:
         plt.title("Original Image | Original Image + Mask | Mask", fontsize=50)
 
 
+def apply_mask_to_image(
+    img: np.ndarray, pred_mask: np.ndarray, threshold: float = 0.5, process_image: bool = True
+) -> np.ndarray:
+    """Applies a predicted mask to an image with a random color overlay.
+
+    Args:
+        img: A numpy array or tensor containing the input image.
+        pred_mask: A numpy array containing the predicted segmentation mask.
+        threshold: Float between 0-1 specifying the threshold for mask values. Defaults to 0.5.
+        process_image: Boolean indicating whether to preprocess the image. Defaults to True.
+
+    Returns:
+        A numpy array containing the original image with the mask overlaid in a random color.
+    """
+    if process_image:
+        img = np.asarray(img * 255, dtype="uint8").squeeze()
+        img = img.transpose(1, 2, 0)
+
+    mask = (pred_mask > threshold).squeeze()
+    r = np.zeros_like(mask).astype(np.uint8)
+    g = np.zeros_like(mask).astype(np.uint8)
+    b = np.zeros_like(mask).astype(np.uint8)
+    color = list(np.random.choice(range(256), size=3))
+    r[mask == 1], g[mask == 1], b[mask == 1] = color
+    rgb_mask = np.stack([r, g, b], axis=2)
+    img = cv2.addWeighted(img, 1, rgb_mask, 0.8, 0)
+
+    return img
+
+
 def show_pic_and_pred_semantic_mask(
     img: torch.Tensor, pred_mask: np.ndarray, threshold: float = 0.5, use_plt: bool = False
 ) -> None:
@@ -76,17 +106,7 @@ def show_pic_and_pred_semantic_mask(
     :param threshold: a min score for predicted mask pixel after using sigmoid func. Values from 0 to 1.
     :param use_plt: show image with plt for better experience with JN when True. Instead shows it via GUI with cv2.
     """
-    img = np.asarray(img * 255, dtype="uint8").squeeze()
-    img = img.transpose(1, 2, 0)
-
-    mask = (pred_mask > threshold).squeeze()
-    r = np.zeros_like(mask).astype(np.uint8)
-    g = np.zeros_like(mask).astype(np.uint8)
-    b = np.zeros_like(mask).astype(np.uint8)
-    color = list(np.random.choice(range(256), size=3))
-    r[mask == 1], g[mask == 1], b[mask == 1] = color
-    rgb_mask = np.stack([r, g, b], axis=2)
-    img = cv2.addWeighted(img, 0.7, rgb_mask, 1, 0)
+    img = apply_mask_to_image(img, pred_mask, threshold, process_image=True)
 
     if use_plt:
         # Jupyter-friendly visualization
@@ -129,14 +149,7 @@ def show_pic_and_pred_instance_masks(
 
     for mask, score in zip(pred_masks, scores, strict=False):
         if score > min_score:
-            mask = (mask > threshold).squeeze()
-            r = np.zeros_like(mask).astype(np.uint8)
-            g = np.zeros_like(mask).astype(np.uint8)
-            b = np.zeros_like(mask).astype(np.uint8)
-            color = list(np.random.choice(range(256), size=3))
-            r[mask == 1], g[mask == 1], b[mask == 1] = color
-            rgb_mask = np.stack([r, g, b], axis=2)
-            img = cv2.addWeighted(img, 1, rgb_mask, 0.8, 0)
+            img = apply_mask_to_image(img, mask, threshold, process_image=False)
 
     if use_plt:
         # Jupyter-friendly visualization
