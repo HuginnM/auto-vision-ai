@@ -62,7 +62,7 @@ class InferenceEngine:
             threshold: Threshold for binary mask conversion
 
         Returns:
-            tuple: (processed_image, binary_mask)
+            tuple: (processed_image, processed_mask, binary_mask)
         """
         # Convert image tensor to numpy and handle dimensions
         processed_image = image_tensor.cpu().numpy().squeeze(0)  # Remove batch dim
@@ -71,20 +71,21 @@ class InferenceEngine:
         # Ensure mask is in the correct format
         if isinstance(raw_mask, torch.Tensor):
             raw_mask = raw_mask.cpu().numpy()
-        raw_mask = raw_mask.squeeze(0)  # Remove batch dim
+
+        processed_mask = raw_mask.squeeze(0)  # Remove batch dim
 
         # Handle different mask dimensions
-        if raw_mask.ndim == 3:  # If mask has channels (C, H, W)
-            raw_mask = np.transpose(raw_mask, (1, 2, 0))  # Convert to (H, W, C)
-        elif raw_mask.ndim == 2:  # If mask is (H, W)
-            raw_mask = np.expand_dims(raw_mask, axis=-1)  # Add channel dim (H, W, 1)
+        if processed_mask.ndim == 3:  # If mask has channels (C, H, W)
+            processed_mask = np.transpose(processed_mask, (1, 2, 0))  # Convert to (H, W, C)
+        elif processed_mask.ndim == 2:  # If mask is (H, W)
+            processed_mask = np.expand_dims(processed_mask, axis=-1)  # Add channel dim (H, W, 1)
 
         # Create binary mask for visualization
-        binary_mask = (raw_mask > threshold).astype(np.uint8) * 255
+        binary_mask = (processed_mask > threshold).astype(np.uint8) * 255
 
-        return processed_image, binary_mask
+        return processed_image, processed_mask, binary_mask
 
-    def infer(self, image_tensor: torch.Tensor, threshold: float = 0.5, return_binary: bool = False) -> np.ndarray:
+    def infer(self, image_tensor: torch.Tensor, threshold: float = 0.5) -> np.ndarray:
         """
         Run inference on the input image and log results to all enabled ML loggers.
 
@@ -126,7 +127,7 @@ class InferenceEngine:
         inference_time = time.time() - start_time  # Stop timer
 
         # Process results for logging
-        processed_image, binary_mask = self.process_results(image_tensor, image_mask, threshold)
+        processed_image, processed_mask, binary_mask = self.process_results(image_tensor, image_mask, threshold)
 
         # Log results using ML loggers
         log_inference_results(
@@ -137,7 +138,7 @@ class InferenceEngine:
             inference_time=inference_time,
         )
 
-        return image_mask
+        return processed_mask
 
 
 class ModelRegistry:

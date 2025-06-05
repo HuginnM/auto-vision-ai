@@ -7,6 +7,8 @@ import requests
 import streamlit as st
 from PIL import Image
 
+from autovisionai.core.utils.encoding import decode_array_from_base64
+from autovisionai.core.utils.utils import apply_mask_to_image
 from autovisionai.ui.utils import add_sidebar_api_status
 
 
@@ -63,27 +65,6 @@ def create_placeholder_mask(width: int, height: int) -> Image.Image:
     return Image.fromarray(mask_rgb)
 
 
-def create_overlay_visualization(original_image: Image.Image, mask_image: Image.Image) -> Image.Image:
-    """Create an overlay visualization of the original image and mask."""
-    # Resize mask to match original image size
-    mask_resized = mask_image.resize(original_image.size, Image.LANCZOS)
-
-    # Convert to numpy arrays
-    orig_array = np.array(original_image.convert("RGB"))
-    mask_array = np.array(mask_resized.convert("RGB"))
-
-    # Create colored mask (red for car)
-    colored_mask = np.zeros_like(orig_array)
-    colored_mask[:, :, 0] = mask_array[:, :, 0]  # Red channel for car
-
-    # Create overlay with transparency
-    alpha = 0.3
-    overlay = orig_array.astype(float) * (1 - alpha) + colored_mask.astype(float) * alpha
-    overlay = np.clip(overlay, 0, 255).astype(np.uint8)
-
-    return Image.fromarray(overlay)
-
-
 def run_inference(image: Image.Image, image_source: str, source_data, model_name: str):
     """Run inference using the API."""
     with st.spinner("Running inference..."):
@@ -133,7 +114,13 @@ def display_results(result_data: dict):
     image = result_data["image"]
     model_name = result_data["model_name"]
 
-    st.success(f"Status: {result['status']}")
+    try:
+        mask_array = decode_array_from_base64(result["mask_data"])
+        st.success(f"Status: {result['status']}")
+    except Exception as e:
+        mask_array = None
+        st.warning(f"Could not convert mask data: {e}")
+        st.error(f"Error details: {str(e)}")
 
     # Display result details
     with st.expander("📋 Result Details", expanded=True):
@@ -141,26 +128,20 @@ def display_results(result_data: dict):
         st.write(f"**Status:** {result['status']}")
         st.write(f"**Detail:** {result['detail']}")
 
-        if result.get("mask_shape"):
-            st.write(f"**Mask Shape:** {result['mask_shape']}")
+        # Display mask info if available
+        if mask_array is not None:
+            st.write(f"**Mask Shape:** {mask_array.shape}")
 
             # Display mask shape as a metric
-            col1, col2, col3 = st.columns(3)
+            col1, col2 = st.columns(2)
             with col1:
-                st.metric("Height", result["mask_shape"][0])
+                st.metric("Height", mask_array.shape[0])
             with col2:
-                st.metric("Width", result["mask_shape"][1])
-            with col3:
-                if len(result["mask_shape"]) > 2:
-                    st.metric("Channels", result["mask_shape"][2])
+                st.metric("Width", mask_array.shape[1])
 
-    # Mask visualization (placeholder since we need actual mask data from API)
-    if result.get("mask_shape"):
+    # Mask visualization with actual mask data
+    if mask_array is not None:
         st.subheader("🎭 Segmentation Mask")
-
-        # For now, create a placeholder mask visualization
-        mask_height, mask_width = result["mask_shape"][:2]
-        placeholder_mask = create_placeholder_mask(mask_width, mask_height)
 
         # Display original and mask side by side
         col1, col2 = st.columns(2)
@@ -171,17 +152,14 @@ def display_results(result_data: dict):
 
         with col2:
             st.markdown("**Segmentation Mask**")
-            st.image(placeholder_mask, use_container_width=True)
+            binary_mask = (mask_array > 0.5).astype(np.uint8) * 255
+            mask_image = Image.fromarray(binary_mask, mode="L")
+            st.image(mask_image, use_container_width=True)
 
         # Overlay visualization
         st.markdown("**Overlay Visualization**")
-        overlay_image = create_overlay_visualization(image, placeholder_mask)
+        overlay_image = apply_mask_to_image(image, mask_array, 0.5)
         st.image(overlay_image, use_container_width=True)
-
-        st.info(
-            "Note: This is a placeholder mask. In a real implementation, "
-            "the API should return the actual segmentation mask data."
-        )
 
     # Download results section
     st.subheader("💾 Download Results")
@@ -196,6 +174,7 @@ Model: {model_name}
 Status: {result["status"]}
 Detail: {result["detail"]}
 Mask Shape: {result.get("mask_shape", "N/A")}
+Has Mask Data: {bool(result.get("mask_data"))}
 """
             st.download_button(
                 label="📄 Download Results Report",
@@ -207,7 +186,25 @@ Mask Shape: {result.get("mask_shape", "N/A")}
 
     with col2:
         if st.button("🖼️ Download Images", use_container_width=True, key="download_images_inference"):
-            st.info("Image download functionality would be implemented here.")
+            # Download mask as PNG if available
+            if result.get("mask_data") and mask_image:
+                try:
+                    # Convert mask image to bytes
+                    img_bytes = io.BytesIO()
+                    mask_image.save(img_bytes, format="PNG")
+                    img_bytes.seek(0)
+
+                    st.download_button(
+                        label="💾 Download Mask PNG",
+                        data=img_bytes.getvalue(),
+                        file_name=f"mask_{model_name}.png",
+                        mime="image/png",
+                        key="download_mask_file",
+                    )
+                except Exception as e:
+                    st.error(f"Could not prepare mask download: {e}")
+            else:
+                st.info("Mask download available when inference returns actual mask data")
 
 
 # Main page content

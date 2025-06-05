@@ -32,7 +32,7 @@ def run_inference_service(model_name: str, image_path: Optional[str] = None, ima
             }
 
         engine = ModelRegistry.get_model(model_name)
-        mask = engine.infer(image_tensor, return_binary=True)
+        mask = engine.infer(image_tensor)
 
         return {
             "status": "success",
