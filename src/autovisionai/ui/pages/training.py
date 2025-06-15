@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import requests
 import streamlit as st
 
-from autovisionai.ui.utils import add_sidebar_api_status
+from autovisionai.ui.utils import configure_sidebar, format_model_name
 
 
 class TrainingProgressTracker:
@@ -49,7 +49,7 @@ class TrainingProgressTracker:
 
 
 def simulate_training_progress(tracker: TrainingProgressTracker, config: dict):
-    """Simulate training progress for demonstration."""
+    """Simulate training progress for demonstration in case if the real training doesn't work for some reason."""
     import math
     import random
 
@@ -76,7 +76,7 @@ def simulate_training_progress(tracker: TrainingProgressTracker, config: dict):
         tracker.update_progress(epoch, train_loss, val_loss, lr, log_msg)
 
         # Simulate epoch time
-        time.sleep(0.5)  # Half second per epoch for demo
+        time.sleep(1)  # Increased to 1 second per epoch for better visibility
 
     if tracker.is_training:  # Completed normally
         tracker.logs.append(f"[{datetime.now(timezone.utc).strftime('%H:%M:%S')}] Training completed!")
@@ -117,7 +117,7 @@ def submit_training_job(config: dict) -> bool:
     """Submit a training job to the API."""
     try:
         api_url = st.session_state.get("api_base_url", "http://localhost:8000")
-        training_url = f"{api_url}/training/start"
+        training_url = f"{api_url}/train"
 
         response = requests.post(training_url, json=config, timeout=10)
         response.raise_for_status()
@@ -142,11 +142,13 @@ if "training_tracker" not in st.session_state:
 
 tracker = st.session_state.training_tracker
 
+
 # Main page content
 st.title("🎯 Training")
 st.markdown("Configure and monitor training jobs for car segmentation models.")
 
-add_sidebar_api_status()
+configure_sidebar()
+
 # Training configuration form
 col1, col2 = st.columns([1, 1])
 
@@ -160,6 +162,7 @@ with col1:
             ["unet", "fast_scnn", "mask_rcnn"],
             index=0,
             help="Choose the model architecture to train",
+            format_func=format_model_name,
         )
 
         # Dataset configuration
@@ -255,16 +258,27 @@ with col1:
 
             # Start local simulation regardless
             if not tracker.is_training:
+                st.info("🚀 Starting training simulation...")
                 training_thread = threading.Thread(
                     target=simulate_training_progress, args=(tracker, training_config), daemon=True
                 )
                 training_thread.start()
+                st.rerun()  # Force immediate refresh
 
 with col2:
     st.subheader("📊 Training Progress")
 
+    # Add debug info to see current state
+    if st.checkbox("Show Debug Info", key="debug_training"):
+        st.write(f"Is Training: {tracker.is_training}")
+        st.write(f"Current Epoch: {tracker.current_epoch}")
+        st.write(f"Total Epochs: {tracker.total_epochs}")
+        st.write(f"Number of loss entries: {len(tracker.train_loss)}")
+
     if not tracker.is_training and tracker.current_epoch == 0:
         st.info("Configure training parameters and click 'Start Training' to begin.")
+    elif tracker.is_training and tracker.current_epoch == 0:
+        st.warning("🔄 Initializing training... Please wait a moment.")
     else:
         # Progress metrics
         if tracker.is_training or tracker.current_epoch > 0:
@@ -328,7 +342,7 @@ with col2:
                     key="download_logs_file_btn",
                 )
 
-        # Auto-refresh for real-time updates
-        if tracker.is_training:
-            time.sleep(1)
-            st.rerun()
+# Auto-refresh for real-time updates
+if tracker.is_training:
+    time.sleep(0.5)
+    st.rerun()

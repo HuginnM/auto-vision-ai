@@ -7,6 +7,9 @@ import requests
 import streamlit as st
 import websocket
 
+from autovisionai.core.configs.config import PROJECT_ROOT
+from autovisionai.core.utils.encoding import encode_image_path_to_base64
+
 
 class WebSocketClient:
     """WebSocket client for training progress updates."""
@@ -127,36 +130,85 @@ def check_api_endpoint(endpoint: str) -> bool:
         return False
 
 
-def add_sidebar_api_status():
+def add_api_status():
     """Add API status sidebar with manual check to avoid page load delays."""
+    if "api_base_url" not in st.session_state:
+        st.session_state.api_base_url = "http://localhost:8000"
+
+    st.subheader("⚙️ API Settings")
+    api_url = st.text_input(
+        "API Base URL",
+        value=st.session_state.api_base_url,
+        help="Base URL of the AutoVisionAI API",
+        key="global_api_url",
+    )
+    st.session_state.api_base_url = api_url
+
+    st.markdown("**Connection Status:**")
+
+    # Manual check button
+    if st.button("🔄 Check API Connection"):
+        with st.spinner("Checking..."):
+            try:
+                response = requests.get(f"{api_url}/docs", timeout=2)
+                if response.status_code == 200:
+                    st.success("✅ API Connected")
+                else:
+                    st.error(f"❌ Unexpected response: {response.status_code}")
+            except requests.exceptions.RequestException as e:
+                st.error(f"❌ API Offline or Error: {e}")
+    else:
+        st.info("🔍 Click the button to check API status")
+
+
+# noqa: E501
+def show_ml_loggers(local_href: str = "http://localhost"):
+    wandb_local_icon_path = PROJECT_ROOT / "assets" / "wandb_icon.png"
+    mlflow_local_icon_path = PROJECT_ROOT / "assets" / "ml_flow_logo-white.png"
+    tesnorboard_local_icon_path = PROJECT_ROOT / "assets" / "tensorboard-logo-social.png"
+
+    wandb_icon_b64 = encode_image_path_to_base64(wandb_local_icon_path)
+    mlflow_icon_b64 = encode_image_path_to_base64(mlflow_local_icon_path)
+    tesnorboard_icon_b64 = encode_image_path_to_base64(tesnorboard_local_icon_path)
+
+    st.markdown("## 📊 Track ML progress")
+    st.markdown(
+        f"""
+        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <a href="https://wandb.ai/arthur-sobol-private/autovisionai_inference"
+               target="_blank"
+               style="display: flex; align-items: center; justify-content: center;
+               height: 75px; border: 1px solid #ccc; border-radius: 6px; padding: 4px;">
+                <img src="data:image/png;base64,{wandb_icon_b64}"
+                     style="max-height: 100%; max-width: 100%; object-fit: contain;" />
+            </a>
+            <a href="{local_href}:5050"
+               target="_blank"
+               style="display: flex; align-items: center; justify-content: center;
+               height: 75px; border: 1px solid #ccc; border-radius: 6px; padding: 4px;">
+                <img src="data:image/png;base64,{mlflow_icon_b64}"
+                     style="max-height: 100%; max-width: 100%; object-fit: contain;" />
+            </a>
+            <a href="{local_href}:6006"
+               target="_blank"
+               style="display: flex; align-items: center; justify-content: center;
+               height: 75px; border: 1px solid #ccc; border-radius: 6px; padding: 4px;">
+                <img src="data:image/png;base64,{tesnorboard_icon_b64}"
+                     style="max-height: 100%; max-width: 100%; object-fit: contain;" />
+            </a>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def configure_sidebar():
     with st.sidebar:
-        st.markdown("## 🏎️ AutoVisionAI")
-        st.markdown("---")
+        st.image(PROJECT_ROOT / "assets" / "autovisionai_icon.png")
+        show_ml_loggers()
+        add_api_status()
 
-        if "api_base_url" not in st.session_state:
-            st.session_state.api_base_url = "http://localhost:8000"
 
-        st.subheader("⚙️ API Settings")
-        api_url = st.text_input(
-            "API Base URL",
-            value=st.session_state.api_base_url,
-            help="Base URL of the AutoVisionAI API",
-            key="global_api_url",
-        )
-        st.session_state.api_base_url = api_url
-
-        st.markdown("**Connection Status:**")
-
-        # Manual check button
-        if st.button("🔄 Check API Connection"):
-            with st.spinner("Checking..."):
-                try:
-                    response = requests.get(f"{api_url}/docs", timeout=2)
-                    if response.status_code == 200:
-                        st.success("✅ API Connected")
-                    else:
-                        st.error(f"❌ Unexpected response: {response.status_code}")
-                except requests.exceptions.RequestException as e:
-                    st.error(f"❌ API Offline or Error: {e}")
-        else:
-            st.info("🔍 Click the button to check API status")
+def format_model_name(name):
+    model_names_transform = {"unet": "U-Net", "fast_scnn": "Fast-SCNN", "mask_rcnn": "Mask R-CNN"}
+    return model_names_transform[name]

@@ -60,3 +60,8 @@ def decode_image_from_base64(b64_str: str) -> Image.Image:
         PIL image.
     """
     return Image.open(io.BytesIO(base64.b64decode(b64_str)))
+
+
+def encode_image_path_to_base64(image_path):
+    with open(image_path, "rb") as f:
+        return base64.b64encode(f.read()).decode()

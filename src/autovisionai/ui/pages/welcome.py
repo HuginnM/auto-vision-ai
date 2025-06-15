@@ -2,7 +2,7 @@
 
 import streamlit as st
 
-from autovisionai.ui.utils import add_sidebar_api_status, check_api_endpoint
+from autovisionai.ui.utils import check_api_endpoint, configure_sidebar
 
 
 def main():
@@ -12,7 +12,7 @@ def main():
     if "api_base_url" not in st.session_state:
         st.session_state.api_base_url = "http://localhost:8000"
 
-    add_sidebar_api_status()
+    configure_sidebar()
 
     # Main page content
     st.title("👋 Welcome to AutoVisionAI")

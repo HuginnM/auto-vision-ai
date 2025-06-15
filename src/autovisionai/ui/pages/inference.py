@@ -9,7 +9,7 @@ from PIL import Image
 
 from autovisionai.core.utils.encoding import decode_array_from_base64
 from autovisionai.core.utils.utils import apply_mask_to_image
-from autovisionai.ui.utils import add_sidebar_api_status
+from autovisionai.ui.utils import configure_sidebar, format_model_name
 
 
 def get_model_info(model_name: str) -> dict:
@@ -211,7 +211,7 @@ Has Mask Data: {bool(result.get("mask_data"))}
 st.title("🔍 Inference")
 st.markdown("Upload an image or provide a URL to run car segmentation inference.")
 
-add_sidebar_api_status()
+configure_sidebar()
 
 # Main content
 col1, col2 = st.columns([1, 1])
@@ -257,10 +257,6 @@ with col1:
                 st.image(image, caption="Image from URL", use_container_width=True)
             except Exception as e:
                 st.error(f"Failed to load image from URL: {e}")
-
-    def format_model_name(name):
-        model_names_transform = {"unet": "U-Net", "fast_scnn": "Fast-SCNN", "mask_rcnn": "Mask R-CNN"}
-        return model_names_transform[name]
 
     model_name = st.selectbox(
         "🤖 Select Model",
