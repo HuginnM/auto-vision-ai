@@ -74,6 +74,14 @@ class ModelTrainer:
     - Data augmentation options
     - GPU/CPU training
 
+    TODO:
+    - Add support for learning rate scheduler (StepLR, CosineAnnealingLR, etc.)
+    - Add support for optimizer (Adam, AdamW, etc.)
+    - Add support for weight decay
+    - Add support for scheduler step size
+    - Add support for scheduler gamma (0.1, 0.5, 0.9)
+    - Add support for scheduler type (StepLR, CosineAnnealingLR, etc.)
+
     Attributes:
         config: Training configuration
         model: PyTorch Lightning model to train

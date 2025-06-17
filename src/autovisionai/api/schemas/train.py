@@ -8,12 +8,18 @@ class TrainingRequest(BaseModel):
 
     experiment_name: str
     model_name: str
-    batch_size: int = 4
-    epoch_patience: int = 2
-    use_resize: bool = False
-    use_random_crop: bool = False
-    use_hflip: bool = False
+    batch_size: Optional[int] = None
+    epoch_patience: Optional[int] = None
+    use_resize: Optional[bool] = None
+    use_random_crop: Optional[bool] = None
+    use_hflip: Optional[bool] = None
     max_epochs: Optional[int] = None
+    learning_rate: Optional[float] = None
+    optimizer: Optional[str] = None
+    weight_decay: Optional[float] = None
+    scheduler_type: Optional[str] = None
+    scheduler_step_size: Optional[int] = None
+    scheduler_gamma: Optional[float] = None
 
 
 class TrainingResponse(BaseModel):

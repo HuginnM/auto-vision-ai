@@ -22,7 +22,7 @@ async def train_endpoint(request: TrainingRequest):
         request (TrainingRequest): Training configuration
 
     Returns:
-        TrainingResponse: Initial response with training status
+        TrainingResponse: Initial response confirming training start
     """
     try:
         # Create WebSocket callback function
@@ -30,9 +30,22 @@ async def train_endpoint(request: TrainingRequest):
             # Send progress update through WebSocket
             await manager.broadcast(progress.__dict__)
 
-        # Start training in background with progress callback
-        result = await training_service.train_model(request, progress_callback)
-        return TrainingResponse(**result)
+        # Start training in background
+        try:
+            task = asyncio.create_task(training_service.train_model(request, progress_callback))
+            # Add error callback to the task
+            task.add_done_callback(lambda t: handle_task_exception(t))
+        except Exception as err:
+            logger.error(f"Failed to start training task: {str(err)}")
+            raise RuntimeError(f"Failed to start training: {str(err)}") from err
+
+        # Return immediate success response
+        return TrainingResponse(
+            status="success",
+            detail="Training started successfully",
+            experiment_path=None,  # Will be available after training completes
+            model_weights_path=None,  # Will be available after training completes
+        )
     except Exception as e:
         return JSONResponse(
             status_code=500,
@@ -43,6 +56,16 @@ async def train_endpoint(request: TrainingRequest):
                 "model_weights_path": None,
             },
         )
+
+
+def handle_task_exception(task):
+    """Handle any exceptions that occur in the background task."""
+    try:
+        # This will raise the exception if the task failed
+        task.result()
+    except Exception as e:
+        logger.error(f"Training task failed: {str(e)}")
+        # The error will be reported through the WebSocket progress updates
 
 
 @router.websocket("/ws/{experiment_name}")

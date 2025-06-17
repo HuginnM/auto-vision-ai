@@ -1,4 +1,3 @@
-import datetime as dt
 import io
 import logging
 import os
@@ -18,13 +17,9 @@ from pytorch_lightning.loggers import MLFlowLogger, TensorBoardLogger, WandbLogg
 from torch.utils.tensorboard import SummaryWriter
 
 from autovisionai.core.configs import CONFIG, CONFIG_DIR, MLLoggersConfig
+from autovisionai.core.utils.common import get_run_name
 
 logger = logging.getLogger(__name__)
-
-
-def get_run_name(name="run"):
-    local_tz = dt.datetime.now().astimezone().tzinfo
-    return f"{name}_{dt.datetime.now(tz=local_tz).strftime('%Y%m%dT%H%M%SUTC%z')}".replace("+", "")  # ISO8601 format
 
 
 def get_loggers(experiment_name: str, experiment_path: Path, run_name: str = "run_default") -> list:
@@ -60,8 +55,6 @@ def get_loggers(experiment_name: str, experiment_path: Path, run_name: str = "ru
         wandb_mode = ml_loggers_cfg.wandb.mode
         os.environ["WANDB_MODE"] = wandb_mode
         wandb_log_dir = experiment_path / ml_loggers_cfg.wandb.save_dir
-        print("------------------------------------")
-        print(os.getenv("WANDB_ENTITY"))
         loggers.append(
             WandbLogger(
                 project=experiment_name,
