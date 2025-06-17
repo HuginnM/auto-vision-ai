@@ -1,0 +1,56 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    command: uvicorn src.autovisionai.api.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./mlruns:/app/mlruns
+      - ./mlartifacts:/app/mlartifacts
+      - ./experiments:/app/experiments
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  ui:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    command: streamlit run src.autovisionai.ui/app.py --server.port 8501 --server.address 0.0.0.0
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./mlruns:/app/mlruns
+      - ./mlartifacts:/app/mlartifacts
+      - ./experiments:/app/experiments
+    environment:
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - api
+      - mlflow
+
+  mlflow:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    command: mlflow server --host 0.0.0.0 --port 8080 --backend-store-uri /app/mlruns --default-artifact-root /app/mlartifacts
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./mlruns:/app/mlruns
+      - ./mlartifacts:/app/mlartifacts
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  tensorboard:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    command: tensorboard --logdir /app/experiments --host 0.0.0.0 --port 6006
+    ports:
+      - "6006:6006"
+    volumes:
+      - ./experiments:/app/experiments
+    environment:
+      - PYTHONUNBUFFERED=1
