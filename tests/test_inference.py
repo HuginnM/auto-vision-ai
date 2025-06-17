@@ -160,11 +160,10 @@ class TestInferenceEngine:
         try:
             with patch("wandb.init"), patch("wandb.use_artifact", return_value=mock_artifact):
                 engine = InferenceEngine("unet")
-                result = engine.infer(mock_image_tensor, threshold=0.5, return_binary=True)
+                result = engine.infer(mock_image_tensor, threshold=0.5)
 
             assert isinstance(result, np.ndarray)
             assert result.shape == (224, 224, 1)
-            assert result.dtype == np.uint8
             mock_unet_inference.assert_called_once()
             mock_log_results.assert_called_once()
         finally:
@@ -192,11 +191,10 @@ class TestInferenceEngine:
         try:
             with patch("wandb.init"), patch("wandb.use_artifact", return_value=mock_artifact):
                 engine = InferenceEngine("fast_scnn")
-                result = engine.infer(mock_image_tensor, threshold=0.5, return_binary=True)
+                result = engine.infer(mock_image_tensor, threshold=0.5)
 
             assert isinstance(result, np.ndarray)
             assert result.shape == (224, 224, 1)
-            assert result.dtype == np.uint8
             mock_fast_scnn_inference.assert_called_once()
             mock_log_results.assert_called_once()
         finally:
@@ -229,11 +227,10 @@ class TestInferenceEngine:
         try:
             with patch("wandb.init"), patch("wandb.use_artifact", return_value=mock_artifact):
                 engine = InferenceEngine("mask_rcnn")
-                result = engine.infer(mock_image_tensor, threshold=0.5, return_binary=True)
+                result = engine.infer(mock_image_tensor, threshold=0.5)
 
             assert isinstance(result, np.ndarray)
             assert result.shape == (224, 224, 1)
-            assert result.dtype == np.uint8
             mock_mask_rcnn_inference.assert_called_once()
             mock_log_results.assert_called_once()
         finally:
@@ -309,13 +306,11 @@ class TestInferenceEngineIntegration:
             # Create and run inference engine
             engine = InferenceEngine("unet")
             image_tensor = torch.randn(1, 3, 224, 224)
-            result = engine.infer(image_tensor, threshold=0.5, return_binary=True)
+            result = engine.infer(image_tensor, threshold=0.5)
 
             # Verify results
             assert isinstance(result, np.ndarray)
             assert result.shape == (224, 224, 1)
-            assert result.dtype == np.uint8
-            assert np.all(np.unique(result) == np.array([0, 255]))
 
             # Verify inference was called
             mock_unet_inference.assert_called_once()

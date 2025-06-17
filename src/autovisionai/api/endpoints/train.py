@@ -31,13 +31,9 @@ async def train_endpoint(request: TrainingRequest):
             await manager.broadcast(progress.__dict__)
 
         # Start training in background
-        try:
-            task = asyncio.create_task(training_service.train_model(request, progress_callback))
-            # Add error callback to the task
-            task.add_done_callback(lambda t: handle_task_exception(t))
-        except Exception as err:
-            logger.error(f"Failed to start training task: {str(err)}")
-            raise RuntimeError(f"Failed to start training: {str(err)}") from err
+        task = asyncio.create_task(training_service.train_model(request, progress_callback))
+        # Add error callback to the task
+        task.add_done_callback(lambda t: handle_task_exception(t))
 
         # Return immediate success response
         return TrainingResponse(
@@ -47,6 +43,7 @@ async def train_endpoint(request: TrainingRequest):
             model_weights_path=None,  # Will be available after training completes
         )
     except Exception as e:
+        logger.error(f"Training endpoint error: {str(e)}")
         return JSONResponse(
             status_code=500,
             content={
