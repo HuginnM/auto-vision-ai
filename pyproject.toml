@@ -24,11 +24,13 @@ dependencies = [
     "pytorch-lightning>=2.5.1",
     "pyyaml>=6.0.2",
     "requests>=2.32.3",
+    "streamlit>=1.40.0",
     "tensorboard>=2.19.0",
     "torch>=2.6.0",
     "torchmetrics>=1.7.1",
     "torchvision>=0.21.0",
     "wandb>=0.19.10",
+    "websocket-client>=1.8.0",
 ]
 license = "MIT"
 keywords = [
@@ -169,4 +171,5 @@ markers = [
 [dependency-groups]
 dev = [
     "ipykernel>=6.29.5",
+    "pytest>=8.3.5",
 ]

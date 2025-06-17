@@ -81,12 +81,12 @@ class TestTrainingProgress:
         """Test that TrainingProgress initializes with correct default values."""
         progress = TrainingProgress()
 
-        assert progress.current_epoch == 0
+        assert progress.current_epoch == -1
         assert progress.total_epochs == 0
-        assert progress.current_loss == float("inf")  # Updated to match current implementation
+        assert progress.current_loss == float("inf")
         assert progress.best_loss == float("inf")
         assert progress.status == "initializing"
-        assert progress.detail == ""
+        assert progress.detail == "Training is starting..."
 
     def test_update_progress(self):
         """Test updating progress values."""

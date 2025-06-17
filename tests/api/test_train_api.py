@@ -14,6 +14,7 @@ def training_request():
 class TestTrainingEndpoints:
     def test_train_endpoint_success(self, client, training_request):
         with patch("autovisionai.api.services.train_service.training_service.train_model") as mock_train:
+            # Mock the async training function
             mock_train.return_value = {
                 "status": "success",
                 "detail": "Training completed successfully",
@@ -25,18 +26,10 @@ class TestTrainingEndpoints:
             assert response.status_code == 200
             data = response.json()
             assert data["status"] == "success"
-            assert data["experiment_path"] == "test/path"
-            assert data["model_weights_path"] == "test/weights.pt"
-
-    def test_train_endpoint_error(self, client, training_request):
-        with patch(
-            "autovisionai.api.services.train_service.training_service.train_model", side_effect=Exception("Test error")
-        ):
-            response = client.post("/train/", json=training_request.model_dump())
-            assert response.status_code == 500
-            data = response.json()
-            assert data["status"] == "error"
-            assert "Test error" in data["detail"]
+            assert data["detail"] == "Training started successfully"
+            # Paths are None because training runs in background
+            assert data["experiment_path"] is None
+            assert data["model_weights_path"] is None
 
     def test_training_progress_websocket_timeout(self, client):
         """Test WebSocket connection when training doesn't start within timeout."""
@@ -76,3 +69,19 @@ class TestTrainingEndpoints:
 
             # Verify WebSocket broadcast was called
             mock_broadcast.assert_called()
+
+    def test_train_endpoint_background_task_creation(self, client, training_request):
+        """Test that endpoint returns success when background training task is created successfully."""
+        with patch(
+            "autovisionai.api.services.train_service.training_service.train_model", side_effect=Exception("Test error")
+        ):
+            # Since training now runs in background, the endpoint returns 200 immediately
+            # even if the background task will fail later
+            response = client.post("/train/", json=training_request.model_dump())
+            assert response.status_code == 200
+            data = response.json()
+            assert data["status"] == "success"
+            assert data["detail"] == "Training started successfully"
+            # Paths are None because training runs in background
+            assert data["experiment_path"] is None
+            assert data["model_weights_path"] is None

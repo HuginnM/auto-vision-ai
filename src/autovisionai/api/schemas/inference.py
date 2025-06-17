@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -6,4 +6,4 @@ from pydantic import BaseModel
 class InferenceResponse(BaseModel):
     status: str
     detail: str
-    mask_shape: Optional[List[int]] = None
+    mask_data: Optional[str] = None  # Base64 encoded mask data

@@ -20,15 +20,26 @@ logger = logging.getLogger(__name__)
 
 
 def get_valid_files(dir_path: Path, allowed_extenstions: Union[List, Tuple]) -> List[str]:
-    """Returns sorted list of valid image filenames in a directory."""
+    """Returns sorted list of valid image filenames in a directory.
+
+    Args:
+        dir_path: Path to the directory to search for files.
+        allowed_extenstions: List or tuple of allowed file extensions (e.g., ['.jpg', '.png']).
+
+    Returns:
+        Sorted list of valid image filenames that match the allowed extensions.
+    """
     return sorted(f.name for f in dir_path.iterdir() if f.is_file() and f.suffix.lower() in allowed_extenstions)
 
 
 def show_pic_and_original_mask(image_id: int) -> None:
-    """
-    Helper function to plot original image, original mask and bitwise picture.
+    """Displays original image, original mask and bitwise masked image side by side.
 
-    :param image_id: an image id.
+    Args:
+        image_id: Index of the image to display from the dataset.
+
+    Raises:
+        Exception: If OpenCV display fails, falls back to matplotlib display.
     """
     images_folder = CONFIG.dataset.data_root / CONFIG.dataset.images_folder
     masks_folder = CONFIG.dataset.data_root / CONFIG.dataset.masks_folder
@@ -65,19 +76,23 @@ def show_pic_and_original_mask(image_id: int) -> None:
         plt.title("Original Image | Original Image + Mask | Mask", fontsize=50)
 
 
-def show_pic_and_pred_semantic_mask(
-    img: torch.Tensor, pred_mask: np.ndarray, threshold: float = 0.5, use_plt: bool = False
-) -> None:
-    """
-    Helper function to plot original image and predicted semantic mask.
+def apply_mask_to_image(
+    img: np.ndarray, pred_mask: np.ndarray, threshold: float = 0.5, process_image: bool = True
+) -> np.ndarray:
+    """Applies a predicted mask to an image with a random color overlay.
 
-    :param img: an image for which the trained model predicts segmentation masks.
-    :param pred_mask: predicted semantic mask.
-    :param threshold: a min score for predicted mask pixel after using sigmoid func. Values from 0 to 1.
-    :param use_plt: show image with plt for better experience with JN when True. Instead shows it via GUI with cv2.
+    Args:
+        img: Input image as numpy array or tensor.
+        pred_mask: Predicted segmentation mask as numpy array.
+        threshold: Threshold for mask values between 0-1. Defaults to 0.5.
+        process_image: Whether to preprocess the image (normalize and transpose). Defaults to True.
+
+    Returns:
+        Numpy array containing the original image with the mask overlaid in a random color.
     """
-    img = np.asarray(img * 255, dtype="uint8").squeeze()
-    img = img.transpose(1, 2, 0)
+    if process_image:
+        img = np.asarray(img * 255, dtype="uint8").squeeze()
+        img = img.transpose(1, 2, 0)
 
     mask = (pred_mask > threshold).squeeze()
     r = np.zeros_like(mask).astype(np.uint8)
@@ -86,7 +101,27 @@ def show_pic_and_pred_semantic_mask(
     color = list(np.random.choice(range(256), size=3))
     r[mask == 1], g[mask == 1], b[mask == 1] = color
     rgb_mask = np.stack([r, g, b], axis=2)
-    img = cv2.addWeighted(img, 0.7, rgb_mask, 1, 0)
+    img = cv2.addWeighted(img, 1, rgb_mask, 0.8, 0)
+
+    return img
+
+
+def show_pic_and_pred_semantic_mask(
+    img: torch.Tensor, pred_mask: np.ndarray, threshold: float = 0.5, use_plt: bool = False
+) -> None:
+    """Displays original image with predicted semantic mask overlay.
+
+    Args:
+        img: Input image tensor for which the model predicts segmentation masks.
+        pred_mask: Predicted semantic mask as numpy array.
+        threshold: Minimum score for predicted mask pixel after sigmoid. Values from 0 to 1. Defaults to 0.5.
+        use_plt: If True, shows image with matplotlib (Jupyter-friendly).
+                If False, uses OpenCV GUI. Defaults to False.
+
+    Raises:
+        Exception: If OpenCV display fails, falls back to matplotlib display.
+    """
+    img = apply_mask_to_image(img, pred_mask, threshold, process_image=True)
 
     if use_plt:
         # Jupyter-friendly visualization
@@ -114,29 +149,26 @@ def show_pic_and_pred_instance_masks(
     threshold: float = 0.5,
     use_plt: bool = True,
 ) -> None:
-    """
-    Helper function to plot original image and predicted instance masks.
+    """Displays original image with predicted instance masks overlay.
 
-    :param img: an image for which the trained model predicts segmentation masks.
-    :param pred_masks: predicted instance segmentation masks.
-    :param scores: predicted scores.
-    :param min_score: a min score to sort segmentation masks.
-    :param threshold: a min score for predicted mask pixel after using sigmoid func. Values from 0 to 1.
-    :param use_plt: show image with plt for better experience with JN when True. Instead shows it via GUI with cv2.
+    Args:
+        img: Input image tensor for which the model predicts segmentation masks.
+        pred_masks: Predicted instance segmentation masks as numpy array.
+        scores: Predicted confidence scores as numpy array.
+        min_score: Minimum score to filter segmentation masks. Defaults to 0.8.
+        threshold: Minimum score for predicted mask pixel after sigmoid. Values from 0 to 1. Defaults to 0.5.
+        use_plt: If True, shows image with matplotlib (Jupyter-friendly).
+                If False, uses OpenCV GUI. Defaults to True.
+
+    Raises:
+        Exception: If OpenCV display fails, falls back to matplotlib display.
     """
     img = np.asarray(img * 255, dtype="uint8").squeeze()
     img = img.transpose(1, 2, 0)
 
     for mask, score in zip(pred_masks, scores, strict=False):
         if score > min_score:
-            mask = (mask > threshold).squeeze()
-            r = np.zeros_like(mask).astype(np.uint8)
-            g = np.zeros_like(mask).astype(np.uint8)
-            b = np.zeros_like(mask).astype(np.uint8)
-            color = list(np.random.choice(range(256), size=3))
-            r[mask == 1], g[mask == 1], b[mask == 1] = color
-            rgb_mask = np.stack([r, g, b], axis=2)
-            img = cv2.addWeighted(img, 1, rgb_mask, 0.8, 0)
+            img = apply_mask_to_image(img, mask, threshold, process_image=False)
 
     if use_plt:
         # Jupyter-friendly visualization
@@ -157,12 +189,18 @@ def show_pic_and_pred_instance_masks(
 
 
 def get_input_image_for_inference(local_path: str = None, url: str = None) -> torch.Tensor:
-    """
-    Converts image into tensor [1, 3, H, W] for model inference.
+    """Converts image into tensor [1, 3, H, W] for model inference.
 
-    :param local_path: a local path to the image.
-    :param url: an image url.
-    :return: a torch tensor with shape [1, 3, H, W].
+    Args:
+        local_path: Local filesystem path to the image file. Defaults to None.
+        url: URL of the image to download and process. Defaults to None.
+
+    Returns:
+        PyTorch tensor with shape [1, 3, H, W] ready for model inference.
+
+    Raises:
+        ValueError: If neither local_path nor url is provided.
+        requests.exceptions.HTTPError: If URL request fails.
     """
     if local_path is not None:
         img = Image.open(local_path).convert("RGB")
@@ -185,13 +223,15 @@ def get_batch_images_and_pred_masks_in_a_grid(
     images: Tuple[torch.Tensor, ...],
     threshold: float = 0.5,
 ) -> torch.Tensor:
-    """
-    Makes a grid of images and their predicted masks on validation_step.
+    """Creates a grid of images with their predicted masks overlaid for validation visualization.
 
-    :param mask_rcnn: specifies whether eval_step_output is a Mask RCNN output or not.
-    :param eval_step_output: an validation step output.
-    :param images: a batch of images.
-    :return: a tensor containing grid of images.
+    Args:
+        eval_step_output: Validation step output containing predicted masks.
+        images: Batch of input images as tuple of tensors.
+        threshold: Threshold for converting mask probabilities to binary. Defaults to 0.5.
+
+    Returns:
+        Tensor containing a grid of images with predicted masks drawn on them.
     """
     pred_masks = torch.stack([mask.sigmoid().detach().cpu() > threshold for mask in eval_step_output])
 
@@ -214,12 +254,14 @@ def get_batch_images_and_pred_masks_in_a_grid(
 
 
 def bboxes_iou(target: Dict[str, torch.Tensor], pred: Dict[str, torch.Tensor]) -> torch.Tensor:
-    """
-    Calculates an Intersection Over Union metric over bboxes.
+    """Calculates Intersection over Union (IoU) metric for bounding boxes.
 
-    :param target: a dict with target annotations.
-    :param pred: a dict with predicted annotations.
-    :return: an IoU over bboxes score.
+    Args:
+        target: Dictionary containing target annotations with 'boxes' key.
+        pred: Dictionary containing predicted annotations with 'boxes' key.
+
+    Returns:
+        IoU score as tensor. Returns 0.0 if no predicted boxes are present.
     """
     if pred["boxes"].shape[0] == 0:
         iou_score = torch.tensor(0.0, device=pred["boxes"].device)
@@ -228,14 +270,16 @@ def bboxes_iou(target: Dict[str, torch.Tensor], pred: Dict[str, torch.Tensor]) -
     return iou_score
 
 
-def masks_iou(target, preds, num_classes):
-    """
-    Calculates an Intersection Over Union metric over masks.
+def masks_iou(target, preds, num_classes) -> torch.Tensor:
+    """Calculates Intersection over Union (IoU) metric for segmentation masks.
 
-    :param target: a torch tensor with stacked target masks.
-    :param preds: a prediction of the model.
-    :param num_classes: a number of classes.
-    :return: an IoU score over masks.
+    Args:
+        target: Tensor with stacked target masks.
+        preds: Model predictions tensor.
+        num_classes: Number of classes for multiclass segmentation.
+
+    Returns:
+        IoU score over masks using Jaccard index.
     """
     probs = torch.sigmoid(preds.squeeze(1))
     pred_masks = torch.where(probs > 0.5, 1.0, 0.0)
@@ -248,12 +292,12 @@ def masks_iou(target, preds, num_classes):
 
 
 def save_tensor_image(tensor: torch.Tensor, filename: str, folder: str = "debug_failed_samples") -> None:
-    """
-    Saves a tensor image [C, H, W] to a PNG file in the specified folder.
+    """Saves a tensor image to a PNG file in the specified folder.
 
-    :param tensor: Tensor of shape [C, H, W], values in [0, 1] or [0, 255]
-    :param filename: File name (e.g., 'bad_sample_001.png')
-    :param folder: Folder to save into (default = 'debug_failed_samples')
+    Args:
+        tensor: Image tensor of shape [C, H, W] with values in [0, 1] or [0, 255].
+        filename: Output filename (e.g., 'sample_001.png').
+        folder: Directory to save the file. Defaults to 'debug_failed_samples'.
     """
     folder_path = Path(folder)
     folder_path.mkdir(parents=True, exist_ok=True)
@@ -265,7 +309,17 @@ def save_tensor_image(tensor: torch.Tensor, filename: str, folder: str = "debug_
     save_image(tensor, folder_path / filename)
 
 
-def find_bounding_box(mask, min_size: int = CONFIG.data_augmentation.bbox_min_size):
+def find_bounding_box(mask, min_size: int = CONFIG.data_augmentation.bbox_min_size) -> torch.Tensor:
+    """Finds bounding box coordinates from a binary mask.
+
+    Args:
+        mask: Binary mask tensor to extract bounding box from.
+        min_size: Minimum size for valid bounding box. Defaults to CONFIG.data_augmentation.bbox_min_size.
+
+    Returns:
+        Tensor with bounding box coordinates [xmin, ymin, xmax, ymax] or None if mask is empty
+        or bounding box is too small.
+    """
     if not torch.any(mask):
         print("The mask is empty. Returning the empty bbox.")
         return None

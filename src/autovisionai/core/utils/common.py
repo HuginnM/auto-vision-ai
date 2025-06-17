@@ -1,3 +1,4 @@
+import datetime as dt
 from pathlib import Path
 
 
@@ -61,3 +62,8 @@ def parse_size(size_str: str) -> int:
         raise ValueError(f"Unsupported unit '{unit}'")
 
     return int(num * byte_factors[unit])
+
+
+def get_run_name(name="run"):
+    local_tz = dt.datetime.now().astimezone().tzinfo
+    return f"{name}_{dt.datetime.now(tz=local_tz).strftime('%Y%m%dT%H%M%SUTC%z')}".replace("+", "")  # ISO8601 format

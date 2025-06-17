@@ -1,0 +1,1 @@
+"""AutoVisionAI UI package."""
