@@ -21,7 +21,6 @@ logs/
 notebooks/
 tests/
 test_data/
-README.md
-LICENCE
 .github/
 .pre-commit-config.yaml
+.env
