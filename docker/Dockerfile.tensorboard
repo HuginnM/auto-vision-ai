@@ -1,0 +1,39 @@
+# syntax=docker/dockerfile:1.4
+# Minimal TensorBoard service
+FROM python:3.12.4-slim-bookworm
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Create non-root user
+RUN groupadd --gid 1000 tensorboard && \
+    useradd --uid 1000 --gid 1000 --create-home --shell /bin/bash tensorboard
+
+# Install TensorBoard
+RUN pip install --no-cache-dir tensorboard==2.19.0
+
+# Create directory for logs
+RUN mkdir -p /app/experiments && \
+    chown -R tensorboard:tensorboard /app
+
+# Switch to non-root user
+USER tensorboard
+WORKDIR /app
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+# Expose port
+EXPOSE 6006
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:6006 || exit 1
+
+# Default command
+CMD ["tensorboard", "--logdir", "/app/experiments", "--host", "0.0.0.0", "--port", "6006"]
