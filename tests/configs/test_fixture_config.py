@@ -4,7 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from autovisionai.core.configs.schema import (
-    AppConfig,
+    GlobalConfig,
 )
 
 
@@ -71,7 +71,7 @@ def minimal_valid_config_dict():
 
 
 def test_app_config_valid(minimal_valid_config_dict):
-    config = AppConfig(**minimal_valid_config_dict)
+    config = GlobalConfig(**minimal_valid_config_dict)
     assert isinstance(config.dataset.data_root, Path)
     assert config.models.unet.optimizer.initial_lr == 0.01
     assert config.logging.ml_loggers.tensorboard.use is True
@@ -80,19 +80,19 @@ def test_app_config_valid(minimal_valid_config_dict):
 def test_app_config_missing_required_field(minimal_valid_config_dict):
     del minimal_valid_config_dict["dataset"]["data_root"]
     with pytest.raises(ValidationError) as exc_info:
-        AppConfig(**minimal_valid_config_dict)
+        GlobalConfig(**minimal_valid_config_dict)
     assert "data_root" in str(exc_info.value)
 
 
 def test_app_config_invalid_type(minimal_valid_config_dict):
     minimal_valid_config_dict["dataloader"]["num_workers"] = "many"
     with pytest.raises(ValidationError) as exc_info:
-        AppConfig(**minimal_valid_config_dict)
+        GlobalConfig(**minimal_valid_config_dict)
     assert "num_workers" in str(exc_info.value)
 
 
 def test_app_logger_defaults(minimal_valid_config_dict):
-    config = AppConfig(**minimal_valid_config_dict)
+    config = GlobalConfig(**minimal_valid_config_dict)
     stdout = config.logging.app_logger.stdout
     assert stdout.level == "INFO"
 

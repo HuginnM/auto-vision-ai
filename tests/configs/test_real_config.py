@@ -1,11 +1,11 @@
 from autovisionai.core.configs.config import load_app_config
-from autovisionai.core.configs.schema import AppConfig
+from autovisionai.core.configs.schema import GlobalConfig
 
 
 def test_load_real_app_config():
     """Test that the real merged YAML config loads without validation errors."""
     config = load_app_config()
-    assert isinstance(config, AppConfig)
+    assert isinstance(config, GlobalConfig)
 
 
 def test_real_config_dataset_fields():

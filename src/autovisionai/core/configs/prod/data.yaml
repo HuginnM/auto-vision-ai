@@ -1,8 +1,8 @@
 dataset:
-  data_root: C:\DATA\Projects\AutoVisionAI\data
+  data_root: ./data
+  test_data_root: ./tests/test_data
   images_folder: images
   masks_folder: masks
-  test_data_root: C:\DATA\Projects\AutoVisionAI\tests\test_data
   allowed_extensions:
   - .jpg
   - .jpeg
