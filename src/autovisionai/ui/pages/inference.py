@@ -7,6 +7,7 @@ import requests
 import streamlit as st
 from PIL import Image
 
+from autovisionai.core.configs import CONFIG
 from autovisionai.core.utils.encoding import decode_array_from_base64
 from autovisionai.core.utils.utils import apply_mask_to_image
 from autovisionai.ui.utils import configure_sidebar, format_model_name
@@ -69,7 +70,7 @@ def run_inference(image: Image.Image, image_source: str, source_data, model_name
     """Run inference using the API."""
     with st.spinner("Running inference..."):
         try:
-            api_url = st.session_state.get("api_base_url", "http://localhost:8000")
+            api_url = st.session_state.get("api_base_url", CONFIG.app.api_base_url)
             inference_url = f"{api_url}/inference/"
 
             if image_source == "file":
@@ -81,7 +82,8 @@ def run_inference(image: Image.Image, image_source: str, source_data, model_name
                 files = {"file": ("image.jpg", img_bytes, "image/jpeg")}
                 data = {"model_name": model_name}
 
-                response = requests.post(inference_url, files=files, data=data, timeout=30)
+                # Extended timeout for the first request to let the model load
+                response = requests.post(inference_url, files=files, data=data, timeout=60)
 
             else:  # URL
                 data = {"model_name": model_name, "image_url": source_data}

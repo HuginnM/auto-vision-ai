@@ -2,6 +2,7 @@
 
 import streamlit as st
 
+from autovisionai.core.configs import CONFIG
 from autovisionai.ui.utils import check_api_endpoint, configure_sidebar
 
 
@@ -10,7 +11,7 @@ def main():
 
     # API configuration in sidebar (shared across all pages)
     if "api_base_url" not in st.session_state:
-        st.session_state.api_base_url = "http://localhost:8000"
+        st.session_state.api_base_url = CONFIG.app.api_base_url
 
     configure_sidebar()
 
@@ -97,7 +98,7 @@ def main():
 
     with tab3:
         st.markdown(
-            """
+            f"""
         ### API Setup
 
         1. **Start the API server**:
@@ -106,17 +107,18 @@ def main():
         python -m uvicorn src.autovisionai.api.main:app --reload
         ```
 
-        2. **Configure API URL** in the sidebar (default: http://localhost:8000)
+        2. **Configure API URL** in the sidebar (default: {CONFIG.app.api_base_url})
 
         3. **Test connection** - status shown in sidebar
 
-        4. **Access API documentation** at http://localhost:8000/docs
+        4. **Access API documentation** at {CONFIG.app.api_base_url}/docs
 
         #### Available Endpoints
         - `POST /inference/` - Run inference on images
-        - `POST /training/start` - Start training jobs
-        - `GET /training/status/{job_id}` - Check training status
+        - `POST /train` - Start training jobs
         - `GET /models/` - List available models
+        - `GET /train/ws/{{experiment_name}}` - Monitor training progress with WebSocket
+        - `GET /health` - Check API health
         """
         )
 
@@ -161,57 +163,12 @@ def main():
         st.markdown("**System Information**")
 
         # Get API URL from session state
-        api_url = st.session_state.get("api_base_url", "http://localhost:8000")
+        api_url = st.session_state.get("api_base_url", CONFIG.app.api_base_url)
 
         st.write(f"**API URL:** {api_url}")
         st.write("**UI Framework:** Streamlit")
         st.write("**Backend:** FastAPI")
         st.write("**ML Framework:** PyTorch")
-
-    # # API testing section
-    # st.markdown("---")
-    # st.subheader("🧪 API Testing")
-
-    # with st.expander("Test API Endpoints", expanded=False):
-    #     st.markdown("Use this section to test API connectivity and endpoints.")
-
-    #     # Test inference endpoint
-    #     col1, col2 = st.columns(2)
-
-    #     with col1:
-    #         if st.button("🔍 Test Inference Endpoint", use_container_width=True, key="test_inference_btn"):
-    #             try:
-    #                 api_url = st.session_state.get("api_base_url", "http://localhost:8000")
-    #                 # Try to get available models (if endpoint exists)
-    #                 response = requests.get(f"{api_url}/models/", timeout=5)
-    #                 if response.status_code == 200:
-    #                     st.success("✅ Inference endpoint is working!")
-    #                     models = response.json()
-    #                     st.write("Available models:", models)
-    #                 else:
-    #                     st.warning(f"⚠️ Unexpected response: {response.status_code}")
-    #             except requests.exceptions.ConnectionError:
-    #                 st.error("❌ Cannot connect to API. Make sure the server is running.")
-    #             except Exception as e:
-    #                 st.error(f"❌ Error: {e}")
-
-    #     with col2:
-    #         if st.button("🎯 Test Training Endpoint", use_container_width=True, key="test_training_btn"):
-    #             try:
-    #                 api_url = st.session_state.get("api_base_url", "http://localhost:8000")
-    #                 # Try to access training status endpoint
-    #                 response = requests.get(f"{api_url}/training/status/test", timeout=5)
-    #                 # We expect this to return 404 or similar, but not connection error
-    #                 if response.status_code in [404, 422]:  # Expected for non-existent job
-    #                     st.success("✅ Training endpoint is accessible!")
-    #                 elif response.status_code == 200:
-    #                     st.success("✅ Training endpoint is working!")
-    #                 else:
-    #                     st.warning(f"⚠️ Unexpected response: {response.status_code}")
-    #             except requests.exceptions.ConnectionError:
-    #                 st.error("❌ Cannot connect to API. Make sure the server is running.")
-    #             except Exception as e:
-    #                 st.error(f"❌ Error: {e}")
 
     # Documentation links
     st.markdown("---")
@@ -221,11 +178,10 @@ def main():
 
     with col1:
         st.markdown(
-            """
+            f"""
         **📚 Documentation**
-        - [Project README](https://github.com/your-repo)
-        - [API Documentation](http://localhost:8000/docs)
-        - [Model Architectures](https://github.com/your-repo/docs)
+        - [Project README](https://github.com/HuginnM/auto-vision-ai/blob/main/README.md)
+        - [API Documentation]({CONFIG.app.api_base_url}/docs)
         """
         )
 

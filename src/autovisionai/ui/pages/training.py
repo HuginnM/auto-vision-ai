@@ -160,7 +160,7 @@ def plot_training_curves(tracker: TrainingProgressTracker):
 
 async def monitor_training_websocket(tracker: TrainingProgressTracker, experiment_name: str):
     """Monitor training progress via WebSocket."""
-    api_url = st.session_state.get("api_base_url", "http://localhost:8000")
+    api_url = st.session_state.get("api_base_url", CONFIG.app.api_base_url)
     ws_url = f"ws://{api_url.split('://')[1]}/train/ws/{experiment_name}"
 
     try:
@@ -210,7 +210,7 @@ def start_websocket_monitoring(tracker: TrainingProgressTracker, experiment_name
 def submit_training_job(config: dict) -> bool:
     """Submit a training job to the API."""
     try:
-        api_url = st.session_state.get("api_base_url", "http://localhost:8000")
+        api_url = st.session_state.get("api_base_url", CONFIG.app.api_base_url)
         training_url = f"{api_url}/train"
 
         # Use a shorter timeout for the initial request
