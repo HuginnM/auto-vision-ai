@@ -131,6 +131,12 @@ class LoggingConfig(BaseModel):
 
 
 class AppConfig(BaseModel):
+    api_base_url: str
+    ui_base_url: str
+
+
+class GlobalConfig(BaseModel):
+    app: AppConfig
     dataset: DatasetConfig
     data_augmentation: DataAugmentationConfig
     dataloader: DataloaderConfig
