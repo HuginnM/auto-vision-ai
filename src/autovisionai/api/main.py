@@ -20,3 +20,9 @@ app = FastAPI(title="AutoVisionAI API", version="0.1.0", lifespan=lifespan)
 
 app.include_router(inference_router)
 app.include_router(train_router)
+
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for Docker containers"""
+    return {"status": "healthy", "service": "autovisionai-api"}
