@@ -11,7 +11,12 @@ services:
       - ./mlruns:/app/mlruns
       - ./mlartifacts:/app/mlartifacts
       - ./experiments:/app/experiments
+    env_file:
+      - .env
     environment:
+      - ENV_MODE="prod"
+      - WANDB_API_KEY=${WANDB_API_KEY}
+      - WANDB_ENTITY=${WANDB_ENTITY}
       - PYTHONUNBUFFERED=1
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -25,14 +30,19 @@ services:
       context: .
       dockerfile: docker/Dockerfile
       target: runtime
-    command: ["uv", "run", "streamlit", "run", "autovisionai/ui/app.py", "--server.port", "8501", "--server.address", "0.0.0.0"]
+    command: ["uv", "run", "streamlit", "run", "src/autovisionai/ui/app.py", "--server.port", "8501", "--server.address", "0.0.0.0"]
     ports:
       - "8501:8501"
     volumes:
       - ./mlruns:/app/mlruns
       - ./mlartifacts:/app/mlartifacts
       - ./experiments:/app/experiments
+    env_file:
+      - .env
     environment:
+      - ENV_MODE=${ENV_MODE}
+      - WANDB_API_KEY=${WANDB_API_KEY}
+      - WANDB_ENTITY=${WANDB_ENTITY}
       - PYTHONUNBUFFERED=1
     depends_on:
       api:
