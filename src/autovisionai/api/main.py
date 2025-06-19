@@ -1,10 +1,16 @@
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
 from autovisionai.api.endpoints.inference import router as inference_router
 from autovisionai.api.endpoints.train import router as train_router
+from autovisionai.core.configs import ENV_MODE
 from autovisionai.core.inference import ModelRegistry
+
+logger = logging.getLogger(__name__)
+
+logger.info(f"Starting AutoVisionAI API in {ENV_MODE} mode")
 
 
 @asynccontextmanager

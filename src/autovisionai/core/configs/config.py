@@ -13,6 +13,7 @@ load_dotenv()
 
 ENV_MODE = os.getenv("ENV_MODE", "local")
 WANDB_API_KEY = os.getenv("WANDB_API_KEY")
+WANDB_ENTITY = os.getenv("WANDB_ENTITY")
 
 PROJECT_ROOT: Path = find_project_root()
 CONFIG_DIR: Path = PROJECT_ROOT / "src" / "autovisionai" / "core" / "configs" / ENV_MODE
