@@ -7,7 +7,8 @@ import requests
 import streamlit as st
 import websocket
 
-from autovisionai.core.configs.config import CONFIG, PROJECT_ROOT, WANDB_ENTITY
+from autovisionai.core.configs import CONFIG, PROJECT_ROOT, WANDB_ENTITY
+from autovisionai.core.configs.schema import MLLoggersConfig
 from autovisionai.core.utils.encoding import encode_image_path_to_base64
 
 
@@ -171,28 +172,30 @@ def show_ml_loggers():
     mlflow_icon_b64 = encode_image_path_to_base64(mlflow_local_icon_path)
     tesnorboard_icon_b64 = encode_image_path_to_base64(tesnorboard_local_icon_path)
 
+    ml_loggers_cfg: MLLoggersConfig = CONFIG.logging.ml_loggers
+
     st.markdown("## 📊 Track ML progress")
     st.markdown(
         f"""
         <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-            <a href="{CONFIG.logging.wandb.tracking_uri}/{WANDB_ENTITY}/{CONFIG.logging.wandb.inference_project}"
+            <a href="{ml_loggers_cfg.wandb.tracking_uri}/{WANDB_ENTITY}/{ml_loggers_cfg.wandb.inference_project}"
                target="_blank"
                style="display: flex; align-items: center; justify-content: center;
-               height: 75px; border: 1px solid #ccc; border-radius: 6px; padding: 4px;">
+               height: 75px; border: 1px solid #54555D; border-radius: 6px; padding: 4px;">
                 <img src="data:image/png;base64,{wandb_icon_b64}"
                      style="max-height: 100%; max-width: 100%; object-fit: contain;" />
             </a>
-            <a href="{CONFIG.logging.mlflow.tracking_uri}"
+            <a href="{ml_loggers_cfg.mlflow.tracking_uri}"
                target="_blank"
                style="display: flex; align-items: center; justify-content: center;
-               height: 75px; border: 1px solid #ccc; border-radius: 6px; padding: 4px;">
+               height: 75px; border: 1px solid #54555D; border-radius: 6px; padding: 4px;">
                 <img src="data:image/png;base64,{mlflow_icon_b64}"
                      style="max-height: 100%; max-width: 100%; object-fit: contain;" />
             </a>
-            <a href="{CONFIG.logging.tensorboard.tracking_uri}"
+            <a href="{ml_loggers_cfg.tensorboard.tracking_uri}"
                target="_blank"
                style="display: flex; align-items: center; justify-content: center;
-               height: 75px; border: 1px solid #ccc; border-radius: 6px; padding: 4px;">
+               height: 75px; border: 1px solid #54555D; border-radius: 6px; padding: 4px;">
                 <img src="data:image/png;base64,{tesnorboard_icon_b64}"
                      style="max-height: 100%; max-width: 100%; object-fit: contain;" />
             </a>
