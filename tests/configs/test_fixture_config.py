@@ -11,6 +11,10 @@ from autovisionai.core.configs.schema import (
 @pytest.fixture
 def minimal_valid_config_dict():
     return {
+        "app": {
+            "api_base_url": "http://localhost:8000",
+            "ui_base_url": "http://localhost:8501",
+        },
         "dataset": {
             "data_root": "./data",
             "test_data_root": "./tests/test_data",
@@ -62,9 +66,21 @@ def minimal_valid_config_dict():
             },
             "ml_loggers": {
                 "root_dir": "./experiments",
-                "tensorboard": {"use": True},
-                "mlflow": {"use": False, "tracking_uri": "http://localhost"},
-                "wandb": {"use": False, "log_model": False, "mode": "offline"},
+                "tensorboard": {
+                    "use": True,
+                    "tracking_uri": "http://localhost:6006",
+                },
+                "mlflow": {
+                    "use": False,
+                    "tracking_uri": "http://localhost:5000",
+                },
+                "wandb": {
+                    "use": False,
+                    "log_model": False,
+                    "tracking_uri": "https://api.wandb.ai",
+                    "inference_project": "autovisionai-inference",
+                    "mode": "offline",
+                },
             },
         },
     }
