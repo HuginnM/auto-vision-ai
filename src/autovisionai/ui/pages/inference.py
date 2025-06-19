@@ -1,15 +1,19 @@
 """Inference page for AutoVisionAI Streamlit UI."""
 
 import io
+import logging
 
 import numpy as np
 import requests
 import streamlit as st
 from PIL import Image
 
+from autovisionai.core.configs import CONFIG
 from autovisionai.core.utils.encoding import decode_array_from_base64
 from autovisionai.core.utils.utils import apply_mask_to_image
 from autovisionai.ui.utils import configure_sidebar, format_model_name
+
+logger = logging.getLogger(__name__)
 
 
 def get_model_info(model_name: str) -> dict:
@@ -69,7 +73,7 @@ def run_inference(image: Image.Image, image_source: str, source_data, model_name
     """Run inference using the API."""
     with st.spinner("Running inference..."):
         try:
-            api_url = st.session_state.get("api_base_url", "http://localhost:8000")
+            api_url = st.session_state.get("api_base_url", CONFIG.app.api_base_url)
             inference_url = f"{api_url}/inference/"
 
             if image_source == "file":
@@ -81,7 +85,8 @@ def run_inference(image: Image.Image, image_source: str, source_data, model_name
                 files = {"file": ("image.jpg", img_bytes, "image/jpeg")}
                 data = {"model_name": model_name}
 
-                response = requests.post(inference_url, files=files, data=data, timeout=30)
+                # Extended timeout for the first request to let the model load
+                response = requests.post(inference_url, files=files, data=data, timeout=60)
 
             else:  # URL
                 data = {"model_name": model_name, "image_url": source_data}
@@ -89,38 +94,45 @@ def run_inference(image: Image.Image, image_source: str, source_data, model_name
 
             response.raise_for_status()
             result = response.json()
+            logger.info(f"Inference result: {result}")
 
             # Store result in session state
             st.session_state.inference_result = {"result": result, "image": image, "model_name": model_name}
 
             st.success("Inference completed successfully!")
+            logger.info("Inference completed successfully!")
             return True
 
         except requests.exceptions.Timeout:
             st.error("Request timed out. Please try again.")
+            logger.error("Request timed out. Please try again.")
         except requests.exceptions.ConnectionError:
             st.error(f"Could not connect to API at {api_url}. Make sure the API server is running.")
+            logger.error(f"Could not connect to API at {api_url}. Make sure the API server is running.")
         except requests.exceptions.RequestException as e:
             st.error(f"API request failed: {e}")
+            logger.error(f"API request failed: {e}")
         except Exception as e:
             st.error(f"An error occurred: {e}")
+            logger.error(f"An error occurred: {e}")
 
         return False
 
 
 def display_results(result_data: dict):
     """Display inference results."""
-    result = result_data["result"]
-    image = result_data["image"]
-    model_name = result_data["model_name"]
+    result: dict = result_data["result"]  # status, detail, mask_data
+    image: Image.Image = result_data["image"]
+    model_name: str = result_data["model_name"]
 
     try:
         mask_array = decode_array_from_base64(result["mask_data"])
         st.success(f"Status: {result['status']}")
+        logger.info("Mask array decoded successfully. Mask_array shape: %s", mask_array.shape)
     except Exception as e:
         mask_array = None
-        st.warning(f"Could not convert mask data: {e}")
-        st.error(f"Error details: {str(e)}")
+        st.error(f"Could not convert mask data: {e}")
+        logger.error(f"Could not convert mask data: {e}")
 
     # Display result details
     with st.expander("📋 Result Details", expanded=True):
@@ -153,12 +165,13 @@ def display_results(result_data: dict):
         with col2:
             st.markdown("**Segmentation Mask**")
             binary_mask = (mask_array > 0.5).astype(np.uint8) * 255
+            binary_mask = np.squeeze(binary_mask)
             mask_image = Image.fromarray(binary_mask, mode="L")
             st.image(mask_image, use_container_width=True)
 
         # Overlay visualization
         st.markdown("**Overlay Visualization**")
-        overlay_image = apply_mask_to_image(image, mask_array, 0.5)
+        overlay_image = apply_mask_to_image(image, mask_array, 0.5, process_image=True)
         st.image(overlay_image, use_container_width=True)
 
     # Download results section

@@ -77,12 +77,12 @@ def show_pic_and_original_mask(image_id: int) -> None:
 
 
 def apply_mask_to_image(
-    img: np.ndarray, pred_mask: np.ndarray, threshold: float = 0.5, process_image: bool = True
+    img: Union[np.ndarray, Image.Image], pred_mask: np.ndarray, threshold: float = 0.5, process_image: bool = True
 ) -> np.ndarray:
     """Applies a predicted mask to an image with a random color overlay.
 
     Args:
-        img: Input image as numpy array or tensor.
+        img: Input image as numpy array, tensor, or PIL Image.
         pred_mask: Predicted segmentation mask as numpy array.
         threshold: Threshold for mask values between 0-1. Defaults to 0.5.
         process_image: Whether to preprocess the image (normalize and transpose). Defaults to True.
@@ -90,9 +90,19 @@ def apply_mask_to_image(
     Returns:
         Numpy array containing the original image with the mask overlaid in a random color.
     """
-    if process_image:
+    # Handle different input types
+    if isinstance(img, Image.Image):
+        # PIL Image is already in 0-255 range
+        img = np.asarray(img, dtype="uint8")
+    elif process_image:
+        # Tensor/normalized array (0-1 range) - convert to 0-255
         img = np.asarray(img * 255, dtype="uint8").squeeze()
         img = img.transpose(1, 2, 0)
+
+    if img.ndim == 2:
+        img = np.stack([img, img, img], axis=2)
+    elif img.ndim == 3 and img.shape[2] == 1:
+        img = np.repeat(img, 3, axis=2)
 
     mask = (pred_mask > threshold).squeeze()
     r = np.zeros_like(mask).astype(np.uint8)

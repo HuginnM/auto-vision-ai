@@ -7,7 +7,8 @@ import requests
 import streamlit as st
 import websocket
 
-from autovisionai.core.configs.config import PROJECT_ROOT
+from autovisionai.core.configs import CONFIG, PROJECT_ROOT, WANDB_ENTITY
+from autovisionai.core.configs.schema import MLLoggersConfig
 from autovisionai.core.utils.encoding import encode_image_path_to_base64
 
 
@@ -123,7 +124,7 @@ def get_model_info(model_name: str) -> dict:
 def check_api_endpoint(endpoint: str) -> bool:
     """Check if an API endpoint is accessible."""
     try:
-        api_url = st.session_state.get("api_base_url", "http://localhost:8000")
+        api_url = st.session_state.get("api_base_url", CONFIG.app.api_base_url)
         response = requests.options(f"{api_url}{endpoint}", timeout=2)
         return response.status_code in (200, 204, 405)
     except requests.RequestException:
@@ -133,7 +134,7 @@ def check_api_endpoint(endpoint: str) -> bool:
 def add_api_status():
     """Add API status sidebar with manual check to avoid page load delays."""
     if "api_base_url" not in st.session_state:
-        st.session_state.api_base_url = "http://localhost:8000"
+        st.session_state.api_base_url = CONFIG.app.api_base_url
 
     st.subheader("⚙️ API Settings")
     api_url = st.text_input(
@@ -162,7 +163,7 @@ def add_api_status():
 
 
 # noqa: E501
-def show_ml_loggers(local_href: str = "http://localhost"):
+def show_ml_loggers():
     wandb_local_icon_path = PROJECT_ROOT / "assets" / "wandb_icon.png"
     mlflow_local_icon_path = PROJECT_ROOT / "assets" / "ml_flow_logo-white.png"
     tesnorboard_local_icon_path = PROJECT_ROOT / "assets" / "tensorboard-logo-social.png"
@@ -171,28 +172,30 @@ def show_ml_loggers(local_href: str = "http://localhost"):
     mlflow_icon_b64 = encode_image_path_to_base64(mlflow_local_icon_path)
     tesnorboard_icon_b64 = encode_image_path_to_base64(tesnorboard_local_icon_path)
 
+    ml_loggers_cfg: MLLoggersConfig = CONFIG.logging.ml_loggers
+
     st.markdown("## 📊 Track ML progress")
     st.markdown(
         f"""
         <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-            <a href="https://wandb.ai/arthur-sobol-private/autovisionai_inference"
+            <a href="{ml_loggers_cfg.wandb.tracking_uri}/{WANDB_ENTITY}/{ml_loggers_cfg.wandb.inference_project}"
                target="_blank"
                style="display: flex; align-items: center; justify-content: center;
-               height: 75px; border: 1px solid #ccc; border-radius: 6px; padding: 4px;">
+               height: 75px; border: 1px solid #54555D; border-radius: 6px; padding: 4px;">
                 <img src="data:image/png;base64,{wandb_icon_b64}"
                      style="max-height: 100%; max-width: 100%; object-fit: contain;" />
             </a>
-            <a href="{local_href}:5050"
+            <a href="{ml_loggers_cfg.mlflow.tracking_uri}"
                target="_blank"
                style="display: flex; align-items: center; justify-content: center;
-               height: 75px; border: 1px solid #ccc; border-radius: 6px; padding: 4px;">
+               height: 75px; border: 1px solid #54555D; border-radius: 6px; padding: 4px;">
                 <img src="data:image/png;base64,{mlflow_icon_b64}"
                      style="max-height: 100%; max-width: 100%; object-fit: contain;" />
             </a>
-            <a href="{local_href}:6006"
+            <a href="{ml_loggers_cfg.tensorboard.tracking_uri}"
                target="_blank"
                style="display: flex; align-items: center; justify-content: center;
-               height: 75px; border: 1px solid #ccc; border-radius: 6px; padding: 4px;">
+               height: 75px; border: 1px solid #54555D; border-radius: 6px; padding: 4px;">
                 <img src="data:image/png;base64,{tesnorboard_icon_b64}"
                      style="max-height: 100%; max-width: 100%; object-fit: contain;" />
             </a>

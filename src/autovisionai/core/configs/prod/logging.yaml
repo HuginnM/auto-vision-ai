@@ -1,23 +1,36 @@
-global_logger:
-  level: INFO
-  save_dir: logs
-  file_name: app.log
-  rotation: 10 MB
-  retention: 7 days
-  format: "[{time:YYYY-MM-DD HH:mm:ss}] {level} {message}"
+logging:
+  app_logger:
+    stdout:
+      level: INFO
+      format: "[%(asctime)s] %(levelname)s | %(name)s | pid=%(process)d | %(funcName)s:%(lineno)d - %(message)s"
 
-ml_loggers:
-  tensorboard:
-    use: true
-    save_dir: tensorlogs
+    file:
+      level: DEBUG
+      save_dir: ./logs
+      file_name: app.log
+      format: "%(asctime)s | %(levelname)s | %(name)s | pid=%(process)d | %(funcName)s:%(lineno)d - %(message)s"
+      rotation: "10 MB"
+      backup_count: 3
+      encoding: "utf-8"
 
-  mlflow:
-    use: true
-    tracking_uri: http://localhost:8080
-    save_dir: mlruns
 
-  wandb:
-    use: true
-    log_model: true
-    save_dir: wandb
-    mode: online
+  ml_loggers:
+    root_dir: ./experiments
+
+    tensorboard:
+      use: true
+      save_dir: tensorlogs
+      tracking_uri: http://tensorboard:8080
+
+    mlflow:
+      use: true
+      tracking_uri: http://mlflow:8080
+      save_dir: mlruns
+
+    wandb:
+      use: true
+      log_model: true
+      tracking_uri: https://wandb.ai
+      inference_project: autovisionai_inference
+      save_dir: wandb
+      mode: online

@@ -76,6 +76,7 @@ class TrainerConfig(BaseModel):
 
 class TensorBoardConfig(BaseModel):
     use: bool
+    tracking_uri: str
     save_dir: str = "tensorlogs"
 
 
@@ -88,6 +89,8 @@ class MLFlowConfig(BaseModel):
 class WandBConfig(BaseModel):
     use: bool
     log_model: bool
+    tracking_uri: str
+    inference_project: str
     save_dir: str = "wandb"
     mode: Literal["offline", "online"]
 
@@ -131,6 +134,12 @@ class LoggingConfig(BaseModel):
 
 
 class AppConfig(BaseModel):
+    api_base_url: str
+    ui_base_url: str
+
+
+class GlobalConfig(BaseModel):
+    app: AppConfig
     dataset: DatasetConfig
     data_augmentation: DataAugmentationConfig
     dataloader: DataloaderConfig
