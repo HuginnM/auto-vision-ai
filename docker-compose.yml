@@ -14,7 +14,7 @@ services:
     env_file:
       - .env
     environment:
-      - ENV_MODE="prod"
+      - ENV_MODE=${ENV_MODE}
       - WANDB_API_KEY=${WANDB_API_KEY}
       - WANDB_ENTITY=${WANDB_ENTITY}
       - PYTHONUNBUFFERED=1
