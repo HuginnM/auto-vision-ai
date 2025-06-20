@@ -68,8 +68,12 @@ COPY --chown=appuser:appuser README.md ./
 COPY --chown=appuser:appuser src/ ./src/
 
 # Copy application assets
-COPY --chown=appuser:appuser scripts/ ./scripts/
-COPY --chown=appuser:appuser data/ ./data/
+
+# COPY --chown=appuser:appuser scripts/ ./scripts/
+
+# Exclude data/ as we are not going to use training in AWS ECS due to expensiveness
+# COPY --chown=appuser:appuser data/ ./data/
+
 COPY --chown=appuser:appuser assets/ ./assets/
 
 # Create directories for persistent data with proper permissions
@@ -93,6 +97,3 @@ EXPOSE 8000 8501 8080 6006
 # Add health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import requests; requests.get('http://localhost:8000/health', timeout=5)" || exit 1
-
-# Default command (can be overridden in docker-compose)
-CMD ["python", "-m", "uvicorn", "autovisionai.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
