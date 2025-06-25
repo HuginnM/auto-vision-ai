@@ -1,0 +1,27 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "elasticfilesystem:ClientMount",
+        "elasticfilesystem:ClientRootAccess",
+        "elasticfilesystem:ClientWrite"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "elasticfilesystem:AccessPointArn": "arn:aws:elasticfilesystem:us-west-1:869935094020:access-point/*"
+        }
+      }
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "elasticfilesystem:DescribeFileSystems",
+        "elasticfilesystem:DescribeAccessPoints"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
