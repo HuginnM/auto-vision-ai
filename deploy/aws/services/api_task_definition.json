@@ -1,0 +1,67 @@
+{
+  "family": "autovision-api",
+  "requiresCompatibilities": ["FARGATE"],
+  "networkMode": "awsvpc",
+  "cpu": "1024",
+  "memory": "2048",
+  "executionRoleArn": "arn:aws:iam::869935094020:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::869935094020:role/ecsTaskRole",
+  "volumes": [
+    {
+      "name": "experiments-volume",
+      "efsVolumeConfiguration": {
+        "fileSystemId": "fs-07764262731e69aef",
+        "rootDirectory": "/"
+      }
+    }
+  ],
+  "containerDefinitions": [
+    {
+      "name": "api",
+      "image": "869935094020.dkr.ecr.us-west-1.amazonaws.com/autovisionai:latest",
+      "essential": true,
+      "command": [
+        "uv", "run",
+        "uvicorn", "autovisionai.api.main:app",
+        "--host", "0.0.0.0",
+        "--port", "8000"
+      ],
+      "portMappings": [
+        { "containerPort": 8000 }
+      ],
+      "environment": [
+        { "name": "ENV_MODE", "value": "prod" },
+        { "name": "PYTHONUNBUFFERED", "value": "1" },
+        { "name": "WANDB_ENTITY", "value": "arthur-sobol-private" }
+      ],
+      "secrets": [
+        {
+          "name": "WANDB_API_KEY",
+          "valueFrom": "arn:aws:secretsmanager:us-west-1:869935094020:secret:autovision/wandb-api-key"
+        }
+      ],
+      "mountPoints": [
+        {
+          "sourceVolume": "experiments-volume",
+          "containerPath": "/app/experiments",
+          "readOnly": false
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/autovision-api",
+          "awslogs-region": "us-west-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"],
+        "interval": 30,
+        "timeout": 10,
+        "retries": 3,
+        "startPeriod": 15
+      }
+    }
+  ]
+}
