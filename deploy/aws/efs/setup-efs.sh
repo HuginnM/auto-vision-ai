@@ -4,9 +4,9 @@
 set -e
 
 REGION="us-west-1"
-VPC_ID="vpc-0ad5901eb9d7873e9"  # Replace with your VPC ID
-SUBNET_IDS=("subnet-01d736e623358f5d0" "subnet-0e522b325a73bdf85")  # Replace with your subnet IDs
-SECURITY_GROUP_ID="sg-07dd88fd32fa065a6"  # Replace with your security group ID
+VPC_ID="vpc-0ad5901eb9d7873e9"
+SUBNET_IDS=("subnet-01d736e623358f5d0" "subnet-0e522b325a73bdf85")
+SECURITY_GROUP_ID="sg-07dd88fd32fa065a6"
 
 echo "Setting up EFS file system for AutoVision AI..."
 
@@ -48,16 +48,9 @@ ACCESS_POINT_RESPONSE=$(aws efs create-access-point \
 
 ACCESS_POINT_ID=$(echo $ACCESS_POINT_RESPONSE | jq -r '.AccessPointId')
 echo "Created access point: $ACCESS_POINT_ID"
-
-echo ""
 echo "=========================================="
 echo "EFS Setup Complete!"
 echo "=========================================="
 echo "File System ID: $FILE_SYSTEM_ID"
 echo "Access Point ID: $ACCESS_POINT_ID"
-echo ""
-echo "Next steps:"
-echo "1. Replace 'fs-xxxxxxxxx' in your task definitions with: $FILE_SYSTEM_ID"
-echo "2. Ensure your security group allows NFS traffic (port 2049) from ECS tasks"
-echo "3. Update your VPC and subnet IDs in this script for future use"
 echo "=========================================="

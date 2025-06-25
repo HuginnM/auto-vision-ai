@@ -4,7 +4,7 @@
 set -e
 
 REGION="us-west-1"
-VPC_ID="vpc-0ad5901eb9d7873e9"  # Your VPC ID
+VPC_ID="vpc-0ad5901eb9d7873e9"
 
 echo "Getting VPC information for ECS service configuration..."
 echo "VPC ID: $VPC_ID"
