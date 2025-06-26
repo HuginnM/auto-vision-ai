@@ -19,6 +19,7 @@ resource "aws_ecs_cluster" "main" {
 
 # API Service
 resource "aws_ecs_task_definition" "api" {
+  count                    = var.create_ecs_services ? 1 : 0
   family                   = var.api_service_name
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
@@ -99,10 +100,11 @@ resource "aws_ecs_task_definition" "api" {
 }
 
 resource "aws_ecs_service" "api" {
+  count           = var.create_ecs_services ? 1 : 0
   name            = var.api_service_name
   cluster         = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.api.arn
-  desired_count   = 1
+  task_definition = aws_ecs_task_definition.api[0].arn
+  desired_count   = var.api_desired_count
   launch_type     = "FARGATE"
 
   network_configuration {
@@ -112,7 +114,7 @@ resource "aws_ecs_service" "api" {
   }
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.api.arn
+    target_group_arn = aws_lb_target_group.api[0].arn
     container_name   = "api"
     container_port   = var.api_port
   }
@@ -129,6 +131,7 @@ resource "aws_ecs_service" "api" {
 
 # UI Service
 resource "aws_ecs_task_definition" "ui" {
+  count                    = var.create_ecs_services ? 1 : 0
   family                   = var.ui_service_name
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
@@ -210,10 +213,11 @@ resource "aws_ecs_task_definition" "ui" {
 }
 
 resource "aws_ecs_service" "ui" {
+  count           = var.create_ecs_services ? 1 : 0
   name            = var.ui_service_name
   cluster         = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.ui.arn
-  desired_count   = 1
+  task_definition = aws_ecs_task_definition.ui[0].arn
+  desired_count   = var.ui_desired_count
   launch_type     = "FARGATE"
 
   network_configuration {
@@ -223,7 +227,7 @@ resource "aws_ecs_service" "ui" {
   }
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.ui.arn
+    target_group_arn = aws_lb_target_group.ui[0].arn
     container_name   = "ui"
     container_port   = var.ui_port
   }
@@ -240,6 +244,7 @@ resource "aws_ecs_service" "ui" {
 
 # MLflow Service
 resource "aws_ecs_task_definition" "mlflow" {
+  count                    = var.create_ecs_services ? 1 : 0
   family                   = var.mlflow_service_name
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
@@ -293,10 +298,11 @@ resource "aws_ecs_task_definition" "mlflow" {
 }
 
 resource "aws_ecs_service" "mlflow" {
+  count           = var.create_ecs_services ? 1 : 0
   name            = var.mlflow_service_name
   cluster         = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.mlflow.arn
-  desired_count   = 1
+  task_definition = aws_ecs_task_definition.mlflow[0].arn
+  desired_count   = var.mlflow_desired_count
   launch_type     = "FARGATE"
 
   network_configuration {
@@ -306,7 +312,7 @@ resource "aws_ecs_service" "mlflow" {
   }
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.mlflow.arn
+    target_group_arn = aws_lb_target_group.mlflow[0].arn
     container_name   = "mlflow"
     container_port   = var.mlflow_port
   }
@@ -320,6 +326,7 @@ resource "aws_ecs_service" "mlflow" {
 
 # TensorBoard Service
 resource "aws_ecs_task_definition" "tensorboard" {
+  count                    = var.create_ecs_services ? 1 : 0
   family                   = var.tensorboard_service_name
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
@@ -392,10 +399,11 @@ resource "aws_ecs_task_definition" "tensorboard" {
 }
 
 resource "aws_ecs_service" "tensorboard" {
+  count           = var.create_ecs_services ? 1 : 0
   name            = var.tensorboard_service_name
   cluster         = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.tensorboard.arn
-  desired_count   = 1
+  task_definition = aws_ecs_task_definition.tensorboard[0].arn
+  desired_count   = var.tensorboard_desired_count
   launch_type     = "FARGATE"
 
   network_configuration {
@@ -405,7 +413,7 @@ resource "aws_ecs_service" "tensorboard" {
   }
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.tensorboard.arn
+    target_group_arn = aws_lb_target_group.tensorboard[0].arn
     container_name   = "tensorboard"
     container_port   = var.tensorboard_port
   }
