@@ -1,0 +1,170 @@
+name: Deploy AutoVisionAI with Terraform
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-west-1
+  ECR_REPOSITORY: autovisionai
+  TF_VAR_aws_region: us-west-1
+
+jobs:
+  terraform:
+    name: Deploy Infrastructure and Services
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.12.2
+
+    - name: Terraform Init
+      working-directory: deploy/terraform
+      run: terraform init
+
+    - name: Terraform Validate
+      working-directory: deploy/terraform
+      run: terraform validate
+
+    - name: Terraform Plan
+      working-directory: deploy/terraform
+      run: terraform plan -out=tfplan
+
+    - name: Terraform Apply
+      working-directory: deploy/terraform
+      run: terraform apply -auto-approve tfplan
+
+    - name: Get ECR Repository URI
+      id: ecr-uri
+      run: |
+        ECR_URI=$(aws ecr describe-repositories --repository-names $ECR_REPOSITORY --region $AWS_REGION --query 'repositories[0].repositoryUri' --output text)
+        echo "ecr_uri=$ECR_URI" >> $GITHUB_OUTPUT
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Build and push Docker images
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_URI: ${{ steps.ecr-uri.outputs.ecr_uri }}
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        # Build and push main application image
+        docker build -f docker/Dockerfile -t $ECR_URI:latest -t $ECR_URI:$IMAGE_TAG .
+        docker push $ECR_URI:latest
+        docker push $ECR_URI:$IMAGE_TAG
+
+        # Build and push MLflow image
+        docker build -f docker/Dockerfile.mlflow -t $ECR_URI:mlflow -t $ECR_URI:mlflow-$IMAGE_TAG .
+        docker push $ECR_URI:mlflow
+        docker push $ECR_URI:mlflow-$IMAGE_TAG
+
+        # Build and push TensorBoard image
+        docker build -f docker/Dockerfile.tensorboard -t $ECR_URI:tensorboard -t $ECR_URI:tensorboard-$IMAGE_TAG .
+        docker push $ECR_URI:tensorboard
+        docker push $ECR_URI:tensorboard-$IMAGE_TAG
+
+    - name: Update WANDB Secret
+      env:
+        WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
+      run: |
+        if [ -n "$WANDB_API_KEY" ]; then
+          aws secretsmanager update-secret \
+            --secret-id "autovisionai/wandb-api-key" \
+            --secret-string "$WANDB_API_KEY" \
+            --region ${{ env.AWS_REGION }} || \
+          aws secretsmanager create-secret \
+            --name "autovisionai/wandb-api-key" \
+            --secret-string "$WANDB_API_KEY" \
+            --region ${{ env.AWS_REGION }}
+        else
+          echo "WANDB_API_KEY not provided, skipping secret update"
+        fi
+
+    - name: Get ECS Cluster Info
+      id: ecs-info
+      run: |
+        CLUSTER_NAME=$(terraform -chdir=deploy/terraform output -raw ecs_cluster_name)
+        echo "cluster_name=$CLUSTER_NAME" >> $GITHUB_OUTPUT
+
+    - name: Update ECS Services
+      env:
+        CLUSTER_NAME: ${{ steps.ecs-info.outputs.cluster_name }}
+        ECR_URI: ${{ steps.ecr-uri.outputs.ecr_uri }}
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        # Function to update ECS service
+        update_service() {
+          local service_name=$1
+          local image_tag=$2
+
+          echo "Updating service: $service_name"
+
+          # Get current task definition
+          TASK_DEF_ARN=$(aws ecs describe-services \
+            --cluster $CLUSTER_NAME \
+            --services $service_name \
+            --query 'services[0].taskDefinition' \
+            --output text)
+
+          if [ "$TASK_DEF_ARN" != "None" ] && [ "$TASK_DEF_ARN" != "" ]; then
+            # Update the service to use new image
+            aws ecs update-service \
+              --cluster $CLUSTER_NAME \
+              --service $service_name \
+              --force-new-deployment \
+              --region $AWS_REGION
+
+            echo "Service $service_name updated successfully"
+          else
+            echo "Service $service_name not found or not ready"
+          fi
+        }
+
+        # Update all services
+        update_service "autovision-api" "latest"
+        update_service "autovision-ui" "latest"
+        update_service "autovision-mlflow" "mlflow"
+        update_service "autovision-tensorboard" "tensorboard"
+
+    - name: Wait for services to be stable
+      env:
+        CLUSTER_NAME: ${{ steps.ecs-info.outputs.cluster_name }}
+      run: |
+        echo "Waiting for services to stabilize..."
+
+        aws ecs wait services-stable \
+          --cluster $CLUSTER_NAME \
+          --services autovision-api autovision-ui autovision-mlflow autovision-tensorboard \
+          --region $AWS_REGION
+
+        echo "All services are stable!"
+
+    - name: Get Service URLs
+      run: |
+        echo "=== AutoVisionAI Deployment Complete ==="
+        echo ""
+        echo "Service URLs:"
+        echo "API: $(terraform -chdir=deploy/terraform output -raw api_url)"
+        echo "UI: $(terraform -chdir=deploy/terraform output -raw ui_url)"
+        echo "MLflow: $(terraform -chdir=deploy/terraform output -raw mlflow_url)"
+        echo "TensorBoard: $(terraform -chdir=deploy/terraform output -raw tensorboard_url)"
+        echo ""
+        echo "Load Balancer: $(terraform -chdir=deploy/terraform output -raw alb_hostname)"
+        echo "ECR Repository: $(terraform -chdir=deploy/terraform output -raw ecr_repository_url)"
+        echo ""
+        echo "=== Deployment Summary ==="
