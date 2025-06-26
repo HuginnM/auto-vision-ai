@@ -21,6 +21,7 @@ resource "aws_appautoscaling_target" "ecs_target" {
   resource_id        = "service/${aws_ecs_cluster.main.name}/${each.value.service.name}"
   min_capacity       = each.value.min
   max_capacity       = each.value.max
+  role_arn          = aws_iam_role.ecs_auto_scale_role.arn
 }
 
 # Create a single CPU utilization tracking policy that applies to each service.

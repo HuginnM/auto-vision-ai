@@ -189,6 +189,31 @@ variable "create_ecs_services" {
     default     = true
 }
 
+# Desired Count (Initial number of tasks)
+variable "api_desired_count" {
+    description = "Initial desired number of tasks for the API service"
+    type        = number
+    default     = 1
+}
+
+variable "ui_desired_count" {
+    description = "Initial desired number of tasks for the UI service"
+    type        = number
+    default     = 1
+}
+
+variable "mlflow_desired_count" {
+    description = "Initial desired number of tasks for the MLflow service"
+    type        = number
+    default     = 1
+}
+
+variable "tensorboard_desired_count" {
+    description = "Initial desired number of tasks for the TensorBoard service"
+    type        = number
+    default     = 1
+}
+
 # Auto Scaling
 variable "api_min_capacity" {
     description = "Minimum number of tasks for the API service"
