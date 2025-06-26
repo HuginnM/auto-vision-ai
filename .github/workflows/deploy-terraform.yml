@@ -69,24 +69,11 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build, tag, and push image to Amazon ECR
+      - name: Build and Push Docker images
         env:
           ECR_REPOSITORY_URL: ${{ needs.deploy-infra.outputs.ecr_repository_url }}
           IMAGE_TAG: ${{ github.sha }}
-        run: |
-          # Push main app image
-          docker build -t $ECR_REPOSITORY_URL:latest -t $ECR_REPOSITORY_URL:$IMAGE_TAG -f docker/Dockerfile .
-          docker push $ECR_REPOSITORY_URL --all-tags
-
-          # Push mlflow image
-          docker build -t $ECR_REPOSITORY_URL:mlflow -t $ECR_REPOSITORY_URL:mlflow-$IMAGE_TAG -f docker/Dockerfile.mlflow .
-          docker push $ECR_REPOSITORY_URL:mlflow
-          docker push $ECR_REPOSITORY_URL:mlflow-$IMAGE_TAG
-
-          # Push tensorboard image
-          docker build -t $ECR_REPOSITORY_URL:tensorboard -t $ECR_REPOSITORY_URL:tensorboard-$IMAGE_TAG -f docker/Dockerfile.tensorboard .
-          docker push $ECR_REPOSITORY_URL:tensorboard
-          docker push $ECR_REPOSITORY_URL:tensorboard-$IMAGE_TAG
+        run: make build-push
 
   deploy-services:
     name: "Deploy Application Services"
