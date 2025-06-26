@@ -178,7 +178,80 @@ variable "env_mode" {
 
 # Secrets Manager
 variable "wandb_secret_name" {
-    description = "Name of the WANDB API key secret in Secrets Manager"
+    description = "The name of the Secrets Manager secret for the WANDB API key"
     type        = string
     default     = "autovisionai/wandb-api-key"
+}
+
+variable "create_ecs_services" {
+    description = "Controls whether the ECS services and related resources are created. Set to false to create only the base infrastructure."
+    type        = bool
+    default     = true
+}
+
+# Auto Scaling
+variable "api_min_capacity" {
+    description = "Minimum number of tasks for the API service"
+    type        = number
+    default     = 1
+}
+
+variable "api_max_capacity" {
+    description = "Maximum number of tasks for the API service"
+    type        = number
+    default     = 1
+}
+
+variable "ui_min_capacity" {
+    description = "Minimum number of tasks for the UI service"
+    type        = number
+    default     = 1
+}
+
+variable "ui_max_capacity" {
+    description = "Maximum number of tasks for the UI service"
+    type        = number
+    default     = 1
+}
+
+variable "mlflow_min_capacity" {
+    description = "Minimum number of tasks for the MLflow service"
+    type        = number
+    default     = 1
+}
+
+variable "mlflow_max_capacity" {
+    description = "Maximum number of tasks for the MLflow service"
+    type        = number
+    default     = 1
+}
+
+variable "tensorboard_min_capacity" {
+    description = "Minimum number of tasks for the TensorBoard service"
+    type        = number
+    default     = 1
+}
+
+variable "tensorboard_max_capacity" {
+    description = "Maximum number of tasks for the TensorBoard service"
+    type        = number
+    default     = 1
+}
+
+variable "scaling_cpu_target_percentage" {
+    description = "The target CPU utilization percentage for ECS service auto-scaling."
+    type        = number
+    default     = 75
+}
+
+variable "scaling_cooldown_seconds_in" {
+    description = "The scale-in cooldown period, in seconds."
+    type        = number
+    default     = 300
+}
+
+variable "scaling_cooldown_seconds_out" {
+    description = "The scale-out cooldown period, in seconds."
+    type        = number
+    default     = 60
 }

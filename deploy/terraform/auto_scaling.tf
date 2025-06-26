@@ -1,209 +1,47 @@
 # auto_scaling.tf
 
-# Auto Scaling Target for API Service
-resource "aws_appautoscaling_target" "api" {
-  service_namespace  = "ecs"
-  resource_id        = "service/${aws_ecs_cluster.main.name}/${aws_ecs_service.api.name}"
-  scalable_dimension = "ecs:service:DesiredCount"
-  role_arn          = aws_iam_role.ecs_auto_scale_role.arn
-  min_capacity      = 1
-  max_capacity      = 4
-
-  tags = {
-    Name = "${var.project_name}-api-autoscaling-target"
+# This local map defines all the services that should be configured for auto-scaling.
+# The for_each meta-argument in the resources below will iterate over this map.
+locals {
+  autoscaled_services = {
+    api         = { service = aws_ecs_service.api[0], min = var.api_min_capacity, max = var.api_max_capacity },
+    ui          = { service = aws_ecs_service.ui[0], min = var.ui_min_capacity, max = var.ui_max_capacity },
+    mlflow      = { service = aws_ecs_service.mlflow[0], min = var.mlflow_min_capacity, max = var.mlflow_max_capacity },
+    tensorboard = { service = aws_ecs_service.tensorboard[0], min = var.tensorboard_min_capacity, max = var.tensorboard_max_capacity }
   }
 }
 
-# Scale Up Policy for API
-resource "aws_appautoscaling_policy" "api_up" {
-  name               = "${var.project_name}-api-scale-up"
+# Create a single scaling target resource that applies to each service defined in the locals map.
+resource "aws_appautoscaling_target" "ecs_target" {
+  # The for_each loop ensures this resource is created for each service, but only if ecs services are being deployed.
+  for_each = { for k, v in local.autoscaled_services : k => v if var.create_ecs_services }
+
   service_namespace  = "ecs"
-  resource_id        = "service/${aws_ecs_cluster.main.name}/${aws_ecs_service.api.name}"
   scalable_dimension = "ecs:service:DesiredCount"
+  resource_id        = "service/${aws_ecs_cluster.main.name}/${each.value.service.name}"
+  min_capacity       = each.value.min
+  max_capacity       = each.value.max
+}
 
-  step_scaling_policy_configuration {
-    adjustment_type         = "ChangeInCapacity"
-    cooldown               = 60
-    metric_aggregation_type = "Maximum"
+# Create a single CPU utilization tracking policy that applies to each service.
+# This is much simpler than managing separate scale-up/scale-down policies and CloudWatch alarms.
+resource "aws_appautoscaling_policy" "ecs_cpu_scaling_policy" {
+  for_each = { for k, v in local.autoscaled_services : k => v if var.create_ecs_services }
 
-    step_adjustment {
-      metric_interval_lower_bound = 0
-      scaling_adjustment          = 1
+  name               = "${each.value.service.name}-cpu-target-tracking"
+  service_namespace  = aws_appautoscaling_target.ecs_target[each.key].service_namespace
+  scalable_dimension = aws_appautoscaling_target.ecs_target[each.key].scalable_dimension
+  resource_id        = aws_appautoscaling_target.ecs_target[each.key].resource_id
+  policy_type        = "TargetTrackingScaling"
+
+  target_tracking_scaling_policy_configuration {
+    predefined_metric_specification {
+      predefined_metric_type = "ECSServiceAverageCPUUtilization"
     }
+    target_value       = var.scaling_cpu_target_percentage
+    scale_in_cooldown  = var.scaling_cooldown_seconds_in
+    scale_out_cooldown = var.scaling_cooldown_seconds_out
   }
 
-  depends_on = [aws_appautoscaling_target.api]
-}
-
-# Scale Down Policy for API
-resource "aws_appautoscaling_policy" "api_down" {
-  name               = "${var.project_name}-api-scale-down"
-  service_namespace  = "ecs"
-  resource_id        = "service/${aws_ecs_cluster.main.name}/${aws_ecs_service.api.name}"
-  scalable_dimension = "ecs:service:DesiredCount"
-
-  step_scaling_policy_configuration {
-    adjustment_type         = "ChangeInCapacity"
-    cooldown               = 60
-    metric_aggregation_type = "Maximum"
-
-    step_adjustment {
-      metric_interval_upper_bound = 0
-      scaling_adjustment          = -1
-    }
-  }
-
-  depends_on = [aws_appautoscaling_target.api]
-}
-
-# CloudWatch Alarm - API High CPU
-resource "aws_cloudwatch_metric_alarm" "api_cpu_high" {
-  alarm_name          = "${var.project_name}-api-cpu-high"
-  comparison_operator = "GreaterThanOrEqualToThreshold"
-  evaluation_periods  = "2"
-  metric_name         = "CPUUtilization"
-  namespace           = "AWS/ECS"
-  period              = "60"
-  statistic           = "Average"
-  threshold           = "80"
-  alarm_description   = "This metric monitors api cpu utilization"
-
-  dimensions = {
-    ClusterName = aws_ecs_cluster.main.name
-    ServiceName = aws_ecs_service.api.name
-  }
-
-  alarm_actions = [aws_appautoscaling_policy.api_up.arn]
-
-  tags = {
-    Name = "${var.project_name}-api-cpu-high-alarm"
-  }
-}
-
-# CloudWatch Alarm - API Low CPU
-resource "aws_cloudwatch_metric_alarm" "api_cpu_low" {
-  alarm_name          = "${var.project_name}-api-cpu-low"
-  comparison_operator = "LessThanOrEqualToThreshold"
-  evaluation_periods  = "2"
-  metric_name         = "CPUUtilization"
-  namespace           = "AWS/ECS"
-  period              = "60"
-  statistic           = "Average"
-  threshold           = "10"
-  alarm_description   = "This metric monitors api cpu utilization"
-
-  dimensions = {
-    ClusterName = aws_ecs_cluster.main.name
-    ServiceName = aws_ecs_service.api.name
-  }
-
-  alarm_actions = [aws_appautoscaling_policy.api_down.arn]
-
-  tags = {
-    Name = "${var.project_name}-api-cpu-low-alarm"
-  }
-}
-
-# Auto Scaling Target for UI Service
-resource "aws_appautoscaling_target" "ui" {
-  service_namespace  = "ecs"
-  resource_id        = "service/${aws_ecs_cluster.main.name}/${aws_ecs_service.ui.name}"
-  scalable_dimension = "ecs:service:DesiredCount"
-  role_arn          = aws_iam_role.ecs_auto_scale_role.arn
-  min_capacity      = 1
-  max_capacity      = 3
-
-  tags = {
-    Name = "${var.project_name}-ui-autoscaling-target"
-  }
-}
-
-# Scale Up Policy for UI
-resource "aws_appautoscaling_policy" "ui_up" {
-  name               = "${var.project_name}-ui-scale-up"
-  service_namespace  = "ecs"
-  resource_id        = "service/${aws_ecs_cluster.main.name}/${aws_ecs_service.ui.name}"
-  scalable_dimension = "ecs:service:DesiredCount"
-
-  step_scaling_policy_configuration {
-    adjustment_type         = "ChangeInCapacity"
-    cooldown               = 60
-    metric_aggregation_type = "Maximum"
-
-    step_adjustment {
-      metric_interval_lower_bound = 0
-      scaling_adjustment          = 1
-    }
-  }
-
-  depends_on = [aws_appautoscaling_target.ui]
-}
-
-# Scale Down Policy for UI
-resource "aws_appautoscaling_policy" "ui_down" {
-  name               = "${var.project_name}-ui-scale-down"
-  service_namespace  = "ecs"
-  resource_id        = "service/${aws_ecs_cluster.main.name}/${aws_ecs_service.ui.name}"
-  scalable_dimension = "ecs:service:DesiredCount"
-
-  step_scaling_policy_configuration {
-    adjustment_type         = "ChangeInCapacity"
-    cooldown               = 60
-    metric_aggregation_type = "Maximum"
-
-    step_adjustment {
-      metric_interval_upper_bound = 0
-      scaling_adjustment          = -1
-    }
-  }
-
-  depends_on = [aws_appautoscaling_target.ui]
-}
-
-# CloudWatch Alarm - UI High CPU
-resource "aws_cloudwatch_metric_alarm" "ui_cpu_high" {
-  alarm_name          = "${var.project_name}-ui-cpu-high"
-  comparison_operator = "GreaterThanOrEqualToThreshold"
-  evaluation_periods  = "2"
-  metric_name         = "CPUUtilization"
-  namespace           = "AWS/ECS"
-  period              = "60"
-  statistic           = "Average"
-  threshold           = "80"
-  alarm_description   = "This metric monitors ui cpu utilization"
-
-  dimensions = {
-    ClusterName = aws_ecs_cluster.main.name
-    ServiceName = aws_ecs_service.ui.name
-  }
-
-  alarm_actions = [aws_appautoscaling_policy.ui_up.arn]
-
-  tags = {
-    Name = "${var.project_name}-ui-cpu-high-alarm"
-  }
-}
-
-# CloudWatch Alarm - UI Low CPU
-resource "aws_cloudwatch_metric_alarm" "ui_cpu_low" {
-  alarm_name          = "${var.project_name}-ui-cpu-low"
-  comparison_operator = "LessThanOrEqualToThreshold"
-  evaluation_periods  = "2"
-  metric_name         = "CPUUtilization"
-  namespace           = "AWS/ECS"
-  period              = "60"
-  statistic           = "Average"
-  threshold           = "10"
-  alarm_description   = "This metric monitors ui cpu utilization"
-
-  dimensions = {
-    ClusterName = aws_ecs_cluster.main.name
-    ServiceName = aws_ecs_service.ui.name
-  }
-
-  alarm_actions = [aws_appautoscaling_policy.ui_down.arn]
-
-  tags = {
-    Name = "${var.project_name}-ui-cpu-low-alarm"
-  }
+  depends_on = [aws_appautoscaling_target.ecs_target]
 }
