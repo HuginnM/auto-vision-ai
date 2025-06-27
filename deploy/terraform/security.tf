@@ -69,39 +69,84 @@ resource "aws_security_group" "alb" {
 # ECS Tasks Security Group
 resource "aws_security_group" "ecs_tasks" {
   name        = "${var.project_name}-ecs-tasks-security-group"
-  description = "Allow inbound access from the ALB only"
+  description = "Controls access to and from ECS tasks"
   vpc_id      = aws_vpc.main.id
 
+  # ALB → Tasks (API/UI/etc)
+  ingress {
+    protocol        = "tcp"
+    from_port       = 0
+    to_port         = 65535
+    security_groups = [aws_security_group.alb.id]
+    description     = "Allow ALB access to services"
+  }
+
+
   # API port from ALB
+  # ingress {
+  #   protocol        = "tcp"
+  #   from_port       = var.api_port
+  #   to_port         = var.api_port
+  #   security_groups = [aws_security_group.alb.id]
+  # }
+
+  # # UI port from ALB
+  # ingress {
+  #   protocol        = "tcp"
+  #   from_port       = var.ui_port
+  #   to_port         = var.ui_port
+  #   security_groups = [aws_security_group.alb.id]
+  # }
+
+  # # MLflow port from ALB
+  # ingress {
+  #   protocol        = "tcp"
+  #   from_port       = var.mlflow_port
+  #   to_port         = var.mlflow_port
+  #   security_groups = [aws_security_group.alb.id]
+  # }
+
+  # # TensorBoard port from ALB
+  # ingress {
+  #   protocol        = "tcp"
+  #   from_port       = var.tensorboard_port
+  #   to_port         = var.tensorboard_port
+  #   security_groups = [aws_security_group.alb.id]
+  # }
+
+  # Allow traffic between ECS tasks (Service Connect & direct)
   ingress {
-    protocol        = "tcp"
-    from_port       = var.api_port
-    to_port         = var.api_port
-    security_groups = [aws_security_group.alb.id]
+    protocol    = "tcp"
+    from_port   = 0
+    to_port     = 65535
+    self        = true
+    description = "Inter-service traffic within tasks"
   }
 
-  # UI port from ALB
-  ingress {
-    protocol        = "tcp"
-    from_port       = var.ui_port
-    to_port         = var.ui_port
-    security_groups = [aws_security_group.alb.id]
+  # DNS egress
+  egress {
+    protocol    = "udp"
+    from_port   = 53
+    to_port     = 53
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "DNS (UDP) for Cloud Map"
   }
 
-  # MLflow port from ALB
-  ingress {
-    protocol        = "tcp"
-    from_port       = var.mlflow_port
-    to_port         = var.mlflow_port
-    security_groups = [aws_security_group.alb.id]
+  egress {
+    protocol    = "tcp"
+    from_port   = 53
+    to_port     = 53
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "DNS (TCP) for Cloud Map"
   }
 
-  # TensorBoard port from ALB
-  ingress {
-    protocol        = "tcp"
-    from_port       = var.tensorboard_port
-    to_port         = var.tensorboard_port
-    security_groups = [aws_security_group.alb.id]
+  # Full outbound within VPC
+  egress {
+    protocol    = "-1"
+    from_port   = 0
+    to_port     = 0
+    cidr_blocks = [aws_vpc.main.cidr_block]
+    description = "Allow all outbound traffic within the VPC"
   }
 
   # Restricted egress - only allow necessary outbound traffic
