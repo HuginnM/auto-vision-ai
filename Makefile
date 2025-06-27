@@ -5,18 +5,19 @@
 # Use SHELL to ensure that the Makefile uses bash, not the default shell.
 SHELL := /bin/bash
 # Default ECR URL - can be overridden from the command line.
-ECR_REPOSITORY_URL ?= $(shell terraform -chdir=deploy/terraform output -raw ecr_repository_url)
 # Use the short git commit hash as the default image tag.
 IMAGE_TAG ?= $(shell git rev-parse --short HEAD)
-LOCAL_REPOSITORY ?= autovisionai
 AWS_REGION ?= us-west-1
+ACCOUNT_ID ?= 869935094020
+ECR_REPOSITORY_NAME ?= autovisionai
+ECR_REPOSITORY_URL ?= $(ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com/$(ECR_REPOSITORY_NAME)
+
 TF_WORKING_DIR = deploy/terraform
-# Secrets configuration
 WANDB_SECRET_NAME ?= autovisionai/wandb-api-key
 
 # --- Phony Targets ---
 # .PHONY ensures that these targets run even if files with the same name exist.
-.PHONY: help build push build-push build-local deploy-infra deploy-services deploy-full deploy-with-secrets push-secrets
+.PHONY: help build push build-push build-local deploy-infra deploy-services deploy-full deploy-with-secrets push-secrets destroy
 
 # --- Targets ---
 help:
@@ -32,30 +33,23 @@ help:
 	@echo "  deploy-infra Deploy base infrastructure (VPC, ECR, ECS cluster, etc.)."
 	@echo "  deploy-services Deploy application services (requires infrastructure)."
 	@echo "  deploy-full  Complete deployment from local: infrastructure, secrets, build, push, services."
+	@echo "  destroy      Destroy all infrastructure and resources (DANGEROUS!)."
 
 build:
 	@echo "--- Building Docker Images for ECR ---"
-	@echo "ECR Repository: $(ECR_REPOSITORY_URL)"
+	@echo "ECR Repository: $(ECR_REPOSITORY_NAME)"
 	@echo "Image Tag: $(IMAGE_TAG)"
 
 	@chmod +x scripts/build-images.sh
 	@./scripts/build-images.sh $(IMAGE_TAG) $(ECR_REPOSITORY_URL)
 
-build-local:
-	@echo "--- Building Docker Images Locally ---"
-	@echo "Local Repository: $(LOCAL_REPOSITORY)"
-	@echo "Image Tag: $(IMAGE_TAG)"
-
-	@chmod +x scripts/build-images.sh
-	@./scripts/build-images.sh $(IMAGE_TAG) $(LOCAL_REPOSITORY)
-
 push:
 	@echo "--- Pushing Docker Images to ECR ---"
-	@echo "ECR Repository: $(ECR_REPOSITORY_URL)"
+	@echo "ECR Repository: $(ECR_REPOSITORY_NAME)"
 	@echo "Image Tag: $(IMAGE_TAG)"
 
 	@chmod +x scripts/push-images.sh
-	@./scripts/push-images.sh $(ECR_REPOSITORY_URL) $(IMAGE_TAG)
+	@./scripts/push-images.sh $(IMAGE_TAG) $(ECR_REPOSITORY_URL)
 
 build-push: build push
 	@echo "--- Build and push complete ---"
@@ -65,21 +59,20 @@ deploy-infra:
 	@echo "AWS Region: $(AWS_REGION)"
 	@echo "Working Directory: $(TF_WORKING_DIR)"
 
-	@cd $(TF_WORKING_DIR) && terraform init
-	@cd $(TF_WORKING_DIR) && terraform plan -var="create_ecs_services=false" -out=tfplan
-	@cd $(TF_WORKING_DIR) && terraform apply -auto-approve tfplan
+	@terraform -chdir=$(TF_WORKING_DIR) init
+	@terraform -chdir=$(TF_WORKING_DIR) plan -var="create_ecs_services=false" -out=tfplan
+	@terraform -chdir=$(TF_WORKING_DIR) apply -auto-approve tfplan
 
 	@echo "--- Infrastructure deployment complete ---"
-	@echo "ECR Repository URL: $(shell cd $(TF_WORKING_DIR) && terraform output -raw ecr_repository_url)"
 
 deploy-services:
 	@echo "--- Deploying Application Services ---"
 	@echo "AWS Region: $(AWS_REGION)"
 	@echo "Working Directory: $(TF_WORKING_DIR)"
 
-	@cd $(TF_WORKING_DIR) && terraform init
-	@cd $(TF_WORKING_DIR) && terraform plan -var="create_ecs_services=true" -out=tfplan
-	@cd $(TF_WORKING_DIR) && terraform apply -auto-approve tfplan
+	@terraform -chdir=$(TF_WORKING_DIR) init
+	@terraform -chdir=$(TF_WORKING_DIR) plan -var="create_ecs_services=true" -out=tfplan
+	@terraform -chdir=$(TF_WORKING_DIR) apply -auto-approve tfplan
 
 	@echo "--- Services deployment complete ---"
 	@echo "Service URLs:"
@@ -96,3 +89,20 @@ push-secrets:
 deploy-full: deploy-infra push-secrets build-push deploy-services
 	@echo "--- Complete deployment with secrets finished ---"
 	@echo "All services are now running!"
+
+destroy:
+	@echo "--- Destroying AutoVisionAI Infrastructure ---"
+	@echo "WARNING: This will permanently delete all resources!"
+	@echo "This includes:"
+	@echo "  - ECS cluster and services"
+	@echo "  - ECR repository and images"
+	@echo "  - S3 bucket and data"
+	@echo "  - VPC, subnets, and security groups"
+	@echo "  - Load balancer and target groups"
+	@echo "  - IAM roles and policies"
+	@echo "  - Secrets Manager secrets"
+	@echo "  - All other AWS resources"
+	@echo ""
+
+	@chmod +x scripts/destroy-infrastructure.sh
+	@./scripts/destroy-infrastructure.sh $(AWS_REGION)
