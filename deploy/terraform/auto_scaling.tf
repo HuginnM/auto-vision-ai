@@ -3,18 +3,18 @@
 # This local map defines all the services that should be configured for auto-scaling.
 # The for_each meta-argument in the resources below will iterate over this map.
 locals {
-  autoscaled_services = {
+  autoscaled_services = var.create_ecs_services ? {
     api         = { service = aws_ecs_service.api[0], min = var.api_min_capacity, max = var.api_max_capacity },
     ui          = { service = aws_ecs_service.ui[0], min = var.ui_min_capacity, max = var.ui_max_capacity },
     mlflow      = { service = aws_ecs_service.mlflow[0], min = var.mlflow_min_capacity, max = var.mlflow_max_capacity },
     tensorboard = { service = aws_ecs_service.tensorboard[0], min = var.tensorboard_min_capacity, max = var.tensorboard_max_capacity }
-  }
+  } : {}
 }
 
 # Create a single scaling target resource that applies to each service defined in the locals map.
 resource "aws_appautoscaling_target" "ecs_target" {
   # The for_each loop ensures this resource is created for each service, but only if ecs services are being deployed.
-  for_each = { for k, v in local.autoscaled_services : k => v if var.create_ecs_services }
+  for_each = local.autoscaled_services
 
   service_namespace  = "ecs"
   scalable_dimension = "ecs:service:DesiredCount"
@@ -27,7 +27,7 @@ resource "aws_appautoscaling_target" "ecs_target" {
 # Create a single CPU utilization tracking policy that applies to each service.
 # This is much simpler than managing separate scale-up/scale-down policies and CloudWatch alarms.
 resource "aws_appautoscaling_policy" "ecs_cpu_scaling_policy" {
-  for_each = { for k, v in local.autoscaled_services : k => v if var.create_ecs_services }
+  for_each = local.autoscaled_services
 
   name               = "${each.value.service.name}-cpu-target-tracking"
   service_namespace  = aws_appautoscaling_target.ecs_target[each.key].service_namespace
