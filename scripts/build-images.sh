@@ -20,40 +20,15 @@ echo "------------------------------------------"
 
 # --- Main Application Image ---
 echo "Building main application image..."
-docker buildx build \
-  --cache-from type=local,src=/tmp/.buildx-cache \
-  --cache-to type=local,dest=/tmp/.buildx-cache-new,mode=max \
-  -t "$REPOSITORY_URL:latest" \
-  -t "$REPOSITORY_URL:$IMAGE_TAG" \
-  -f docker/Dockerfile \
-  --load \
-  .
+docker build -t "$REPOSITORY_URL:app" -t "$REPOSITORY_URL:app-$IMAGE_TAG" -f docker/Dockerfile .
 
 # --- MLflow Image ---
 echo "Building MLflow image..."
-docker buildx build \
-  --cache-from type=local,src=/tmp/.buildx-cache \
-  --cache-to type=local,dest=/tmp/.buildx-cache-new,mode=max \
-  -t "$REPOSITORY_URL:mlflow" \
-  -t "$REPOSITORY_URL:mlflow-$IMAGE_TAG" \
-  -f docker/Dockerfile.mlflow \
-  --load \
-  .
+docker build -t "$REPOSITORY_URL:mlflow" -t "$REPOSITORY_URL:mlflow-$IMAGE_TAG" -f docker/Dockerfile.mlflow .
 
 # --- TensorBoard Image ---
 echo "Building TensorBoard image..."
-docker buildx build \
-  --cache-from type=local,src=/tmp/.buildx-cache \
-  --cache-to type=local,dest=/tmp/.buildx-cache-new,mode=max \
-  -t "$REPOSITORY_URL:tensorboard" \
-  -t "$REPOSITORY_URL:tensorboard-$IMAGE_TAG" \
-  -f docker/Dockerfile.tensorboard \
-  --load \
-  .
-
-# Move cache to avoid cache bloat
-rm -rf /tmp/.buildx-cache
-mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+docker build -t "$REPOSITORY_URL:tensorboard" -t "$REPOSITORY_URL:tensorboard-$IMAGE_TAG" -f docker/Dockerfile.tensorboard .
 
 echo "------------------------------------------"
 echo "All images built successfully."
