@@ -3,6 +3,16 @@
 # Data source to get current AWS account ID
 data "aws_caller_identity" "current" {}
 
+# --- Service Connect Namespace ---
+resource "aws_service_discovery_private_dns_namespace" "service_connect" {
+  name = "${var.project_name}.local"
+  vpc  = aws_vpc.main.id
+
+  tags = {
+    Name = "${var.project_name}-sc-namespace"
+  }
+}
+
 # ECS Cluster
 resource "aws_ecs_cluster" "main" {
   name = var.cluster_name
@@ -10,6 +20,11 @@ resource "aws_ecs_cluster" "main" {
   setting {
     name  = "containerInsights"
     value = "enabled"
+  }
+
+  # Enable Service Connect for the cluster
+  service_connect_defaults {
+    namespace = aws_service_discovery_private_dns_namespace.service_connect.arn
   }
 
   tags = {
@@ -45,7 +60,7 @@ resource "aws_ecs_task_definition" "api" {
   container_definitions = jsonencode([
     {
       name      = "api"
-      image     = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/${var.ecr_repository_name}:latest"
+      image     = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/${var.ecr_repository_name}:app"
       essential = true
       command = [
         "uv", "run",
@@ -56,6 +71,7 @@ resource "aws_ecs_task_definition" "api" {
       portMappings = [
         {
           containerPort = var.api_port
+          name          = "api"
         }
       ]
       environment = [
@@ -119,6 +135,22 @@ resource "aws_ecs_service" "api" {
     container_port   = var.api_port
   }
 
+  # --- Service Connect ---
+  service_connect_configuration {
+    enabled   = true
+    namespace = aws_service_discovery_private_dns_namespace.service_connect.arn
+
+    service {
+      port_name      = "api"
+      discovery_name = "api"
+
+      client_alias {
+        dns_name = "api"
+        port     = var.api_port
+      }
+    }
+  }
+
   depends_on = [
     aws_lb_listener.api,
     aws_efs_mount_target.experiments
@@ -157,7 +189,7 @@ resource "aws_ecs_task_definition" "ui" {
   container_definitions = jsonencode([
     {
       name      = "ui"
-      image     = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/${var.ecr_repository_name}:latest"
+      image     = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/${var.ecr_repository_name}:app"
       essential = true
       command = [
         "uv", "run",
@@ -169,6 +201,7 @@ resource "aws_ecs_task_definition" "ui" {
       portMappings = [
         {
           containerPort = var.ui_port
+          name          = "ui"
         }
       ]
       environment = [
@@ -232,6 +265,22 @@ resource "aws_ecs_service" "ui" {
     container_port   = var.ui_port
   }
 
+  # --- Service Connect ---
+  service_connect_configuration {
+    enabled   = true
+    namespace = aws_service_discovery_private_dns_namespace.service_connect.arn
+
+    service {
+      port_name      = "ui"
+      discovery_name = "ui"
+
+      client_alias {
+        dns_name = "ui"
+        port     = var.ui_port
+      }
+    }
+  }
+
   depends_on = [
     aws_lb_listener.ui,
     aws_efs_mount_target.experiments
@@ -268,6 +317,7 @@ resource "aws_ecs_task_definition" "mlflow" {
       portMappings = [
         {
           containerPort = var.mlflow_port
+          name          = "mlflow"
         }
       ]
       environment = [
@@ -317,6 +367,22 @@ resource "aws_ecs_service" "mlflow" {
     container_port   = var.mlflow_port
   }
 
+  # --- Service Connect ---
+  service_connect_configuration {
+    enabled   = true
+    namespace = aws_service_discovery_private_dns_namespace.service_connect.arn
+
+    service {
+      port_name      = "mlflow"
+      discovery_name = "mlflow"
+
+      client_alias {
+        dns_name = "mlflow"
+        port     = var.mlflow_port
+      }
+    }
+  }
+
   depends_on = [aws_lb_listener.mlflow]
 
   tags = {
@@ -363,6 +429,7 @@ resource "aws_ecs_task_definition" "tensorboard" {
       portMappings = [
         {
           containerPort = var.tensorboard_port
+          name          = "tensorboard"
         }
       ]
       environment = [
@@ -416,6 +483,22 @@ resource "aws_ecs_service" "tensorboard" {
     target_group_arn = aws_lb_target_group.tensorboard[0].arn
     container_name   = "tensorboard"
     container_port   = var.tensorboard_port
+  }
+
+  # --- Service Connect ---
+  service_connect_configuration {
+    enabled   = true
+    namespace = aws_service_discovery_private_dns_namespace.service_connect.arn
+
+    service {
+      port_name      = "tensorboard"
+      discovery_name = "tensorboard"
+
+      client_alias {
+        dns_name = "tensorboard"
+        port     = var.tensorboard_port
+      }
+    }
   }
 
   depends_on = [
