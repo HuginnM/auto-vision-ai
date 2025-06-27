@@ -1,0 +1,128 @@
+name: Deploy AutoVisionAI with Terraform
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-west-1
+  ECR_REPOSITORY: autovisionai
+  TF_WORKING_DIR: deploy/terraform
+
+jobs:
+  deploy-infra:
+    name: "Deploy Base Infrastructure"
+    runs-on: ubuntu-latest
+    outputs:
+      ecr_repository_url: ${{ steps.ecr.outputs.repository_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform init
+
+      - name: Terraform Plan (Infrastructure Only)
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform plan -var="create_ecs_services=false" -out=tfplan
+
+      - name: Terraform Apply (Infrastructure Only)
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform apply -auto-approve tfplan
+
+      - name: Get ECR Repository URL
+        id: ecr
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          ECR_URL=$(terraform output -raw ecr_repository_url)
+          echo "repository_url=$ECR_URL" >> $GITHUB_OUTPUT
+
+  build-and-push:
+    name: "Build and Push Docker Images"
+    needs: deploy-infra
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and Push Docker images
+        env:
+          ECR_REPOSITORY_URL: ${{ needs.deploy-infra.outputs.ecr_repository_url }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: make build-push
+
+  deploy-services:
+    name: "Deploy Application Services"
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform init
+
+      - name: Update WANDB Secret
+        env:
+          WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
+        if: env.WANDB_API_KEY != ''
+        run: |
+          aws secretsmanager update-secret \
+            --secret-id "autovisionai/wandb-api-key" \
+            --secret-string "${{ secrets.WANDB_API_KEY }}" \
+            --region ${{ env.AWS_REGION }}
+
+      - name: Terraform Plan (Services)
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform plan -var="create_ecs_services=true" -out=tfplan
+
+      - name: Terraform Apply (Services)
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform apply -auto-approve tfplan
+
+      - name: Display Service URLs
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          echo "## AutoVisionAI Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | URL |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| API | $(terraform output -raw api_url) |" >> $GITHUB_STEP_SUMMARY
+          echo "| UI | $(terraform output -raw ui_url) |" >> $GITHUB_STEP_SUMMARY
+          echo "| MLflow | $(terraform output -raw mlflow_url) |" >> $GITHUB_STEP_SUMMARY
+          echo "| TensorBoard | $(terraform output -raw tensorboard_url) |" >> $GITHUB_STEP_SUMMARY

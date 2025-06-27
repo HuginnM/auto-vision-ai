@@ -1,9 +1,15 @@
+# LEGACY: This workflow is deprecated. Use deploy-terraform.yml instead.
 name: Deploy to AWS ECS
 
 on:
-  push:
-    branches: [main]
+  # push:
+  #   branches: [main]
   workflow_dispatch:
+    inputs:
+      confirm_legacy:
+        description: 'Type "LEGACY" to confirm you want to run the legacy deployment'
+        required: true
+        default: 'NO'
 
 env:
   AWS_REGION: us-west-1
@@ -25,13 +31,13 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ env.AWS_REGION }}
 
-    # - name: Setup secrets in AWS Secrets Manager
-    #   env:
-    #     WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
-    #     WANDB_ENTITY: ${{ secrets.WANDB_ENTITY }}
-    #   run: |
-    #     chmod +x deploy/aws/setup-secrets.sh
-    #     ./deploy/aws/setup-secrets.sh
+    - name: Setup secrets in AWS Secrets Manager
+      env:
+        WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
+        WANDB_ENTITY: ${{ secrets.WANDB_ENTITY }}
+      run: |
+        chmod +x deploy/aws/setup-secrets.sh
+        ./deploy/aws/setup-secrets.sh
 
     - name: Login to Amazon ECR
       id: login-ecr
