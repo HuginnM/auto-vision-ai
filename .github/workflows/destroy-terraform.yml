@@ -39,91 +39,9 @@ jobs:
       with:
         terraform_version: 1.12.2
 
-    - name: Terraform Init
-      working-directory: deploy/terraform
-      run: terraform init
-
-    - name: Pre-destruction cleanup
+    - name: Destroy Infrastructure
+      env:
+        AWS_REGION: ${{ env.AWS_REGION }}
       run: |
-        echo "Cleaning up resources that might prevent destruction..."
-
-        # Scale down ECS services to 0
-        echo "Scaling down ECS services..."
-        aws ecs update-service --cluster autovisionai --service autovision-api --desired-count 0 --region $AWS_REGION || true
-        aws ecs update-service --cluster autovisionai --service autovision-ui --desired-count 0 --region $AWS_REGION || true
-        aws ecs update-service --cluster autovisionai --service autovision-mlflow --desired-count 0 --region $AWS_REGION || true
-        aws ecs update-service --cluster autovisionai --service autovision-tensorboard --desired-count 0 --region $AWS_REGION || true
-
-        # Wait for services to scale down
-        echo "Waiting for services to scale down..."
-        sleep 60
-
-        # Empty S3 bucket (required for destruction)
-        echo "Emptying S3 bucket..."
-        aws s3 rm s3://autovision-mlflow-artifacts --recursive --region $AWS_REGION || true
-
-        echo "Pre-destruction cleanup completed"
-
-    - name: Terraform Plan Destroy
-      working-directory: deploy/terraform
-      run: terraform plan -destroy -out=destroy-plan
-
-    - name: Terraform Destroy
-      working-directory: deploy/terraform
-      run: terraform apply -auto-approve destroy-plan
-
-    - name: Post-destruction cleanup
-      run: |
-        echo "Performing final cleanup..."
-
-        # Clean up any remaining ECR images
-        echo "Cleaning up ECR repository..."
-        aws ecr batch-delete-image \
-          --repository-name autovisionai \
-          --image-ids imageTag=latest imageTag=mlflow imageTag=tensorboard \
-          --region $AWS_REGION || true
-
-        # List any remaining tagged images and delete them
-        IMAGES=$(aws ecr list-images --repository-name autovisionai --region $AWS_REGION --query 'imageIds[?imageTag!=null]' --output text 2>/dev/null || echo "")
-        if [ ! -z "$IMAGES" ]; then
-          aws ecr batch-delete-image \
-            --repository-name autovisionai \
-            --image-ids $IMAGES \
-            --region $AWS_REGION || true
-        fi
-
-        echo "Post-destruction cleanup completed"
-
-    - name: Verify destruction
-      run: |
-        echo "Verifying resource destruction..."
-
-        # Check if ECS cluster still exists
-        CLUSTER=$(aws ecs describe-clusters --clusters autovisionai --region $AWS_REGION --query 'clusters[0].status' --output text 2>/dev/null || echo "NOTFOUND")
-        if [ "$CLUSTER" = "ACTIVE" ]; then
-          echo "Warning: ECS cluster still exists"
-        else
-          echo "ECS cluster destroyed"
-        fi
-
-        # Check if ECR repository still exists
-        REPO=$(aws ecr describe-repositories --repository-names autovisionai --region $AWS_REGION --query 'repositories[0].repositoryName' --output text 2>/dev/null || echo "NOTFOUND")
-        if [ "$REPO" = "autovisionai" ]; then
-          echo "Warning: ECR repository still exists"
-        else
-          echo "ECR repository destroyed"
-        fi
-
-        # Check if S3 bucket still exists
-        BUCKET=$(aws s3api head-bucket --bucket autovision-mlflow-artifacts --region $AWS_REGION 2>/dev/null && echo "EXISTS" || echo "NOTFOUND")
-        if [ "$BUCKET" = "EXISTS" ]; then
-          echo "Warning: S3 bucket still exists"
-        else
-          echo "S3 bucket destroyed"
-        fi
-
-        echo ""
-        echo "Destruction process completed!"
-        echo ""
-        echo "Please verify in the AWS console that all resources have been removed."
-        echo "Some resources might take a few minutes to fully terminate."
+        # Set confirmation to DESTROY for non-interactive execution
+        echo "DESTROY" | chmod +x scripts/destroy-infrastructure.sh && ./scripts/destroy-infrastructure.sh $AWS_REGION
