@@ -85,3 +85,5 @@ notebooks/
 .terraform.tfstate.lock.info
 .terraform.lock.hcl
 .terraform/
+deploy/terraform/tfplan
+deploy/terraform/destroy-plan
