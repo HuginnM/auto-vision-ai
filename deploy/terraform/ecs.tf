@@ -116,12 +116,13 @@ resource "aws_ecs_task_definition" "api" {
 }
 
 resource "aws_ecs_service" "api" {
-  count           = var.create_ecs_services ? 1 : 0
-  name            = var.api_service_name
-  cluster         = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.api[0].arn
-  desired_count   = var.api_desired_count
-  launch_type     = "FARGATE"
+  count                = var.create_ecs_services ? 1 : 0
+  name                 = var.api_service_name
+  cluster              = aws_ecs_cluster.main.id
+  task_definition      = aws_ecs_task_definition.api[0].arn
+  desired_count        = var.api_desired_count
+  launch_type          = "FARGATE"
+  force_new_deployment = true
 
   network_configuration {
     security_groups  = [aws_security_group.ecs_tasks.id]
@@ -170,7 +171,7 @@ resource "aws_ecs_task_definition" "ui" {
   cpu                      = var.ui_cpu
   memory                   = var.ui_memory
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
-  task_role_arn           = aws_iam_role.ecs_task_role.arn
+  task_role_arn            = aws_iam_role.ecs_task_role.arn
 
   volume {
     name = "experiments-volume"
@@ -207,7 +208,9 @@ resource "aws_ecs_task_definition" "ui" {
       environment = [
         { name = "ENV_MODE", value = var.env_mode },
         { name = "PYTHONUNBUFFERED", value = "1" },
-        { name = "WANDB_ENTITY", value = var.wandb_entity }
+        { name = "WANDB_ENTITY", value = var.wandb_entity },
+        { name = "MLFLOW_EXTERNAL_URL",      value = "http://${aws_lb.main.dns_name}:${var.mlflow_port}" },
+        { name = "TENSORBOARD_EXTERNAL_URL", value = "http://${aws_lb.main.dns_name}:${var.tensorboard_port}" }
       ]
       secrets = [
         {
@@ -246,12 +249,13 @@ resource "aws_ecs_task_definition" "ui" {
 }
 
 resource "aws_ecs_service" "ui" {
-  count           = var.create_ecs_services ? 1 : 0
-  name            = var.ui_service_name
-  cluster         = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.ui[0].arn
-  desired_count   = var.ui_desired_count
-  launch_type     = "FARGATE"
+  count                = var.create_ecs_services ? 1 : 0
+  name                 = var.ui_service_name
+  cluster              = aws_ecs_cluster.main.id
+  task_definition      = aws_ecs_task_definition.ui[0].arn
+  desired_count        = var.ui_desired_count
+  launch_type          = "FARGATE"
+  force_new_deployment = true
 
   network_configuration {
     security_groups  = [aws_security_group.ecs_tasks.id]
