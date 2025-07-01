@@ -58,16 +58,18 @@ aws s3api put-bucket-lifecycle-configuration \
         "Rules": [
             {
                 "ID": "DeleteOldVersions",
+                "Filter": { "Prefix": "" },
                 "Status": "Enabled",
                 "NoncurrentVersionExpiration": {
-                    "NoncurrentDays": 90
+                    "NoncurrentDays": 30
                 }
             },
             {
                 "ID": "DeleteIncompleteMultipartUploads",
+                "Filter": { "Prefix": "" },
                 "Status": "Enabled",
                 "AbortIncompleteMultipartUpload": {
-                    "DaysAfterInitiation": 7
+                    "DaysAfterInitiation": 3
                 }
             }
         ]
