@@ -1,5 +1,6 @@
 """Utility functions for AutoVisionAI UI."""
 
+import os
 import threading
 from typing import Callable, Optional
 
@@ -148,18 +149,30 @@ def add_api_status():
     st.markdown("**Connection Status:**")
 
     # Manual check button
+    def _check_api(url: str) -> tuple[bool, str]:
+        """Ping the API health endpoint and return (status, message)."""
+        try:
+            resp = requests.get(f"{url}/health", timeout=5)
+            if resp.ok:
+                return True, "API Connected"
+            return False, f"Unexpected status: {resp.status_code}"
+        except requests.exceptions.RequestException as exc:
+            return False, str(exc)
+
     if st.button("🔄 Check API Connection"):
         with st.spinner("Checking..."):
-            try:
-                response = requests.get(f"{api_url}/docs", timeout=2)
-                if response.status_code == 200:
-                    st.success("✅ API Connected")
-                else:
-                    st.error(f"❌ Unexpected response: {response.status_code}")
-            except requests.exceptions.RequestException as e:
-                st.error(f"❌ API Offline or Error: {e}")
+            ok, msg = _check_api(api_url)
+            if ok:
+                st.success(f"✅ {msg}")
+            else:
+                st.error(f"❌ API Offline or Error: {msg}")
     else:
         st.info("🔍 Click the button to check API status")
+
+
+def _resolve_uri(default_uri: str, env_var: str) -> str:
+    """Resolve URI from environment variable or default value."""
+    return os.getenv(env_var) or default_uri
 
 
 # noqa: E501
@@ -173,6 +186,8 @@ def show_ml_loggers():
     tesnorboard_icon_b64 = encode_image_path_to_base64(tesnorboard_local_icon_path)
 
     ml_loggers_cfg: MLLoggersConfig = CONFIG.logging.ml_loggers
+    mlflow_external_url = _resolve_uri(ml_loggers_cfg.mlflow.tracking_uri, "MLFLOW_EXTERNAL_URL")
+    tensorboard_external_url = _resolve_uri(ml_loggers_cfg.tensorboard.tracking_uri, "TENSORBOARD_EXTERNAL_URL")
 
     st.markdown("## 📊 Track ML progress")
     st.markdown(
@@ -185,14 +200,14 @@ def show_ml_loggers():
                 <img src="data:image/png;base64,{wandb_icon_b64}"
                      style="max-height: 100%; max-width: 100%; object-fit: contain;" />
             </a>
-            <a href="{ml_loggers_cfg.mlflow.tracking_uri}"
+            <a href="{mlflow_external_url}"
                target="_blank"
                style="display: flex; align-items: center; justify-content: center;
                height: 75px; border: 1px solid #54555D; border-radius: 6px; padding: 4px;">
                 <img src="data:image/png;base64,{mlflow_icon_b64}"
                      style="max-height: 100%; max-width: 100%; object-fit: contain;" />
             </a>
-            <a href="{ml_loggers_cfg.tensorboard.tracking_uri}"
+            <a href="{tensorboard_external_url}"
                target="_blank"
                style="display: flex; align-items: center; justify-content: center;
                height: 75px; border: 1px solid #54555D; border-radius: 6px; padding: 4px;">
