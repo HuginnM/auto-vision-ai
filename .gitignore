@@ -83,6 +83,7 @@ notebooks/
 *.tfstate
 *.tfstate.backup
 .terraform.tfstate.lock.info
-
-# Module directory
+.terraform.lock.hcl
 .terraform/
+deploy/terraform/tfplan
+deploy/terraform/destroy-plan

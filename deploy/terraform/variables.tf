@@ -66,13 +66,13 @@ variable "tensorboard_service_name" {
 variable "api_cpu" {
     description = "API Fargate instance CPU units to provision (1 vCPU = 1024 CPU units)"
     type        = number
-    default     = 1024
+    default     = 2048
 }
 
 variable "api_memory" {
     description = "API Fargate instance memory to provision (in MiB)"
     type        = number
-    default     = 2048
+    default     = 4096
 }
 
 variable "ui_cpu" {

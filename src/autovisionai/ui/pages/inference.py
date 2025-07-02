@@ -85,12 +85,12 @@ def run_inference(image: Image.Image, image_source: str, source_data, model_name
                 files = {"file": ("image.jpg", img_bytes, "image/jpeg")}
                 data = {"model_name": model_name}
 
-                # Extended timeout for the first request to let the model load
-                response = requests.post(inference_url, files=files, data=data, timeout=60)
+                # first request may take long to load the model – give generous time budget
+                response = requests.post(inference_url, files=files, data=data, timeout=180)
 
             else:  # URL
                 data = {"model_name": model_name, "image_url": source_data}
-                response = requests.post(inference_url, data=data, timeout=30)
+                response = requests.post(inference_url, data=data, timeout=120)
 
             response.raise_for_status()
             result = response.json()

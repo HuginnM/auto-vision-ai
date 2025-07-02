@@ -82,7 +82,11 @@ resource "aws_iam_role_policy" "ecs_task_role_policy" {
           "s3:GetObject",
           "s3:PutObject",
           "s3:DeleteObject",
-          "s3:ListBucket"
+          "s3:ListBucket",
+          "s3:GetBucketLocation",
+          "s3:ListBucketMultipartUploads",
+          "s3:ListBucketVersions",
+          "s3:AbortMultipartUpload"
         ]
         Resource = [
           "arn:aws:s3:::${var.mlflow_artifacts_bucket}",

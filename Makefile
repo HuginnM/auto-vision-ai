@@ -17,7 +17,7 @@ WANDB_SECRET_NAME ?= autovisionai/wandb-api-key
 
 # --- Phony Targets ---
 # .PHONY ensures that these targets run even if files with the same name exist.
-.PHONY: help build push build-push build-local deploy-infra deploy-services deploy-full deploy-with-secrets push-secrets destroy
+.PHONY: help build push build-push build-local deploy-infra deploy-services deploy-full push-secrets destroy setup-backend migrate-state
 
 # --- Targets ---
 help:
@@ -34,6 +34,9 @@ help:
 	@echo "  deploy-services Deploy application services (requires infrastructure)."
 	@echo "  deploy-full  Complete deployment from local: infrastructure, secrets, build, push, services."
 	@echo "  destroy      Destroy all infrastructure and resources (DANGEROUS!)."
+	@echo "  setup-backend Set up Terraform S3 backend."
+	@echo "  tf-init      Initialize Terraform with S3 backend."
+	@echo "  migrate-state Migrate existing state to S3 backend (if you have local state)."
 
 build:
 	@echo "--- Building Docker Images for ECR ---"
@@ -106,3 +109,14 @@ destroy:
 
 	@chmod +x scripts/destroy-infrastructure.sh
 	@./scripts/destroy-infrastructure.sh $(AWS_REGION)
+
+# Setup Terraform Backend
+setup-backend:
+	@echo "Setting up Terraform S3 backend..."
+	@chmod +x scripts/setup-terraform-backend.sh
+	@./scripts/setup-terraform-backend.sh
+
+# Migrate existing state to S3 backend
+migrate-state:
+	@echo "Migrating local state to S3 backend..."
+	@terraform -chdir=$(TF_WORKING_DIR) init -migrate-state
