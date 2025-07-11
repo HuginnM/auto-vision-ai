@@ -20,7 +20,7 @@ logging:
     tensorboard:
       use: true
       save_dir: tensorlogs
-      tracking_uri: http://localhost:8080
+      tracking_uri: http://localhost:6006
 
     mlflow:
       use: true
@@ -30,7 +30,7 @@ logging:
     wandb:
       use: true
       log_model: true
-      tracking_uri: https://wandb.ai/
+      tracking_uri: https://wandb.ai
       inference_project: autovisionai_inference
       save_dir: wandb
       mode: online

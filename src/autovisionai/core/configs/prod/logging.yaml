@@ -20,7 +20,7 @@ logging:
     tensorboard:
       use: true
       save_dir: tensorlogs
-      tracking_uri: http://tensorboard:8080
+      tracking_uri: http://tensorboard:6006
 
     mlflow:
       use: true

@@ -5,9 +5,9 @@
 
 ---
 
-## 💰 Estimated Monthly Cost: ~$171.55
+## 💰 Estimated Monthly Cost: ~$175.55
 
-### **Annual Cost Estimate: ~$2,058.60**
+### **Annual Cost Estimate: ~$2,106.60**
 
 This estimate is based on the `us-west-1` (N. California) region and assumes continuous operation (730 hours/month). Costs are variable and depend on actual usage.
 
@@ -29,11 +29,15 @@ This estimate is based on the `us-west-1` (N. California) region and assumes con
 | | EFS Provisioned | 10 MiB/s throughput | $6.00 |
 | | EFS Storage | 10 GB Standard-IA | ~$3.00 |
 | | S3 Storage | 5 GB Standard | $0.12 |
-| | ECR Storage | 5 GB of images | $0.50 |
 | | CloudWatch Logs | 5 GB ingested/stored | $0.70 |
+| **Container Registry** | **ECR Repository** | | **$0.50** |
+| | ECR Storage | 5 GB of images | $0.50 |
+| **Networking** | **VPC & DNS** | | **$3.50** |
+| | VPC & Networking | Data processing & NAT | $2.00 |
+| | Route 53 DNS | Hosted zone & queries | $1.50 |
 | **Databases/Other**| **Secrets Manager** | | **$0.40** |
 | | Secrets Manager | 1 secret | $0.40 |
-| | **TOTAL** | | **~$171.55** |
+| | **TOTAL** | | **~$175.55** |
 
 ---
 
@@ -54,6 +58,40 @@ This estimate is based on the `us-west-1` (N. California) region and assumes con
 ### 4. EFS Intelligent-Tiering
 - **Strategy**: Implemented a lifecycle policy to automatically move EFS files to the cost-effective Infrequent Access (IA) storage class after 30 days.
 - **Impact**: Reduces storage costs for older, less-frequently-accessed experiment data by up to 92%.
+
+---
+
+## 💡 Additional Cost Optimization Options
+
+For projects with tighter budget constraints, the following optimizations can significantly reduce deployment costs:
+
+### Potential Cost Reductions
+
+| Optimization | Monthly Savings | Annual Savings | Impact |
+|--------------|-----------------|----------------|---------|
+| **Remove NAT Gateway** | ~$45.00 | ~$540.00 | Deploy in public subnets, store model weights on S3 instead of W&B model registry |
+| **Replace EFS with S3** | ~$6.00 | ~$72.00 | Use S3 for experiment storage (slightly slower access) |
+| **Use DockerHub instead of ECR** | ~$0.50 | ~$6.00 | Free public Docker registry |
+| **Remove Route 53 DNS** | ~$1.50 | ~$18.00 | Use direct ALB endpoints instead of custom domains |
+| **Switch to EC2** | ~$40.00 | ~$480.00 | For long-running deployments, EC2 instances are more cost-effective than Fargate |
+| **Total Potential Savings** | **~$93.00** | **~$1,116.00** | **Optimized cost: ~$82.55/month** |
+
+### Alternative Storage Options
+
+- **MongoDB for Inference Results**: Use MongoDB for inference results and custom experiment metadata storage instead of file-based systems
+- **S3-Only Storage**: Store all experiment data, logs, and artifacts directly in S3 with appropriate folder structure
+- **Hybrid Approach**: Keep critical real-time data in EFS, archive older experiments to S3
+
+### Performance vs Cost Trade-offs
+
+⚠️ **Important Considerations**:
+- These optimizations may slightly impact system **stability**, **convenience**, and **performance**
+- Public subnet deployment reduces security isolation
+- S3 access is slower than EFS for frequent file operations
+- EC2 instances require more management overhead than Fargate
+- DockerHub has rate limits and less security than private ECR
+
+**Recommendation**: For production environments, start with the current architecture. For development/testing or budget-constrained deployments, consider the optimized approach.
 
 ---
 

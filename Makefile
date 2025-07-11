@@ -17,7 +17,7 @@ WANDB_SECRET_NAME ?= autovisionai/wandb-api-key
 
 # --- Phony Targets ---
 # .PHONY ensures that these targets run even if files with the same name exist.
-.PHONY: help build push build-push build-local deploy-infra deploy-services deploy-full push-secrets destroy setup-backend migrate-state
+.PHONY: help build push build-push deploy-infra deploy-services deploy-full push-secrets destroy setup-backend migrate-state
 
 # --- Targets ---
 help:
@@ -26,7 +26,6 @@ help:
 	@echo "Local Development Targets:"
 	@echo "  help         Show this help message."
 	@echo "  build        Build all Docker images and tag them locally."
-	@echo "  build-local  Build all Docker images with local repository name."
 	@echo "  push         Push the already-built images to ECR."
 	@echo "  build-push   Run the build and push targets sequentially."
 	@echo "  push-secrets Push secrets from .env to AWS Secrets Manager."
@@ -35,7 +34,6 @@ help:
 	@echo "  deploy-full  Complete deployment from local: infrastructure, secrets, build, push, services."
 	@echo "  destroy      Destroy all infrastructure and resources (DANGEROUS!)."
 	@echo "  setup-backend Set up Terraform S3 backend."
-	@echo "  tf-init      Initialize Terraform with S3 backend."
 	@echo "  migrate-state Migrate existing state to S3 backend (if you have local state)."
 
 build:
